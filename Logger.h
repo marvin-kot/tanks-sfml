@@ -20,9 +20,8 @@ public:
     void operator=(const Logger& l) = delete;
 
     static Logger& instance() {
-        static Logger instance;
-        
-        return instance;
+        static Logger _instance;
+        return _instance;
     }
 
     template <typename T>

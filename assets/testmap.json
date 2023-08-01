@@ -1,0 +1,87 @@
+[
+    {
+        "type" : "brickWall",
+        "x" : 7,
+        "y" : 7
+    },
+    {
+        "type" : "brickWall",
+        "x" : 8,
+        "y" : 7
+    },
+    {
+        "type" : "brickWall",
+        "x" : 9,
+        "y" : 7
+    },
+    {
+        "type" : "brickWall",
+        "x" : 7,
+        "y" : 8
+    },
+    {
+        "type" : "brickWall",
+        "x" : 9,
+        "y" : 8
+    },
+    {
+        "type" : "brickWall",
+        "x" : 7,
+        "y" : 9
+    },
+    {
+        "type" : "brickWall",
+        "x" : 9,
+        "y" : 8
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 4,
+        "y" : 1
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 4,
+        "y" : 2
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 4,
+        "y" : 3
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 3,
+        "y" : 2
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 5,
+        "y" : 2
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 12,
+        "y" : 1
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 12,
+        "y" : 2
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 12,
+        "y" : 3
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 11,
+        "y" : 2
+    },
+    {
+        "type" : "concreteWall",
+        "x" : 13,
+        "y" : 2
+    }
+]

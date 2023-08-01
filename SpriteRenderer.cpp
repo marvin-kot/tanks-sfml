@@ -1,44 +1,39 @@
 #include "SpriteRenderer.h"
 #include "GlobalConst.h"
+#include "AnimationSpriteSheet.h"
 
 #include <cassert>
 
-SpriteRenderer::SpriteRenderer(sf::Texture& tex)
-: _texture(tex)
+SpriteRenderer::SpriteRenderer(std::string t) : _objectType(t)
 {
-    _sprite.setTexture(_texture);
+    _sprite.setTexture(AnimationSpriteSheet::instance().spriteSheetTexture);
+    setDefaultSprite();
 }
 
-void SpriteRenderer::setMainSprite(int ofx, int ofy, int sx, int sy)
+void SpriteRenderer::setDefaultSprite()
 {
-    _sprite.setTextureRect(sf::IntRect(ofx, ofy, sx, sy));
+    auto frame = AnimationSpriteSheet::instance().getAnimationFrame(_objectType, "default", 0);
+    _sprite.setTextureRect(frame.rect);
     _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-    _sprite.setOrigin(sx/2, sy/2);
+    _sprite.setOrigin(frame.rect.width/2, frame.rect.height/2);
 }
 
-void SpriteRenderer::assignAnimationFrame(std::string id, int ofx, int ofy, int sx, int sy)
+
+void SpriteRenderer::setCurrentAnimation(std::string id)
 {
-    setMainSprite(ofx, ofy, sx, sy);
+    assert(id.empty() == false);
+    
+    _currentAnimation = id;
+    showAnimationFrame(0);
 }
 
-void SpriteRenderer::showAnimationFrame(std::string id)
-{}
-
-AnimatedSpriteRenderer::AnimatedSpriteRenderer(sf::Texture& tex)
-: SpriteRenderer(tex)
-{}
-
-void AnimatedSpriteRenderer::assignAnimationFrame(std::string id, int ofx, int ofy, int sx, int sy)
+void SpriteRenderer::showAnimationFrame(int i)
 {
-    _animationFrames[id] = sf::IntRect(ofx, ofy, sx, sy);
-}
+    assert(_currentAnimation.empty() == false);
 
-void AnimatedSpriteRenderer::showAnimationFrame(std::string id)
-{
-    assert(_animationFrames.find(id) != _animationFrames.end());
+    auto frame = AnimationSpriteSheet::instance().getAnimationFrame(_objectType, _currentAnimation, i);
 
-    sf::IntRect rect = _animationFrames[id];
-    _sprite.setTextureRect(rect);
+    _sprite.setTextureRect(frame.rect);
     _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-    _sprite.setOrigin(rect.width/2, rect.height/2);
+    _sprite.setOrigin(frame.rect.width/2, frame.rect.height/2);
 }

@@ -1,6 +1,6 @@
 #include "Controller.h"
 #include "GameObject.h"
-
+#include "Utils.h"
 
 
 Controller::Controller(AnimatedGameObject *obj)
@@ -16,26 +16,31 @@ void StupidController::update()
     if (clock.getElapsedTime() > actionTimeout) {
         clock.restart();
         // change decision
-        int dir = distribution(generator);
+        int dir = distribution(Utils::generator);
         switch (dir) {
             case 0: // stay
                 currMoveX = currMoveY = 0;
+                isMoving = false;
                 break;
             case 1: // left
                 currMoveX = -moveSpeed; currMoveY = 0;
-                _gameObject->setCurrentFrame("left");
+                _gameObject->setCurrentAnimation("left");
+                isMoving = true;
                 break;
             case 2: // up
                 currMoveY = -moveSpeed; currMoveX = 0;
-                _gameObject->setCurrentFrame("up");
+                _gameObject->setCurrentAnimation("up");
+                isMoving = true;
                 break;
             case 3: // right
                 currMoveX = moveSpeed; currMoveY = 0;
-                _gameObject->setCurrentFrame("right");
+                _gameObject->setCurrentAnimation("right");
+                isMoving = true;
                 break;
             case 4: // down
                 currMoveY = moveSpeed; currMoveX = 0;
-                _gameObject->setCurrentFrame("down");
+                _gameObject->setCurrentAnimation("down");
+                isMoving = true;
                 break;
         }
     }
@@ -53,31 +58,34 @@ void PlayerController::update()
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
     {
         _gameObject->move(-moveSpeed, 0);
-        _gameObject->setCurrentFrame("left");
+        _gameObject->setCurrentAnimation("left");
         action = true;
     }
     else
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
     {
         _gameObject->move(0, -moveSpeed);
-        _gameObject->setCurrentFrame("up");
+        _gameObject->setCurrentAnimation("up");
         action = true;
     }
     else
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
     {
         _gameObject->move(moveSpeed, 0);
-        _gameObject->setCurrentFrame("right");
+        _gameObject->setCurrentAnimation("right");
         action = true;
     }
     else
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
     {
         _gameObject->move(0, moveSpeed);
-        _gameObject->setCurrentFrame("down");
+        _gameObject->setCurrentAnimation("down");
         action = true;
     }
 
-    if (action)
+    if (action) {
         lastActionTime = clock.getElapsedTime();
+        isMoving = true;
+    } else
+        isMoving = false;
 }
