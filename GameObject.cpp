@@ -1,6 +1,7 @@
 #include "GameObject.h"
 #include "Logger.h"
 #include "Controller.h"
+#include "GlobalConst.h"
 
 #include <iostream>
 
@@ -32,7 +33,7 @@ void GameObject::draw()
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
 }
 
-void GameObject::createCollider(sf::IntRect rect)
+void GameObject::createCollider(const sf::IntRect& rect)
 {
     collider = new Collider(rect);
 }
@@ -44,12 +45,42 @@ void GameObject::setPos(int x, int y)
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
 }
 
+bool isOutOfBounds(const sf::IntRect& rect) {
+    return rect.left < 0
+        || (rect.left+rect.width > globalConst::screen_w)
+        || rect.top < 0
+        || (rect.top+rect.height > globalConst::screen_h);
+}
+
 void GameObject::move(int x, int y)
 {
-    if (spriteRenderer)
+    if (spriteRenderer) {
+        sf::Vector2i oldPos = position();
+
+        //sf::Vector2i newPos = pos + sf::Vector2i(x, y);
         spriteRenderer->_sprite.move(x, y);
+
+        sf::IntRect thisBoundingBox = sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
+
+        if (isOutOfBounds(thisBoundingBox))
+            spriteRenderer->_sprite.move(-x, -y);
+
+    }
     else
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
+}
+
+sf::Vector2i GameObject::position() const
+{
+    return sf::Vector2i(spriteRenderer->_sprite.getPosition());
+}
+
+bool GameObject::collides(const GameObject& go)
+{
+    sf::IntRect thisBoundingBox = sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
+    sf::IntRect otherBoundingBox = sf::IntRect(go.spriteRenderer->_sprite.getGlobalBounds());
+
+    return thisBoundingBox.intersects(otherBoundingBox);
 }
 
 // **** AnimatedGameObject
@@ -99,3 +130,4 @@ AnimatedGameObject::~AnimatedGameObject()
     if (_controller)
         delete _controller;
 }
+

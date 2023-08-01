@@ -22,25 +22,46 @@ int main()
     window.setVerticalSyncEnabled(true);
 
     sf::Texture texture;
-    if (!texture.loadFromFile("assets/spriteSheet16x16.png", sf::IntRect(0, 0, 128, 16)))
+    if (!texture.loadFromFile("assets/spriteSheet16x16.png", sf::IntRect(0, 0, 256, 256)))
     {
         Logger::instance() << "[ERROR] Could not open assets/spriteSheet16x16.png";
         return -1;
     }
 
     AnimatedGameObject pc("player", window);
-    pc.setController(new PlayerController(&pc));
-    pc.createCollider(sf::IntRect(-8, -8, 16, 16));
-    pc.createSpriteRenderer(texture);
+    {
+        pc.setController(new PlayerController(&pc));
+        //pc.createCollider(sf::IntRect(-8, -8, 16, 16));
+        pc.createSpriteRenderer(texture);
 
-    pc.assignAnimationFrame("up", 0, 0, 16, 16);
-    pc.assignAnimationFrame("left", 32, 0, 16, 16);
-    pc.assignAnimationFrame("down", 64, 0, 16, 16);
-    pc.assignAnimationFrame("right", 96, 0, 16, 16);
+        pc.assignAnimationFrame("up", 0, 0, 16, 16);
+        pc.assignAnimationFrame("left", 32, 0, 16, 16);
+        pc.assignAnimationFrame("down", 64, 0, 16, 16);
+        pc.assignAnimationFrame("right", 96, 0, 16, 16);
 
-    pc.setCurrentFrame("up");
+        pc.setCurrentFrame("up");
 
-    pc.setPos(posx, posy);
+        pc.setPos(posx, posy);
+
+        pc.update(); pc.draw();
+    }
+
+
+    AnimatedGameObject enemy("enemy", window);
+    {
+        enemy.createSpriteRenderer(texture);
+        enemy.assignAnimationFrame("up", 0, 240, 16, 16);
+        enemy.assignAnimationFrame("left", 32, 240, 16, 16);
+        enemy.assignAnimationFrame("down", 64, 240, 16, 16);
+        enemy.assignAnimationFrame("right", 96, 240, 16, 16);
+        enemy.setController(new StupidController(&enemy));
+
+        pc.setCurrentFrame("down");
+        enemy.setPos(128, 128);
+
+        enemy.update(); enemy.draw();
+    }
+        
 
     while (window.isOpen())
     {
@@ -67,8 +88,8 @@ int main()
         }
 
         window.clear();
-        pc.update();
-        pc.draw();
+        pc.update(); pc.draw();
+        enemy.update(); enemy.draw();
         window.display();
     }
 

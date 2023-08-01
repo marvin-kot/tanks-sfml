@@ -6,7 +6,7 @@ class Collider
 {
     sf::IntRect rect;
 public:
-    Collider(sf::IntRect r) : rect(r)
+    Collider(const sf::IntRect& r) : rect(r)
     {}
 
     bool collides(const Collider& other) const {

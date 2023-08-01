@@ -8,19 +8,21 @@ class GameObject
 private:
     sf::RenderWindow& _gameWindow;
     std::string _name;
-
+    Collider *collider = nullptr;
 public:
     SpriteRenderer *spriteRenderer = nullptr;
-    Collider *collider = nullptr;
 public:
     GameObject(std::string name, sf::RenderWindow& w);
     virtual ~GameObject();
     
     virtual void draw();
     virtual void createSpriteRenderer(sf::Texture& tex);
-    virtual void createCollider(sf::IntRect rect);
+    virtual void createCollider(const sf::IntRect& rect);
     void setPos(int x, int y);
     void move(int x, int y);
+    sf::Vector2i position() const;
+
+    bool collides(const GameObject& go);
 };
 
 
