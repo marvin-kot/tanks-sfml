@@ -30,6 +30,7 @@ int main()
 
     AnimatedGameObject pc("player", window);
     pc.setController(new PlayerController(&pc));
+    pc.createCollider(sf::IntRect(-8, -8, 16, 16));
     pc.createSpriteRenderer(texture);
 
     pc.assignAnimationFrame("up", 0, 0, 16, 16);

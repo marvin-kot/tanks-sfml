@@ -12,7 +12,10 @@ GameObject::GameObject(std::string name, sf::RenderWindow& w)
 
 GameObject::~GameObject()
 {
-    delete spriteRenderer;
+    if (spriteRenderer)
+        delete spriteRenderer;
+    if (collider)
+        delete collider;
 }
 
 void GameObject::createSpriteRenderer(sf::Texture& tex)
@@ -29,6 +32,10 @@ void GameObject::draw()
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
 }
 
+void GameObject::createCollider(sf::IntRect rect)
+{
+    collider = new Collider(rect);
+}
 void GameObject::setPos(int x, int y)
 {
     if (spriteRenderer)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SpriteRenderer.h"
+#include "Collider.h"
 
 class GameObject
 {
@@ -10,12 +11,14 @@ private:
 
 public:
     SpriteRenderer *spriteRenderer = nullptr;
+    Collider *collider = nullptr;
 public:
     GameObject(std::string name, sf::RenderWindow& w);
     virtual ~GameObject();
     
     virtual void draw();
     virtual void createSpriteRenderer(sf::Texture& tex);
+    virtual void createCollider(sf::IntRect rect);
     void setPos(int x, int y);
     void move(int x, int y);
 };
