@@ -32,7 +32,7 @@ void GameObject::createSpriteRenderer()
 void GameObject::draw()
 {
     if (spriteRenderer)
-        Utils::window.draw(spriteRenderer->_sprite);
+        spriteRenderer->draw();
     else
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
 }
@@ -128,6 +128,12 @@ void AnimatedGameObject::setCurrentAnimation(std::string animName)
         spriteRenderer->setCurrentAnimation(animName);
     else
         Logger::instance() << "[ERROR] AnimatedGameObject - no spriteRenderer found";
+}
+
+void AnimatedGameObject::stopAnimation()
+{
+    if (spriteRenderer)
+        spriteRenderer->playAnimation(false);
 }
 
 void AnimatedGameObject::setController(Controller * ctrl)

@@ -21,6 +21,7 @@ void StupidController::update()
             case 0: // stay
                 currMoveX = currMoveY = 0;
                 isMoving = false;
+                _gameObject->stopAnimation();
                 break;
             case 1: // left
                 currMoveX = -moveSpeed; currMoveY = 0;
@@ -86,6 +87,8 @@ void PlayerController::update()
     if (action) {
         lastActionTime = clock.getElapsedTime();
         isMoving = true;
-    } else
+    } else {
         isMoving = false;
+        _gameObject->stopAnimation();
+    }
 }

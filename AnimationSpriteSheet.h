@@ -23,6 +23,7 @@ public:
     struct AnimationFrame {
         int id;
         sf::IntRect rect;
+        int duration;
     };
 
     struct Animation {
@@ -91,6 +92,11 @@ public:
                     int x = jframe["x"], y = jframe["y"];
                     int w = jframe["w"], h = jframe["h"];
                     frame.rect = sf::IntRect(x, y, w, h);
+
+                    if (animationName == "default")
+                        frame.duration = 0;
+                    else
+                        frame.duration = jframe["dur"];
 
                     animation.frames.push_back(frame);
                 }

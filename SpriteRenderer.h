@@ -4,7 +4,9 @@
 #include <cassert>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/System/Clock.hpp>
 
+#include "AnimationSpriteSheet.h"
 enum Direction
 {
     Up,
@@ -16,15 +18,23 @@ enum Direction
 class SpriteRenderer
 {
     friend class GameObject;
-    sf::Sprite _sprite;
-    std::string _objectType;
-    std::string _currentAnimation;
-    int _currentFrame;
+    std::string _objectType = "";
+    std::string _currentAnimation = "";
 
+    std::vector<AnimationSpriteSheet::AnimationFrame> _currentAnimationFrames;
+    int _currentFrame = 0;
+
+    sf::Sprite _sprite;
+
+    sf::Clock _clock;
+
+    bool _animate = false;
 public:
     SpriteRenderer(std::string t);
     virtual ~SpriteRenderer() {}
     void setCurrentAnimation(std::string id);
+    void draw();
+    void playAnimation(bool);
 
 protected:
     void setDefaultSprite();

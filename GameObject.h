@@ -34,6 +34,7 @@ public:
     ~AnimatedGameObject();
     void setController(Controller *);
     void setCurrentAnimation(std::string animName);
+    void stopAnimation();
     void update();
 
 };
