@@ -9,7 +9,7 @@ include_directories("D:/projects/gamedev/sfml/include")
 
 link_directories("D:/projects/gamedev/sfml/lib")
 
-link_libraries(sfml-graphics sfml-window sfml-system)
+link_libraries(sfml-graphics sfml-window sfml-system sfml-audio)
 
 set(CMAKE_BUILD_TYPE Debug)
 

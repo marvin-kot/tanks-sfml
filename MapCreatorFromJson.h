@@ -44,6 +44,7 @@ public:
     {
         if (type == "brickWall") {
             GameObject *wall = new GameObject("brickWall");
+            wall->setBoolProperties(true, false, false);
             wall->createSpriteRenderer();
             wall->setPos(x*64 + 32, y*64 + 32);
 
@@ -51,6 +52,7 @@ public:
         }
         if (type == "concreteWall") {
             GameObject *wall = new GameObject("concreteWall");
+            wall->setBoolProperties(false, false, false);
             wall->createSpriteRenderer();
             wall->setPos(x*64 + 32, y*64 + 32);
 

@@ -7,13 +7,6 @@
 #include <SFML/System/Clock.hpp>
 
 #include "AnimationSpriteSheet.h"
-enum Direction
-{
-    Up,
-    Left,
-    Down,
-    Right
-};
 
 class SpriteRenderer
 {

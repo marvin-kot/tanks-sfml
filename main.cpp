@@ -12,10 +12,12 @@
 #include "Utils.h"
 #include "MapCreatorFromJson.h"
 #include "AnimationSpriteSheet.h"
+#include "Shootable.h"
 
-AnimatedGameObject *ObjectsPool::playerObject = nullptr;
+GameObject *ObjectsPool::playerObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::obstacles = {};
-std::unordered_set<AnimatedGameObject *> ObjectsPool::enemies = {};
+std::unordered_set<GameObject *> ObjectsPool::enemies = {};
+std::unordered_set<GameObject *> ObjectsPool::bullets = {};
 
 std::default_random_engine Utils::generator = {};
 sf::RenderWindow Utils::window = {};
@@ -54,7 +56,6 @@ int main()
 
     Logger::instance() << "Assets are loaded";
     // load main texture sprite sheet
-    
 
     float posx = screen_w/2, posy = screen_h/2;
 
@@ -62,12 +63,13 @@ int main()
     sf::RenderWindow& window = Utils::window;
     window.setVerticalSyncEnabled(true);
 
-    AnimatedGameObject pc("player");
+    GameObject pc("player");
     {
         pc.setController(new PlayerController(&pc));
+        pc.setShootable(new Shootable(&pc));
+        pc.setBoolProperties(true, false, false);
         pc.createSpriteRenderer();
         pc.setPos(posx, posy);
-        //pc.update();
 
         ObjectsPool::playerObject = &pc;
     }
@@ -75,7 +77,9 @@ int main()
 
     for (int i = 0; i < 4; i++)
     {
-        AnimatedGameObject *enemy = new AnimatedGameObject("npcGreenArmoredTank");
+        GameObject *enemy = new GameObject("npcGreenArmoredTank");
+        enemy->setShootable(new Shootable(enemy));
+        enemy->setBoolProperties(true, false, false);
         enemy->createSpriteRenderer();
         enemy->setController(new StupidController(enemy));
 
@@ -106,11 +110,9 @@ int main()
                     std::cout << "new width: " << event.size.width << std::endl;
                     std::cout << "new height: " << event.size.height << std::endl;
                     break;
-                
                 default:
                     break;
             }
-                
         }
 
         window.clear();
@@ -127,6 +129,18 @@ int main()
         // update pc
         pc.update(); pc.draw();
 
+        // update flying bullets
+        for (auto it = ObjectsPool::bullets.begin(); it != ObjectsPool::bullets.end(); ) {
+            GameObject *obj = *it;
+            if (obj->mustBeDeleted()) {
+                it = ObjectsPool::bullets.erase(it);
+                delete obj;
+            } else {
+                obj->update(); obj->draw();
+                ++it;
+            }
+        }
+
         // update enemies
         for (auto e : ObjectsPool::enemies) {
             e->update(); e->draw();
@@ -135,7 +149,7 @@ int main()
         for (auto o : ObjectsPool::obstacles) {
             o->draw();
         }
-        
+
         window.display();
     }
 

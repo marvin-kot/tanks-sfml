@@ -8,6 +8,7 @@
 class Utils
 {
 public:
+
     static std::default_random_engine generator;
     static sf::RenderWindow window;
 
