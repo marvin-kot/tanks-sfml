@@ -31,12 +31,12 @@ public:
 
         GameObject *bullet = new GameObject("bullet");
         bullet->setParentId(parentObj->Id());
-        bullet->setBoolProperties(true, false, true);
+        bullet->setFlags(GameObject::Bullet);
         bullet->setController(new BulletController(bullet, dir));
         bullet->createSpriteRenderer();
         bullet->copyParentPosition(parentObj);
 
-        // TODO: add to bullet pool
+        // add to bullet pool
         ObjectsPool::bullets.insert(bullet);
 
 

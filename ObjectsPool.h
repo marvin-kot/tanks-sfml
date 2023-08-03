@@ -67,4 +67,11 @@ public:
             }
         }
     }
+
+
+    static GameObject *findNpcById(int id)
+    {
+        auto it = std::find_if(enemies.cbegin(), enemies.cend(), [id](GameObject *obj) { return obj->Id() == id; });
+        return it != enemies.cend() ? *it : nullptr;
+    }
 };

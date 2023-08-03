@@ -20,4 +20,9 @@ public:
             || (rect.top+rect.height > gameViewPort.height + gameViewPort.top);
     }
 
+
+    static void gameOver() {
+        window.close();
+    }
+
 };

@@ -29,11 +29,14 @@ GameObject::~GameObject()
         delete _shootable;
 }
 
-void GameObject::setBoolProperties(bool klbl, bool psbl, bool klr)
+void GameObject::setFlags(GameObject::ObjectFlags flags)
 {
-    _killable = klbl;
-    _passable = psbl;
-    _killer = klr;
+    _flags = flags;
+}
+
+bool GameObject::isFlagSet(GameObject::ObjectFlags f)
+{
+    return (_flags & f) != 0;
 }
 
 void GameObject::createSpriteRenderer()
@@ -65,7 +68,6 @@ void GameObject::setPos(int x, int y)
 }
 
 
-
 void GameObject::move(int x, int y)
 {
     if (_deleteme)
@@ -74,7 +76,6 @@ void GameObject::move(int x, int y)
     if (spriteRenderer) {
         sf::Vector2i oldPos = position();
 
-        //sf::Vector2i newPos = pos + sf::Vector2i(x, y);
         spriteRenderer->_sprite.move(x, y);
 
         sf::IntRect thisBoundingBox = sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
@@ -110,42 +111,79 @@ void GameObject::move(int x, int y)
         }
 
         if (isColliding) {
-            if (_killer && collider == nullptr) {
-                // out of bounds. TODO: how to delete it from the pool?
-                _deleteme = true;
-                return;
-            }
+            bool cancelMovement = false;
 
-            if (_killer && collider && collider->_killable) {
-                // check for owner
-                if (_parentId != collider->Id()) {
-                    ObjectsPool::kill(collider);
-                    _deleteme = true;
-                }
+            updateOnCollision(collider, cancelMovement);
+            if (collider)
+                collider->updateOnCollision(this);
 
-                return;
-            }
-
-            if (_killable && collider && collider->_killer) {
-                if (id != collider->_parentId) {
-                    ObjectsPool::kill(collider);
-                    _deleteme = true;
-                }
-
-                return;
-            }
-
-            if (_killer && collider && !collider->_passable)
-            {
-                _deleteme = true;
-            }
-
-            spriteRenderer->_sprite.move(-x, -y);
+            if (cancelMovement)
+                spriteRenderer->_sprite.move(-x, -y);
         }
 
     }
     else
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
+}
+
+
+void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
+{
+    bool isBullet = isFlagSet(Bullet);
+
+    if (other == nullptr) {
+        // bullet just fled out of bounds
+        if (isBullet)
+            _deleteme = true;
+        cancelMovement = true;
+        return;
+    }
+
+    assert(other != nullptr);
+
+    if (isBullet) {
+        // just hit non-transparent target (and it's not its own creator)
+        if (!other->isFlagSet(BulletPassable) && !isFlagSet(PiercingBullet) && _parentId != other->Id()) {
+            _deleteme = true;
+        }
+
+        return;
+    }
+
+    assert(isBullet == false);
+
+    // is Hit by bullet
+    if (other->isFlagSet(Bullet)) {
+        if (isFlagSet(BulletKillable)) {
+            bool friendlyFire = false;
+            // check if its my own bullet
+            if (Id() == other->_parentId)
+                friendlyFire = true;
+            // check if I'm NPC and bullet is from another NPC (friendly fire)
+            if (isFlagSet(NPC)) {
+                GameObject *bulletAuthor = ObjectsPool::findNpcById(other->_parentId);
+                if (bulletAuthor && bulletAuthor->isFlagSet(NPC))
+                    friendlyFire = true;
+            }
+
+            if (!friendlyFire) {
+                _deleteme = true;
+                cancelMovement = true;
+            }
+        }
+        return;
+    }
+
+    // just run into wall or another tank
+    if (!other->isFlagSet(TankPassable)) {
+        cancelMovement = true;
+    }
+}
+
+void GameObject::updateOnCollision(GameObject *other)
+{
+    bool _;
+    updateOnCollision(other, _);
 }
 
 sf::Vector2i GameObject::position() const

@@ -33,10 +33,10 @@ public:
     using AnimationMap = std::unordered_map<std::string, Animation>;
 
     std::unordered_map<std::string, AnimationMap> objectTypeAnimations;
-    
+
 public:
     sf::Texture spriteSheetTexture;
-    
+
 public:
     static AnimationSpriteSheet& instance()
     {
@@ -51,7 +51,7 @@ public:
         bool result = spriteSheetTexture.loadFromFile(textureName, sf::IntRect(0, 0, 384, 256));
         if (result)
             texLoaded = true;
-        
+
         return result;
     }
 
@@ -67,7 +67,7 @@ public:
         Logger::instance() << "file parsed to json structure";
         jsonLoaded = true;
     }
-    
+
     void parseJsonToDataStructure()
     {
         assert(jsonLoaded == true);
@@ -93,10 +93,10 @@ public:
                     int w = jframe["w"], h = jframe["h"];
                     frame.rect = sf::IntRect(x, y, w, h);
 
-                    if (animationName == "default")
-                        frame.duration = 0;
-                    else
+                    if (jframe.contains("dur"))
                         frame.duration = jframe["dur"];
+                    else
+                        frame.duration = 0;
 
                     animation.frames.push_back(frame);
                 }

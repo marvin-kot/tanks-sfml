@@ -10,25 +10,13 @@ SpriteRenderer::SpriteRenderer(std::string t)
 : _objectType(t)
 {
     _sprite.setTexture(AnimationSpriteSheet::instance().spriteSheetTexture);
-    setDefaultSprite();
+    setCurrentAnimation("default");
 }
-
-void SpriteRenderer::setDefaultSprite()
-{
-    auto frame = AnimationSpriteSheet::instance().getAnimationFrame(_objectType, "default", 0);
-    _sprite.setTextureRect(frame.rect);
-    _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-    _sprite.setOrigin(frame.rect.width/2, frame.rect.height/2);
-
-    _currentAnimation = "default";
-    _currentFrame = 0;
-}
-
 
 void SpriteRenderer::setCurrentAnimation(std::string id)
 {
     assert(id.empty() == false);
-    
+
     if (id == _currentAnimation)
         return;
 

@@ -10,7 +10,7 @@
 #include "Controller.h"
 #include "ObjectsPool.h"
 #include "Utils.h"
-#include "MapCreatorFromJson.h"
+#include "MapCreator.h"
 #include "AnimationSpriteSheet.h"
 #include "Shootable.h"
 
@@ -45,7 +45,6 @@ int main()
     using namespace globalConst;
 
     // initialize logger
-    Logger::instance() << "Starting the Game...";
 
 
     Logger::instance() << "Loading assets...";
@@ -63,23 +62,26 @@ int main()
     sf::RenderWindow& window = Utils::window;
     window.setVerticalSyncEnabled(true);
 
+    Logger::instance() << "Creating player...";
     GameObject pc("player");
     {
         pc.setController(new PlayerController(&pc));
         pc.setShootable(new Shootable(&pc));
-        pc.setBoolProperties(true, false, false);
+        pc.setFlags(GameObject::Player | GameObject::BulletKillable);
         pc.createSpriteRenderer();
         pc.setPos(posx, posy);
+        pc.setCurrentDirection(globalTypes::Up);
 
         ObjectsPool::playerObject = &pc;
     }
 
 
+    Logger::instance() << "Creating enemies...";
     for (int i = 0; i < 4; i++)
     {
         GameObject *enemy = new GameObject("npcGreenArmoredTank");
         enemy->setShootable(new Shootable(enemy));
-        enemy->setBoolProperties(true, false, false);
+        enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->createSpriteRenderer();
         enemy->setController(new StupidController(enemy));
 
@@ -89,10 +91,16 @@ int main()
     }
 
     // build map from json
-    MapCreatorFromJson mapBuilder;
-    mapBuilder.parseJsonMap("assets/testmap.json");
+    Logger::instance() << "Building map...";
+    /*MapCreatorFromJson mapBuilder;
+    mapBuilder.parseMapFile("assets/testmap.json");
+    mapBuilder.buildMapFromData();*/
+    MapCreatorFromCustomMatrixFile mapBuilder;
+    mapBuilder.parseMapFile("assets/testmap.txt");
     mapBuilder.buildMapFromData();
 
+
+    Logger::instance() << "Starting the Game...";
     while (window.isOpen())
     {
         sf::Event event;
@@ -127,7 +135,12 @@ int main()
         blackRect.setFillColor(sf::Color(50, 0, 0));
         window.draw(blackRect);
         // update pc
-        pc.update(); pc.draw();
+        pc.update(); 
+        if (pc.mustBeDeleted()) {
+            Utils::gameOver();
+            break;
+        }
+        pc.draw();
 
         // update flying bullets
         for (auto it = ObjectsPool::bullets.begin(); it != ObjectsPool::bullets.end(); ) {
@@ -142,12 +155,29 @@ int main()
         }
 
         // update enemies
-        for (auto e : ObjectsPool::enemies) {
-            e->update(); e->draw();
+        for (auto it = ObjectsPool::enemies.begin(); it != ObjectsPool::enemies.end(); ) {
+            GameObject *obj = *it;
+            if (obj->mustBeDeleted()) {
+                it = ObjectsPool::enemies.erase(it);
+                delete obj;
+            } else {
+                obj->update(); obj->draw();
+                ++it;
+            }
         }
 
-        for (auto o : ObjectsPool::obstacles) {
-            o->draw();
+        // update obstacles (delete if needed)
+        for (auto it = ObjectsPool::obstacles.begin(); it != ObjectsPool::obstacles.end(); ) {
+            GameObject *obj = *it;
+            if (obj->mustBeDeleted()) {
+                if (obj->isFlagSet(GameObject::Eagle))
+                    Utils::gameOver();
+                it = ObjectsPool::obstacles.erase(it);
+                delete obj;
+            } else {
+                obj->update(); obj->draw();
+                ++it;
+            }
         }
 
         window.display();

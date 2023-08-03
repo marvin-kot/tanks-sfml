@@ -30,6 +30,5 @@ public:
     void playAnimation(bool);
 
 protected:
-    void setDefaultSprite();
     void showAnimationFrame(int i);
 };
