@@ -26,7 +26,7 @@ class SoundPlayer
 
 
 private:
-    SoundPlayer() 
+    SoundPlayer()
     {
         if (-1 == loadSounds())
             Logger::instance() << "[ERROR] Cannot load sounds";
@@ -68,6 +68,11 @@ public:
         return 0;
     }
 
+    void stopAllSounds()
+    {
+        tankMoveSound.stop();
+        tankStandSound.stop();
+    }
 
 
     void playTankStandSound()

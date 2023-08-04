@@ -30,14 +30,14 @@ public:
         Logger::instance() << "shoot";
 
         GameObject *bullet = new GameObject("bullet");
-        bullet->setParentId(parentObj->Id());
+        bullet->setParentId(parentObj->id());
         bullet->setFlags(GameObject::Bullet);
         bullet->setController(new BulletController(bullet, dir));
         bullet->createSpriteRenderer();
         bullet->copyParentPosition(parentObj);
 
         // add to bullet pool
-        ObjectsPool::bullets.insert(bullet);
+        ObjectsPool::addObject(bullet);
 
 
         return true;

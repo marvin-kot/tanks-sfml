@@ -13,18 +13,23 @@ class GameObject;
 
 class MapCreator
 {
+protected:
+    int map_w, map_h;
 public:
     virtual int parseMapFile(std::string fileName) = 0;
     virtual int buildMapFromData() = 0;
+    int mapWidth() const { return map_w; }
+    int mapHeight() const { return map_h; }
 
 protected:
     static GameObject *buildObject(std::string type, int x, int y);
+    void setupScreenBordersBasedOnMapSize();
 
 };
 
 class MapCreatorFromCustomMatrixFile : public MapCreator
 {
-    int map_w, map_h;
+
     std::string mapString;
     std::map<char, std::string> charMap;
 public:

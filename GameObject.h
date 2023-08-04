@@ -11,22 +11,23 @@ class GameObject
 public:
     enum ObjectFlags
     {
-        None = 0,
-        BulletKillable = 1,
-        TankPassable = 2,
-        BulletPassable = 4,
-        Bullet = 8,
-        PiercingBullet = 16,
-        MegaBullet = 32,
-        Ice = 64,
-        NPC = 128,
-        Player = 256,
-        Eagle = 384
+        None = 0x0,
+        BulletKillable = 0x1,
+        TankPassable = 0x2,
+        BulletPassable = 0x4,
+        Bullet = 0x8,
+        PiercingBullet = 0x10,
+        MegaBullet = 0x20,
+        Ice = 0x40,
+        NPC = 0x80,
+        Player = 0x100,
+        Eagle = 0x200,
+        Static = 0x400
     };
 
 private:
-    std::string _name;
-    int id;
+    std::string _type;
+    int _id;
 
     int _parentId = -1;
 
@@ -63,8 +64,8 @@ public:
     void updateOnCollision(GameObject *, bool& cancelMovement);
     void updateOnCollision(GameObject *);
 
-    inline std::string name() const { return _name; }
-    inline int Id() const { return id; }
+    inline std::string type() const { return _type; }
+    inline int id() const { return _id; }
     inline bool mustBeDeleted() const { return _deleteme; }
 
     void setController(Controller *);

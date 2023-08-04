@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Text.hpp>
 
 #include "GlobalConst.h"
 #include "GameObject.h"
@@ -13,14 +14,19 @@
 #include "MapCreator.h"
 #include "AnimationSpriteSheet.h"
 #include "Shootable.h"
+#include "SoundPlayer.h"
 
 GameObject *ObjectsPool::playerObject = nullptr;
-std::unordered_set<GameObject *> ObjectsPool::obstacles = {};
-std::unordered_set<GameObject *> ObjectsPool::enemies = {};
-std::unordered_set<GameObject *> ObjectsPool::bullets = {};
+std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
+std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
+
 
 std::default_random_engine Utils::generator = {};
 sf::RenderWindow Utils::window = {};
+
+int globalVars::borderWidth = 0;
+int globalVars::borderHeight = 0;
+sf::IntRect globalVars::gameViewPort = sf::IntRect();
 
 bool loadAssets()
 {
@@ -34,85 +40,87 @@ bool loadAssets()
     AnimationSpriteSheet::instance().parseJsonFileToJsonAtruct("assets/spriteSheet16x16.json");
     AnimationSpriteSheet::instance().parseJsonToDataStructure();
 
-    // TODO: load sounds
+    return true;
+}
+
+bool buildLevelMap(std::string fileName)
+{
+    MapCreatorFromCustomMatrixFile mapBuilder;
+    mapBuilder.parseMapFile(fileName);
+    if (mapBuilder.buildMapFromData() == -1)
+    {
+        return false;
+    }
+
+    if (mapBuilder.mapWidth() > globalConst::maxFieldWidth || mapBuilder.mapHeight() > globalConst::maxFieldHeight)
+    {
+        Logger::instance() << "[ERROR] assets/testmap.txt - the map size exceeds the limits of the screen. Aborting game...";
+        return false;
+    }
 
     return true;
 }
 
+enum GameState
+{
+    TitleScreen = 0,
+    LoadingLevel = 1,
+    PlayingLevel = 2,
+    GameOver = 3
+};
+
+GameState gameState = TitleScreen;
+int currentLevel = 0;
+const int MaxLevels = 2;
+
+std::vector<std::string> levelMaps = {"assets/testmap.txt", "assets/testmap2.txt"};
 
 int main()
 {
     using namespace globalConst;
 
     // initialize logger
-
-
     Logger::instance() << "Loading assets...";
     if (!loadAssets())
     {
         return -1;
     }
 
-    Logger::instance() << "Assets are loaded";
-    // load main texture sprite sheet
+    sf::Font font;
+    //if (!font.loadFromFile("assets/ARCADECLASSIC.TTF"))
+    if (!font.loadFromFile("assets/joystix.otf"))
+    {
+        return -1;
+    }
 
-    float posx = screen_w/2, posy = screen_h/2;
+    Logger::instance() << "Assets are loaded";
 
     Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML");
     sf::RenderWindow& window = Utils::window;
     window.setVerticalSyncEnabled(true);
 
-    Logger::instance() << "Creating player...";
-    GameObject pc("player");
-    {
-        pc.setController(new PlayerController(&pc));
-        pc.setShootable(new Shootable(&pc));
-        pc.setFlags(GameObject::Player | GameObject::BulletKillable);
-        pc.createSpriteRenderer();
-        pc.setPos(posx, posy);
-        pc.setCurrentDirection(globalTypes::Up);
-
-        ObjectsPool::playerObject = &pc;
-    }
-
-
-    Logger::instance() << "Creating enemies...";
-    for (int i = 0; i < 4; i++)
-    {
-        GameObject *enemy = new GameObject("npcGreenArmoredTank");
-        enemy->setShootable(new Shootable(enemy));
-        enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->createSpriteRenderer();
-        enemy->setController(new StupidController(enemy));
-
-        enemy->setPos(32 + i*288, 32);
-
-        ObjectsPool::enemies.insert(enemy);
-    }
-
-    // build map from json
-    Logger::instance() << "Building map...";
-    /*MapCreatorFromJson mapBuilder;
-    mapBuilder.parseMapFile("assets/testmap.json");
-    mapBuilder.buildMapFromData();*/
-    MapCreatorFromCustomMatrixFile mapBuilder;
-    mapBuilder.parseMapFile("assets/testmap.txt");
-    mapBuilder.buildMapFromData();
-
 
     Logger::instance() << "Starting the Game...";
+    // main loop
     while (window.isOpen())
     {
         sf::Event event;
-        float rotation;
         while (window.pollEvent(event)) {
             switch (event.type) {
                 case sf::Event::Closed:
                     window.close();
                     break;
                 case sf::Event::KeyPressed:
-                    if (event.key.scancode == sf::Keyboard::Scan::Escape)
-                        window.close();
+                    if (gameState == TitleScreen) {
+                        if (event.key.scancode == sf::Keyboard::Scan::Escape)
+                            window.close();
+                        else if (event.key.scancode == sf::Keyboard::Scan::Space) {
+                            gameState = LoadingLevel;
+                            currentLevel = 0;
+                        }
+                    } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Escape) {
+                        gameState = GameOver;
+                    }
                     break;
                 case sf::Event::Resized:
                     std::cout << "new width: " << event.size.width << std::endl;
@@ -123,62 +131,115 @@ int main()
             }
         }
 
+
+        if (gameState == TitleScreen) {
+            sf::Text text;
+            text.setFont(font);
+            std::string title = "RETRO TANK MASSACRE";
+            text.setString(title);
+            const int titleSize = 96;
+            text.setCharacterSize(titleSize);
+            text.setFillColor(sf::Color::White);
+            text.setOrigin(titleSize * title.length() / 2.5, titleSize/2);
+            text.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 - titleSize);
+
+            sf::Text textSub;
+            std::string subtitle = "version  0.1";
+            textSub.setFont(font);
+            textSub.setString(subtitle);
+            textSub.setCharacterSize(titleSize/6);
+            textSub.setFillColor(sf::Color::White);
+            textSub.setOrigin(titleSize/6 * subtitle.length() / 4, titleSize/4/2);
+            textSub.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 + 12);
+
+            sf::Text textInstruction;
+            std::string instruction = "Press [space] to start the game";
+            textInstruction.setFont(font);
+            textInstruction.setString(instruction);
+            textInstruction.setCharacterSize(titleSize/4);
+            textInstruction.setFillColor(sf::Color::Yellow);
+            textInstruction.setOrigin(titleSize/4 * instruction.length() / 2.5, titleSize/2/2);
+            textInstruction.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 + 12 + titleSize + 12);
+
+            window.clear();
+
+            sf::RectangleShape blackRect(sf::Vector2f(globalConst::screen_w, globalConst::screen_h));
+            blackRect.setFillColor(sf::Color(0, 0, 0));
+
+            window.draw(blackRect);
+            window.draw(text);
+            window.draw(textSub);
+            window.draw(textInstruction);
+            window.display();
+            continue;
+        } else if (gameState == LoadingLevel) {
+            assert (currentLevel < levelMaps.size());
+            Logger::instance() << "Building map..." << levelMaps[currentLevel];
+            if (!buildLevelMap(levelMaps[currentLevel])) {
+                window.close();
+                Logger::instance() << "Failed to build map";
+                return -1;
+            }
+            Logger::instance() << "Level map is built";
+            gameState = PlayingLevel;
+            continue;
+        } else if (gameState == GameOver) {
+            SoundPlayer::instance().stopAllSounds();
+            ObjectsPool::clearEverything();
+            gameState = TitleScreen;
+            continue;
+        }
+
+
+        assert(ObjectsPool::playerObject != nullptr);
+
+        auto &allObjects = ObjectsPool::getAllObjects();
+        // update object states
+        for (auto it = allObjects.begin(); it != allObjects.end(); ) {
+            GameObject *obj = *it;
+            if (obj->mustBeDeleted()) {
+                it = allObjects.erase(it);
+
+                if (obj->isFlagSet(GameObject::Player) || obj->isFlagSet(GameObject::Eagle)) {
+                    gameState = GameOver;
+                    break;
+                }
+                delete obj;
+            } else {
+                if (!obj->isFlagSet(GameObject::Static))
+                    obj->update();
+                ++it;
+            }
+        }
+
+        if (gameState == GameOver)
+            continue;
+
         window.clear();
-        // border
+        // draw objects (order matter)
+        // draw border
         sf::RectangleShape greyRect(sf::Vector2f(screen_w, screen_h));
         greyRect.setFillColor(sf::Color(102, 102, 102));
         window.draw(greyRect);
 
         // draw view port
-        sf::RectangleShape blackRect(sf::Vector2f(gameViewPort.width, gameViewPort.height));
-        blackRect.setPosition(sf::Vector2f(gameViewPort.left, gameViewPort.top));
+        sf::RectangleShape blackRect(sf::Vector2f(globalVars::gameViewPort.width, globalVars::gameViewPort.height));
+        blackRect.setPosition(sf::Vector2f(globalVars::gameViewPort.left, globalVars::gameViewPort.top));
         blackRect.setFillColor(sf::Color(50, 0, 0));
         window.draw(blackRect);
-        // update pc
-        pc.update(); 
-        if (pc.mustBeDeleted()) {
-            Utils::gameOver();
-            break;
-        }
-        pc.draw();
 
-        // update flying bullets
-        for (auto it = ObjectsPool::bullets.begin(); it != ObjectsPool::bullets.end(); ) {
-            GameObject *obj = *it;
-            if (obj->mustBeDeleted()) {
-                it = ObjectsPool::bullets.erase(it);
-                delete obj;
-            } else {
-                obj->update(); obj->draw();
-                ++it;
-            }
-        }
+        // 1. draw ice and water
+        auto objectsToDrawFirst = ObjectsPool::getObjectsByTypes({"ice", "water"});
+        std::for_each(objectsToDrawFirst.cbegin(), objectsToDrawFirst.cend(), [](GameObject *obj) { obj->draw(); });
 
-        // update enemies
-        for (auto it = ObjectsPool::enemies.begin(); it != ObjectsPool::enemies.end(); ) {
-            GameObject *obj = *it;
-            if (obj->mustBeDeleted()) {
-                it = ObjectsPool::enemies.erase(it);
-                delete obj;
-            } else {
-                obj->update(); obj->draw();
-                ++it;
-            }
-        }
+        // 2. draw tanks and bullets
+        std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcGreenArmoredTank", "bullet"});
+        std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [](GameObject *obj) { if (obj) obj->draw(); });
 
-        // update obstacles (delete if needed)
-        for (auto it = ObjectsPool::obstacles.begin(); it != ObjectsPool::obstacles.end(); ) {
-            GameObject *obj = *it;
-            if (obj->mustBeDeleted()) {
-                if (obj->isFlagSet(GameObject::Eagle))
-                    Utils::gameOver();
-                it = ObjectsPool::obstacles.erase(it);
-                delete obj;
-            } else {
-                obj->update(); obj->draw();
-                ++it;
-            }
-        }
+        // 3. draw walls and trees
+        auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({"brickWall", "concreteWall", "tree"});
+        std::for_each(objectsToDrawThird.cbegin(), objectsToDrawThird.cend(), [](GameObject *obj) { obj->draw(); });
+
 
         window.display();
     }

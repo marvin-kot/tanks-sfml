@@ -35,6 +35,11 @@
         "y" : 8
     },
     {
+        "type" : "eagle",
+        "x" : 8,
+        "y" : 9
+    },
+    {
         "type" : "concreteWall",
         "x" : 4,
         "y" : 1
@@ -83,5 +88,35 @@
         "type" : "concreteWall",
         "x" : 13,
         "y" : 2
+    },
+    {
+        "type" : "tree",
+        "x" : 6,
+        "y" : 2
+    },
+    {
+        "type" : "tree",
+        "x" : 7,
+        "y" : 2
+    },
+    {
+        "type" : "tree",
+        "x" : 8,
+        "y" : 2
+    },
+    {
+        "type" : "water",
+        "x" : 6,
+        "y" : 5
+    },
+    {
+        "type" : "water",
+        "x" : 7,
+        "y" : 5
+    },
+    {
+        "type" : "water",
+        "x" : 8,
+        "y" : 5
     }
 ]

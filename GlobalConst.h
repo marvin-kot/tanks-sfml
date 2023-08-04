@@ -16,15 +16,27 @@ namespace globalTypes
 
 namespace globalConst
 {
-    constexpr int screen_w = 1280;
-    constexpr int screen_h = 720;
+    constexpr int screen_w = 1920;
+    constexpr int screen_h = 1080;
+
+    constexpr int spriteOriginalSizeX = 16;
+    constexpr int spriteOriginalSizeY = 16;
 
     constexpr int spriteScaleX = 4;
     constexpr int spriteScaleY = 4;
 
-    constexpr int borderWidth = 128;
-    constexpr int borderHeight = 40;
-    
-    const sf::IntRect gameViewPort = sf::IntRect(borderWidth, borderHeight, screen_w - borderWidth*2, screen_h - borderHeight * 2);
+    constexpr int spriteDisplaySizeX = spriteOriginalSizeX * spriteScaleX;
+    constexpr int spriteDisplaySizeY = spriteOriginalSizeY * spriteScaleY;
+
+    constexpr int maxFieldWidth = screen_w / spriteDisplaySizeX;
+    constexpr int maxFieldHeight = screen_h / spriteDisplaySizeY;
+
 };
 
+namespace globalVars
+{
+    extern int borderWidth;
+    extern int borderHeight;
+
+    extern sf::IntRect gameViewPort;
+};

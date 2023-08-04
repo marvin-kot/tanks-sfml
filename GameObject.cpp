@@ -9,12 +9,12 @@
 #include <iostream>
 
 
-GameObject::GameObject(std::string name)
-: _name(name)
+GameObject::GameObject(std::string type)
+: _type(type)
 {
     static int count = 0;
 
-    id = count++;
+    _id = count++;
 }
 
 GameObject::~GameObject()
@@ -42,7 +42,7 @@ bool GameObject::isFlagSet(GameObject::ObjectFlags f)
 void GameObject::createSpriteRenderer()
 {
     Logger::instance() << "createSpriteRenderer";
-    spriteRenderer = new SpriteRenderer(_name);
+    spriteRenderer = new SpriteRenderer(_type);
 }
 
 void GameObject::draw()
@@ -59,8 +59,8 @@ void GameObject::draw()
 void GameObject::setPos(int x, int y)
 {
     if (spriteRenderer) {
-        int mappedX = x + globalConst::gameViewPort.left;
-        int mappedY = y + globalConst::gameViewPort.top;
+        int mappedX = x + globalVars::gameViewPort.left;
+        int mappedY = y + globalVars::gameViewPort.top;
         spriteRenderer->_sprite.setPosition(mappedX, mappedY);
     }
     else
@@ -88,25 +88,12 @@ void GameObject::move(int x, int y)
         if (Utils::isOutOfBounds(thisBoundingBox))
             isColliding = true;
         else {
-            for (GameObject *o : ObjectsPool::obstacles) {
-                if (collides(*o)) {
+            for (GameObject *o : ObjectsPool::getAllObjects()) {
+                if (_id != o->_id && collides(*o)) {
                     collider = o;
                     isColliding = true;
                     break;
                 }
-            }
-        }
-
-        if (_name != "player" && collides(*ObjectsPool::playerObject)) {
-                collider = ObjectsPool::playerObject;
-                isColliding = true;
-        }
-
-        for (GameObject *o : ObjectsPool::enemies) {
-            if (id != o->id && collides(*o)) {
-                collider = o;
-                isColliding = true;
-                break;
             }
         }
 
@@ -143,9 +130,12 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
 
     if (isBullet) {
         // just hit non-transparent target (and it's not its own creator)
-        if (!other->isFlagSet(BulletPassable) && !isFlagSet(PiercingBullet) && _parentId != other->Id()) {
+        if (!other->isFlagSet(BulletPassable) && !isFlagSet(PiercingBullet) && _parentId != other->id()) {
             _deleteme = true;
         }
+
+        if (other->isFlagSet(Bullet))
+            _deleteme = true;
 
         return;
     }
@@ -157,7 +147,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         if (isFlagSet(BulletKillable)) {
             bool friendlyFire = false;
             // check if its my own bullet
-            if (Id() == other->_parentId)
+            if (id() == other->_parentId)
                 friendlyFire = true;
             // check if I'm NPC and bullet is from another NPC (friendly fire)
             if (isFlagSet(NPC)) {

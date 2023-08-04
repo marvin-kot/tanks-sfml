@@ -14,6 +14,8 @@ public:
 
     static bool isOutOfBounds(const sf::IntRect& rect) {
         using namespace globalConst;
+        using namespace globalVars;
+
         return rect.left < gameViewPort.left
             || (rect.left+rect.width > gameViewPort.width + gameViewPort.left)
             || rect.top < gameViewPort.top
