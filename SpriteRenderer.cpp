@@ -1,13 +1,16 @@
 #include "SpriteRenderer.h"
+#include "GameObject.h"
 #include "GlobalConst.h"
 #include "AnimationSpriteSheet.h"
 #include "Utils.h"
 
+
 #include <cassert>
 #include <SFML/System/Time.hpp>
 
-SpriteRenderer::SpriteRenderer(std::string t)
-: _objectType(t)
+SpriteRenderer::SpriteRenderer(GameObject * parent)
+: _parentObject(parent)
+, _objectType(parent->type())
 {
     _sprite.setTexture(AnimationSpriteSheet::instance().spriteSheetTexture);
     setCurrentAnimation("default");
@@ -58,4 +61,25 @@ void SpriteRenderer::draw()
 void SpriteRenderer::playAnimation(bool play)
 {
     _animate = play;
+}
+
+OneShotAnimationRenderer::OneShotAnimationRenderer(GameObject * parent) : SpriteRenderer(parent) {}
+
+void OneShotAnimationRenderer::draw()
+{
+    int framesCount = _currentAnimationFrames.size();
+    // play set next frame if duration of current frame passed
+    if (framesCount > 1 && _animate) {
+        if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
+            int nextFrame = _currentFrame+1;
+
+            if (nextFrame == framesCount) {
+                _parentObject->_deleteme = true;
+                return;
+            }
+            showAnimationFrame(nextFrame);
+            _clock.restart();
+        }
+    }
+    Utils::window.draw(_sprite);
 }

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <SFML/Graphics/Rect.hpp>
+#include <SFML/Graphics/Text.hpp>
 #include <cassert>
 
 #include "Logger.h"
@@ -36,6 +37,7 @@ public:
 
 public:
     sf::Texture spriteSheetTexture;
+    sf::Font _titleFont;
 
 public:
     static AnimationSpriteSheet& instance()
@@ -134,6 +136,13 @@ public:
 
         return objectTypeAnimations.at(type).at(animation).frames[frameNum];
     }
+
+    bool loadFont(std::string file)
+    {
+        return _titleFont.loadFromFile(file);
+    }
+
+    sf::Font& defaultFont() { return _titleFont; }
 
     AnimationSpriteSheet(AnimationSpriteSheet& ) = delete;
     void operator=(const AnimationSpriteSheet&) = delete;

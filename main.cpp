@@ -3,7 +3,7 @@
 #include <vector>
 
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Text.hpp>
+
 
 #include "GlobalConst.h"
 #include "GameObject.h"
@@ -15,6 +15,7 @@
 #include "AnimationSpriteSheet.h"
 #include "Shootable.h"
 #include "SoundPlayer.h"
+#include "SpriteRenderer.h"
 
 GameObject *ObjectsPool::playerObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
@@ -39,6 +40,12 @@ bool loadAssets()
 
     AnimationSpriteSheet::instance().parseJsonFileToJsonAtruct("assets/spriteSheet16x16.json");
     AnimationSpriteSheet::instance().parseJsonToDataStructure();
+
+    if (!AnimationSpriteSheet::instance().loadFont("assets/joystix.otf"))
+    {
+        Logger::instance() << "[ERROR] fonts not loaded";
+        return false;
+    }
 
     return true;
 }
@@ -75,6 +82,8 @@ const int MaxLevels = 2;
 
 std::vector<std::string> levelMaps = {"assets/testmap.txt", "assets/testmap2.txt"};
 
+void showTitleScreen(sf::RenderWindow&);
+
 int main()
 {
     using namespace globalConst;
@@ -86,12 +95,6 @@ int main()
         return -1;
     }
 
-    sf::Font font;
-    //if (!font.loadFromFile("assets/ARCADECLASSIC.TTF"))
-    if (!font.loadFromFile("assets/joystix.otf"))
-    {
-        return -1;
-    }
 
     Logger::instance() << "Assets are loaded";
 
@@ -102,6 +105,9 @@ int main()
 
     Logger::instance() << "Starting the Game...";
     // main loop
+
+    int framesToDie = -1;
+    constexpr int MaxFramesToDie = 180;
     while (window.isOpen())
     {
         sf::Event event;
@@ -133,44 +139,7 @@ int main()
 
 
         if (gameState == TitleScreen) {
-            sf::Text text;
-            text.setFont(font);
-            std::string title = "RETRO TANK MASSACRE";
-            text.setString(title);
-            const int titleSize = 96;
-            text.setCharacterSize(titleSize);
-            text.setFillColor(sf::Color::White);
-            text.setOrigin(titleSize * title.length() / 2.5, titleSize/2);
-            text.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 - titleSize);
-
-            sf::Text textSub;
-            std::string subtitle = "version  0.1";
-            textSub.setFont(font);
-            textSub.setString(subtitle);
-            textSub.setCharacterSize(titleSize/6);
-            textSub.setFillColor(sf::Color::White);
-            textSub.setOrigin(titleSize/6 * subtitle.length() / 4, titleSize/4/2);
-            textSub.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 + 12);
-
-            sf::Text textInstruction;
-            std::string instruction = "Press [space] to start the game";
-            textInstruction.setFont(font);
-            textInstruction.setString(instruction);
-            textInstruction.setCharacterSize(titleSize/4);
-            textInstruction.setFillColor(sf::Color::Yellow);
-            textInstruction.setOrigin(titleSize/4 * instruction.length() / 2.5, titleSize/2/2);
-            textInstruction.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 + 12 + titleSize + 12);
-
-            window.clear();
-
-            sf::RectangleShape blackRect(sf::Vector2f(globalConst::screen_w, globalConst::screen_h));
-            blackRect.setFillColor(sf::Color(0, 0, 0));
-
-            window.draw(blackRect);
-            window.draw(text);
-            window.draw(textSub);
-            window.draw(textInstruction);
-            window.display();
+            showTitleScreen(window);
             continue;
         } else if (gameState == LoadingLevel) {
             assert (currentLevel < levelMaps.size());
@@ -181,6 +150,7 @@ int main()
                 return -1;
             }
             Logger::instance() << "Level map is built";
+            SoundPlayer::instance().gameOver = false;
             gameState = PlayingLevel;
             continue;
         } else if (gameState == GameOver) {
@@ -190,9 +160,9 @@ int main()
             continue;
         }
 
-
         assert(ObjectsPool::playerObject != nullptr);
 
+        std::vector<GameObject *> objectsToAdd;
         auto &allObjects = ObjectsPool::getAllObjects();
         // update object states
         for (auto it = allObjects.begin(); it != allObjects.end(); ) {
@@ -201,8 +171,33 @@ int main()
                 it = allObjects.erase(it);
 
                 if (obj->isFlagSet(GameObject::Player) || obj->isFlagSet(GameObject::Eagle)) {
-                    gameState = GameOver;
-                    break;
+                    framesToDie = MaxFramesToDie;
+                    SoundPlayer::instance().stopAllSounds();
+                    SoundPlayer::instance().gameOver = true;
+                    // do not break here - we still need to create explosion few lines later!
+                }
+
+                if (obj->isFlagSet(GameObject::Bullet)) {
+                    GameObject *explosion = new GameObject("smallExplosion");
+                    explosion->spriteRenderer = new OneShotAnimationRenderer(explosion);
+                    explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+                    explosion->copyParentPosition(obj);
+
+                    objectsToAdd.push_back(explosion);
+
+                    if (obj->getParentObject()->isFlagSet(GameObject::Player))
+                        SoundPlayer::instance().playBulletHitWallSound();
+                }
+
+                if (obj->isFlagSet(GameObject::Player) || obj->isFlagSet(GameObject::NPC) || obj->isFlagSet(GameObject::Eagle)) {
+                    GameObject *explosion = new GameObject("bigExplosion");
+                    explosion->spriteRenderer = new OneShotAnimationRenderer(explosion);
+                    explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+                    explosion->copyParentPosition(obj);
+
+                    objectsToAdd.push_back(explosion);
+
+                    SoundPlayer::instance().playSmallExplosionSound();
                 }
                 delete obj;
             } else {
@@ -212,8 +207,9 @@ int main()
             }
         }
 
-        if (gameState == GameOver)
-            continue;
+        for (auto obj : objectsToAdd) {
+            ObjectsPool::addObject(obj);
+        }
 
         window.clear();
         // draw objects (order matter)
@@ -237,14 +233,63 @@ int main()
         std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [](GameObject *obj) { if (obj) obj->draw(); });
 
         // 3. draw walls and trees
-        auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({"brickWall", "concreteWall", "tree"});
+        auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({"brickWall", "concreteWall", "tree", "smallExplosion", "bigExplosion"});
         std::for_each(objectsToDrawThird.cbegin(), objectsToDrawThird.cend(), [](GameObject *obj) { obj->draw(); });
 
 
         window.display();
+
+        if (framesToDie > -1) {
+            if (--framesToDie <= 0)
+                gameState = GameOver;
+        }
     }
 
     Logger::instance() << "Game window is closed";
 
     return 0;
+}
+
+
+
+void showTitleScreen(sf::RenderWindow& window)
+{
+    sf::Text text;
+    text.setFont(AnimationSpriteSheet::instance().defaultFont());
+    std::string title = "RETRO TANK MASSACRE";
+    text.setString(title);
+    const int titleSize = 96;
+    text.setCharacterSize(titleSize);
+    text.setFillColor(sf::Color::White);
+    text.setOrigin(titleSize * title.length() / 2.5, titleSize/2);
+    text.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 - titleSize);
+
+    sf::Text textSub;
+    std::string subtitle = "version  0.1";
+    textSub.setFont(AnimationSpriteSheet::instance().defaultFont());
+    textSub.setString(subtitle);
+    textSub.setCharacterSize(titleSize/6);
+    textSub.setFillColor(sf::Color::White);
+    textSub.setOrigin(titleSize/6 * subtitle.length() / 4, titleSize/4/2);
+    textSub.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 + 12);
+
+    sf::Text textInstruction;
+    std::string instruction = "Press [space] to start the game";
+    textInstruction.setFont(AnimationSpriteSheet::instance().defaultFont());
+    textInstruction.setString(instruction);
+    textInstruction.setCharacterSize(titleSize/4);
+    textInstruction.setFillColor(sf::Color::Yellow);
+    textInstruction.setOrigin(titleSize/4 * instruction.length() / 2.5, titleSize/2/2);
+    textInstruction.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 + 12 + titleSize + 12);
+
+    window.clear();
+
+    sf::RectangleShape blackRect(sf::Vector2f(globalConst::screen_w, globalConst::screen_h));
+    blackRect.setFillColor(sf::Color(0, 0, 0));
+
+    window.draw(blackRect);
+    window.draw(text);
+    window.draw(textSub);
+    window.draw(textInstruction);
+    window.display();
 }

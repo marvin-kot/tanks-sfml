@@ -29,7 +29,7 @@ public:
 
         Logger::instance() << "shoot";
 
-        GameObject *bullet = new GameObject("bullet");
+        GameObject *bullet = new GameObject(parentObj, "bullet");
         bullet->setParentId(parentObj->id());
         bullet->setFlags(GameObject::Bullet);
         bullet->setController(new BulletController(bullet, dir));

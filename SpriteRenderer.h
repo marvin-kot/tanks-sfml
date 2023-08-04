@@ -8,9 +8,14 @@
 
 #include "AnimationSpriteSheet.h"
 
+class GameObject;
+
 class SpriteRenderer
 {
     friend class GameObject;
+protected:
+    GameObject *_parentObject;
+
     std::string _objectType = "";
     std::string _currentAnimation = "";
 
@@ -23,12 +28,20 @@ class SpriteRenderer
 
     bool _animate = false;
 public:
-    SpriteRenderer(std::string t);
+    SpriteRenderer(GameObject * parent);
     virtual ~SpriteRenderer() {}
     void setCurrentAnimation(std::string id);
-    void draw();
+    virtual void draw();
     void playAnimation(bool);
 
 protected:
     void showAnimationFrame(int i);
+};
+
+
+class OneShotAnimationRenderer : public SpriteRenderer
+{
+public:
+    OneShotAnimationRenderer(GameObject * parent);
+    void draw() override;
 };

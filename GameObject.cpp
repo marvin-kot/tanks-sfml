@@ -12,8 +12,18 @@
 GameObject::GameObject(std::string type)
 : _type(type)
 {
-    static int count = 0;
+    assignUniqueId();
+}
 
+GameObject::GameObject(GameObject *parent, std::string type)
+: _parentObject(parent), _type(type)
+{
+    assignUniqueId();
+}
+
+void GameObject::assignUniqueId()
+{
+    static int count = 0;
     _id = count++;
 }
 
@@ -42,7 +52,7 @@ bool GameObject::isFlagSet(GameObject::ObjectFlags f)
 void GameObject::createSpriteRenderer()
 {
     Logger::instance() << "createSpriteRenderer";
-    spriteRenderer = new SpriteRenderer(_type);
+    spriteRenderer = new SpriteRenderer(this);
 }
 
 void GameObject::draw()

@@ -17,7 +17,7 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(json)
 
 
-add_executable(game WIN32 main.cpp GameObject.cpp SpriteRenderer.cpp Controller.cpp MapCreator.cpp)
+add_executable(game WIN32 main.cpp GameObject.cpp SpriteRenderer.cpp Controller.cpp MapCreator.cpp SoundPlayer.cpp)
 
 target_link_libraries(game PRIVATE nlohmann_json::nlohmann_json)
 

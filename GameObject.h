@@ -8,6 +8,7 @@ class Shootable;
 
 class GameObject
 {
+    friend class OneShotAnimationRenderer;
 public:
     enum ObjectFlags
     {
@@ -40,12 +41,17 @@ private:
 
     globalTypes::Direction _direction;
 
+    GameObject *_parentObject;
+
+    void assignUniqueId();
 public:
     SpriteRenderer *spriteRenderer = nullptr;
 public:
     GameObject(std::string name);
+    GameObject(GameObject *, std::string name);
     virtual ~GameObject();
 
+    GameObject *getParentObject() const { return _parentObject; }
     void setFlags(ObjectFlags);
     bool isFlagSet(ObjectFlags);
 
