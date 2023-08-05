@@ -1,0 +1,37 @@
+#pragma once
+
+#include "GameObject.h"
+#include "Logger.h"
+#include "GlobalConst.h"
+
+#include <unordered_set>
+#include <unordered_map>
+#include <vector>
+class ObjectsPool
+{
+private:
+    static std::unordered_set<GameObject *> allGameObjects;
+    static std::unordered_map<std::string, std::unordered_set<GameObject *>> objectsByType;
+
+public:
+    static GameObject *playerObject;
+
+    ~ObjectsPool();
+
+    static void clearEverything();
+
+    static void kill(GameObject * obj);
+
+    static void addObject(GameObject *obj);
+
+    static void iterateObjectAndCleanDeleted(std::function<void(GameObject *)> func);
+
+    static std::unordered_set<GameObject *> &getAllObjects();
+
+    static std::unordered_set<GameObject *> &getObjectsByType(std::string type);
+
+    static std::unordered_set<GameObject *> getObjectsByTypes(std::vector<std::string> types);
+    static int countObjectsByTypes(std::vector<std::string> types);
+
+    static GameObject *findNpcById(int id);
+};

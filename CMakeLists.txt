@@ -8,15 +8,25 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
-add_subdirectory(json)
+add_subdirectory(lib/json)
 
+include_directories(
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src)
 
-include_directories(${CMAKE_SOURCE_DIR}/sfml/include)
-link_directories(${CMAKE_SOURCE_DIR}/sfml/lib)
+include_directories(${CMAKE_SOURCE_DIR}/lib/sfml/include)
+set(SFML_LIB_DIR ${CMAKE_SOURCE_DIR}/lib/sfml/bin)
+link_directories(${SFML_LIB_DIR})
 link_libraries(sfml-graphics sfml-window sfml-system sfml-audio)
-set(SFML_LIB_DIR ${CMAKE_SOURCE_DIR}/sfml/lib)
 
-add_executable(game WIN32 main.cpp GameObject.cpp SpriteRenderer.cpp Controller.cpp MapCreator.cpp SoundPlayer.cpp)
+
+
+file(GLOB ALL_SOURCES
+    "${CMAKE_SOURCE_DIR}/include/*.h"
+    "${CMAKE_SOURCE_DIR}/src/*.cpp"
+    )
+
+add_executable(game WIN32 ${ALL_SOURCES})
 
 target_link_libraries(game PRIVATE nlohmann_json::nlohmann_json)
 
