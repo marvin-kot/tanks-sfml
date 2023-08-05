@@ -84,40 +84,28 @@ void GameObject::move(int x, int y)
         return;
 
     if (spriteRenderer) {
-        sf::Vector2i oldPos = position();
-
         spriteRenderer->_sprite.move(x, y);
 
+        GameObject *collider = nullptr;
+        bool cancelMovement = false;
         sf::IntRect thisBoundingBox = sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
 
-        bool isColliding = false;
-
-        GameObject *collider = nullptr;
-
-
-        if (Utils::isOutOfBounds(thisBoundingBox))
-            isColliding = true;
+        if (Utils::isOutOfBounds(thisBoundingBox)) {
+            updateOnCollision(collider, cancelMovement);
+        }
         else {
             for (GameObject *o : ObjectsPool::getAllObjects()) {
-                if (_id != o->_id && collides(*o)) {
+                if (this != o && collides(*o)) {
                     collider = o;
-                    isColliding = true;
-                    break;
+                    updateOnCollision(collider, cancelMovement);
+                    if (collider)
+                        collider->updateOnCollision(this);
                 }
             }
         }
 
-        if (isColliding) {
-            bool cancelMovement = false;
-
-            updateOnCollision(collider, cancelMovement);
-            if (collider)
-                collider->updateOnCollision(this);
-
-            if (cancelMovement)
-                spriteRenderer->_sprite.move(-x, -y);
-        }
-
+        if (cancelMovement)
+            spriteRenderer->_sprite.move(-x, -y);
     }
     else
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
@@ -211,7 +199,22 @@ sf::IntRect GameObject::boundingBox() const
 
 bool GameObject::collides(const GameObject& go) const
 {
-    return boundingBox().intersects(go.boundingBox());
+    auto thisBB = boundingBox();
+    auto otherBB = go.boundingBox();
+
+    using v2f = sf::Vector2i;
+
+    bool intersects
+            =  thisBB.contains(v2f(otherBB.left, otherBB.top))
+            || thisBB.contains(v2f(otherBB.left + otherBB.width, otherBB.top))
+            || thisBB.contains(v2f(otherBB.left + otherBB.width, otherBB.top + otherBB.height))
+            || thisBB.contains(v2f(otherBB.left, otherBB.top + otherBB.height))
+            || otherBB.contains(v2f(thisBB.left, thisBB.top))
+            || otherBB.contains(v2f(thisBB.left + thisBB.width, thisBB.top))
+            || otherBB.contains(v2f(thisBB.left + thisBB.width, thisBB.top + thisBB.height))
+            || otherBB.contains(v2f(thisBB.left, thisBB.top + thisBB.height));
+
+    return intersects;
 }
 
 

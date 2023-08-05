@@ -78,9 +78,11 @@ enum GameState
 
 GameState gameState = TitleScreen;
 int currentLevel = 0;
-const int MaxLevels = 2;
 
-std::vector<std::string> levelMaps = {"assets/testmap.txt", "assets/testmap2.txt"};
+std::vector<std::string> levelMaps = {
+    "assets/testmap.txt",
+    "assets/testmap2.txt",
+    "assets/testmap3.txt"};
 
 void showTitleScreen(sf::RenderWindow&);
 
