@@ -8,9 +8,14 @@ Implemented in C++ using SFML library.
 
 '
 cd tanks-sfml
+
 mkdir build
+
 cd build
+
 cmake -S ..
+
 make
+
 ./game
 '
