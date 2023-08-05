@@ -1,2 +1,16 @@
-# tanks-sfml
-Simple Battle City -like game game implemented in C++ and SFML
+# Retro Tank Massacre
+
+Yet another remake of the classic NES Battle City game.
+
+Implemented in C++ using SFML library.
+
+## Building
+
+'
+cd tanks-sfml
+mkdir build
+cd build
+cmake -S ..
+make
+./game
+'
