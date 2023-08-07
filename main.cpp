@@ -219,7 +219,7 @@ int main()
         }
 
         // as the game just cleared all objects marked for deletion, all the existing enemies must be alive at this point
-        int countEnemiesAlive = ObjectsPool::countObjectsByTypes({"npcGreenArmoredTank"});
+        int countEnemiesAlive = ObjectsPool::countObjectsByTypes({"npcGreenArmoredTank", "spawner_ArmoredTank"});
         if (countEnemiesAlive < 1 && framesToWin == -1) {
             framesToWin = MaxFramesToWin;
             SoundPlayer::instance().stopAllSounds();
@@ -250,6 +250,10 @@ int main()
         // 3. draw walls and trees
         auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({"brickWall", "concreteWall", "tree", "smallExplosion", "bigExplosion"});
         std::for_each(objectsToDrawThird.cbegin(), objectsToDrawThird.cend(), [](GameObject *obj) { obj->draw(); });
+
+        // 4. visual effects
+        auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({"spawner_ArmoredTank"});
+        std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [](GameObject *obj) { obj->draw(); });
 
 
         window.display();

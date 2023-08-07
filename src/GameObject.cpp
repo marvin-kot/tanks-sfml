@@ -49,10 +49,10 @@ bool GameObject::isFlagSet(GameObject::ObjectFlags f)
     return (_flags & f) != 0;
 }
 
-void GameObject::createSpriteRenderer()
+void GameObject::createSpriteRenderer(std::string t)
 {
     Logger::instance() << "createSpriteRenderer";
-    spriteRenderer = new SpriteRenderer(this);
+    spriteRenderer = new SpriteRenderer(this, t);
 }
 
 void GameObject::draw()
@@ -63,7 +63,14 @@ void GameObject::draw()
     if (spriteRenderer)
         spriteRenderer->draw();
     else
-        Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
+        Logger::instance() << _type << "no renderer";
+}
+
+void GameObject::hide(bool val)
+{
+    Logger::instance() << "GameObject::hide" << val;
+    if (spriteRenderer)
+        spriteRenderer->hide(val);
 }
 
 void GameObject::setPos(int x, int y)
@@ -73,8 +80,8 @@ void GameObject::setPos(int x, int y)
         int mappedY = y + globalVars::gameViewPort.top;
         spriteRenderer->_sprite.setPosition(mappedX, mappedY);
     }
-    else
-        Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
+    _x = x + globalVars::gameViewPort.left;
+    _y = y + globalVars::gameViewPort.top;
 }
 
 
@@ -85,6 +92,7 @@ void GameObject::move(int x, int y)
 
     if (spriteRenderer) {
         spriteRenderer->_sprite.move(x, y);
+        _x += x, _y += y;
 
         GameObject *collider = nullptr;
         bool cancelMovement = false;
@@ -104,11 +112,15 @@ void GameObject::move(int x, int y)
             }
         }
 
-        if (cancelMovement)
+        if (cancelMovement) {
             spriteRenderer->_sprite.move(-x, -y);
+            _x -= x, _y -= y;
+        }
     }
-    else
+    else {
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
+        _x += x, _y += y;
+    }
 }
 
 
@@ -176,23 +188,34 @@ void GameObject::updateOnCollision(GameObject *other)
 
 sf::Vector2i GameObject::position() const
 {
-    return sf::Vector2i(spriteRenderer->_sprite.getPosition());
+    if (spriteRenderer)
+        return sf::Vector2i(spriteRenderer->_sprite.getPosition());
+    else
+        return sf::Vector2i(_x, _y);
 }
 
 void GameObject::copyParentPosition(const GameObject * parent)
 {
     auto pos = parent->position();
     spriteRenderer->_sprite.setPosition(pos.x, pos.y);
+    _x = pos.x; _y = pos.y;
 }
 
 sf::IntRect GameObject::boundingBox() const
 {
-    sf::IntRect thisBoundingBox = sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
-    // reduct rect
-    thisBoundingBox.left += 2;
-    thisBoundingBox.top += 2;
-    thisBoundingBox.width -= 4;
-    thisBoundingBox.height -= 4;
+
+    sf::IntRect thisBoundingBox;
+
+    if (spriteRenderer) {
+        thisBoundingBox =  sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
+        // reduct rect
+        thisBoundingBox.left += 2;
+        thisBoundingBox.top += 2;
+        thisBoundingBox.width -= 4;
+        thisBoundingBox.height -= 4;
+    }
+    else
+        thisBoundingBox =  sf::IntRect(_x, _y, 0, 0);
 
     return thisBoundingBox;
 }
@@ -267,7 +290,5 @@ void GameObject::update()
 {
     if (_controller)
         _controller->update();
-    else
-        Logger::instance() << "[ERROR] GameObject::update - no controller found";
 }
 

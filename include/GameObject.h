@@ -9,6 +9,7 @@ class Shootable;
 class GameObject
 {
     friend class OneShotAnimationRenderer;
+    friend class SpawnController;
 public:
     enum ObjectFlags
     {
@@ -42,6 +43,7 @@ private:
     globalTypes::Direction _direction;
 
     GameObject *_parentObject;
+    int _x, _y;
 
     void assignUniqueId();
 public:
@@ -58,7 +60,8 @@ public:
     inline void setParentId(int pid) { _parentId = pid; }
 
     virtual void draw();
-    void createSpriteRenderer();
+    void hide(bool);
+    void createSpriteRenderer(std::string type = "");
     void setPos(int x, int y);
     void move(int x, int y);
 

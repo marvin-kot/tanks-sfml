@@ -3,17 +3,20 @@
 #include "GlobalConst.h"
 #include "AssetManager.h"
 #include "Utils.h"
-
+#include "Logger.h"
 
 #include <cassert>
 #include <SFML/System/Time.hpp>
 
 using namespace Assets;
 
-SpriteRenderer::SpriteRenderer(GameObject * parent)
+SpriteRenderer::SpriteRenderer(GameObject * parent, std::string type)
 : _parentObject(parent)
-, _objectType(parent->type())
+, _objectType(!type.empty() ? type : parent->type())
 {
+    assert(_parentObject != nullptr);
+    assert(_objectType.empty() == false);
+
     _sprite.setTexture(AssetManager::instance().mainSpriteSheetTexture());
     setCurrentAnimation("default");
 }
@@ -33,6 +36,17 @@ void SpriteRenderer::setCurrentAnimation(std::string id)
     _clock.restart();
 }
 
+void SpriteRenderer::hide(bool val)
+{
+    Logger::instance() << "SpriteRenderer::hide()";
+    _hide = val;
+}
+
+bool SpriteRenderer::isHidden()
+{
+    return _hide;
+}
+
 void SpriteRenderer::showAnimationFrame(int frameNum)
 {
     assert(_currentAnimation.empty() == false);
@@ -48,6 +62,7 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
 
 void SpriteRenderer::draw()
 {
+    if (isHidden()) return;
     int framesCount = _currentAnimationFrames.size();
     // play set next frame if duration of current frame passed
     if (framesCount > 1 && _animate) {
@@ -65,10 +80,11 @@ void SpriteRenderer::playAnimation(bool play)
     _animate = play;
 }
 
-OneShotAnimationRenderer::OneShotAnimationRenderer(GameObject * parent) : SpriteRenderer(parent) {}
+OneShotAnimationRenderer::OneShotAnimationRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}
 
 void OneShotAnimationRenderer::draw()
 {
+    if (isHidden()) return;
     int framesCount = _currentAnimationFrames.size();
     // play set next frame if duration of current frame passed
     if (framesCount > 1 && _animate) {
@@ -83,5 +99,28 @@ void OneShotAnimationRenderer::draw()
             _clock.restart();
         }
     }
+    Utils::window.draw(_sprite);
+}
+
+LoopAnimationSpriteRenderer::LoopAnimationSpriteRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}
+
+void LoopAnimationSpriteRenderer::draw()
+{
+    if (isHidden()) return;
+    //Logger::instance() << "LoopAnimationSpriteRenderer::draw()";
+    int framesCount = _currentAnimationFrames.size();
+    // play set next frame if duration of current frame passed
+    if (framesCount > 1 && _animate) {
+        if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
+            int nextFrame = _currentFrame+1;
+
+            if (nextFrame >= framesCount) {
+                nextFrame = 0;
+            }
+            showAnimationFrame(nextFrame);
+            _clock.restart();
+        }
+    }
+
     Utils::window.draw(_sprite);
 }

@@ -3,10 +3,11 @@
 #include "GlobalConst.h"
 #include "Utils.h"
 #include "SoundPlayer.h"
+#include "Shootable.h"
 
 
 Controller::Controller(GameObject *obj)
-: _gameObject(obj) 
+: _gameObject(obj)
 {}
 
 StupidController::StupidController(GameObject *obj)
@@ -15,14 +16,14 @@ StupidController::StupidController(GameObject *obj)
 
 void StupidController::update()
 {
-    if (clock.getElapsedTime() > actionTimeout) {
-        clock.restart();
+    if (_clock.getElapsedTime() > actionTimeout) {
+        _clock.restart();
         // change decision
         int dir = distribution(Utils::generator);
         switch (dir) {
             case 0: // stay / shoot
                 currMoveX = currMoveY = 0;
-                isMoving = false;
+                _isMoving = false;
                 _gameObject->stopAnimation();
                 _gameObject->shoot();
                 break;
@@ -30,25 +31,25 @@ void StupidController::update()
                 currMoveX = -moveSpeed; currMoveY = 0;
                 _gameObject->setCurrentDirection(globalTypes::Left);
                 _gameObject->setCurrentAnimation("left");
-                isMoving = true;
+                _isMoving = true;
                 break;
             case 2: // up
                 currMoveY = -moveSpeed; currMoveX = 0;
                 _gameObject->setCurrentDirection(globalTypes::Up);
                 _gameObject->setCurrentAnimation("up");
-                isMoving = true;
+                _isMoving = true;
                 break;
             case 3: // right
                 currMoveX = moveSpeed; currMoveY = 0;
                 _gameObject->setCurrentDirection(globalTypes::Right);
                 _gameObject->setCurrentAnimation("right");
-                isMoving = true;
+                _isMoving = true;
                 break;
             case 4: // down
                 currMoveY = moveSpeed; currMoveX = 0;
                 _gameObject->setCurrentDirection(globalTypes::Down);
                 _gameObject->setCurrentAnimation("down");
-                isMoving = true;
+                _isMoving = true;
                 break;
         }
     }
@@ -66,7 +67,7 @@ void PlayerController::update()
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
     {
-        isMoving = false;
+        _isMoving = false;
         if (_gameObject->shoot())
             SoundPlayer::instance().playShootSound();;
     } else
@@ -75,7 +76,7 @@ void PlayerController::update()
         _gameObject->move(-moveSpeed, 0);
         _gameObject->setCurrentDirection(globalTypes::Left);
         _gameObject->setCurrentAnimation("left");
-        isMoving = true;
+        _isMoving = true;
     }
     else
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
@@ -83,7 +84,7 @@ void PlayerController::update()
         _gameObject->move(0, -moveSpeed);
         _gameObject->setCurrentDirection(globalTypes::Up);
         _gameObject->setCurrentAnimation("up");
-        isMoving = true;
+        _isMoving = true;
     }
     else
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
@@ -91,7 +92,7 @@ void PlayerController::update()
         _gameObject->move(moveSpeed, 0);
         _gameObject->setCurrentDirection(globalTypes::Right);
         _gameObject->setCurrentAnimation("right");
-        isMoving = true;
+        _isMoving = true;
     }
     else
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
@@ -99,12 +100,12 @@ void PlayerController::update()
         _gameObject->move(0, moveSpeed);
         _gameObject->setCurrentDirection(globalTypes::Down);
         _gameObject->setCurrentAnimation("down");
-        isMoving = true;
+        _isMoving = true;
     } else
-        isMoving = false;
+        _isMoving = false;
 
-    if (isMoving) {
-        lastActionTime = clock.getElapsedTime();
+    if (_isMoving) {
+        _lastActionTime = _clock.getElapsedTime();
         SoundPlayer::instance().playTankMoveSound();
         _gameObject->restartAnimation();
     } else {
@@ -134,4 +135,68 @@ void BulletController::update()
         _gameObject->move(0, moveSpeed);
         _gameObject->setCurrentAnimation("down");
     }
+}
+
+///// Spawner
+SpawnController::SpawnController(GameObject *parent, std::string type, int timeout, int quantity)
+: Controller(parent), _spawnableType(type), _spawnTimeout(sf::seconds(timeout)), _quantity(quantity)
+{
+    _gameObject->hide(true);
+    _state = Starting;
+}
+
+
+void SpawnController::update()
+{
+    if (_quantity < 1) {
+        _gameObject->_deleteme = true;
+        return;
+    }
+
+    switch (_state) {
+        case Waiting:
+            if (_clock.getElapsedTime() > _spawnTimeout)
+                _state = Starting;
+            break;
+        case Starting:
+            Logger::instance() << "Starting";
+            _gameObject->hide(false);
+            _spawnAnimationclock.restart();
+            _state = PlayingAnimation;
+            break;
+        case PlayingAnimation:
+            if (_spawnAnimationclock.getElapsedTime() > _spawnAnimationTime)
+                _state = CreateObject;
+            break;
+        case CreateObject:
+            {
+                GameObject * newNpc = createObject(_spawnableType);
+
+                if (newNpc) {
+                    newNpc->copyParentPosition(_gameObject);
+                    ObjectsPool::addObject(newNpc);
+                    _quantity--;
+                }
+
+                _clock.restart();
+                _gameObject->hide(true);
+                _state = Waiting;
+            }
+            break;
+    }
+}
+
+GameObject *SpawnController::createObject(std::string type)
+{
+    if (type == "npcGreenArmoredTank") {
+        GameObject *enemy = new GameObject("npcGreenArmoredTank");
+        enemy->setShootable(new Shootable(enemy));
+        enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
+        enemy->createSpriteRenderer();
+        enemy->setController(new StupidController(enemy));
+
+        return enemy;
+    }
+
+    return nullptr;
 }

@@ -5,6 +5,7 @@
 #include "Shootable.h"
 #include "ObjectsPool.h"
 #include "GlobalConst.h"
+#include "SpriteRenderer.h"
 
 #include <string>
 
@@ -45,6 +46,18 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
         enemy->setPos(x*64 + 32, y*64 + 32);
 
         return enemy;
+    }
+
+    if (type == "spawner_ArmoredTank") {
+        Logger::instance() << "Creating an enemy spawner...";
+        GameObject *spawner = new GameObject("spawner_ArmoredTank");
+        spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
+        spawner->spriteRenderer = new LoopAnimationSpriteRenderer(spawner, "spark");
+        spawner->setController(new SpawnController(spawner, "npcGreenArmoredTank", 6, 10));
+
+        spawner->setPos(x*64 + 32, y*64 + 32);
+
+        return spawner;
     }
 
     if (type == "brickWall") {
@@ -101,7 +114,7 @@ MapCreatorFromCustomMatrixFile::MapCreatorFromCustomMatrixFile()
 {
     charMap = {
             {'@', "player"},
-            {'x',  "npcGreenArmoredTank"},
+            {'x', "spawner_ArmoredTank"},
             {'#', "brickWall"},
             {'*', "concreteWall"},
             {'!', "eagle"},

@@ -16,9 +16,9 @@ class Controller
 
 protected:
     GameObject *_gameObject;
-    sf::Clock clock;
-    sf::Time lastActionTime;
-    bool isMoving = false;
+    sf::Clock _clock;
+    sf::Time _lastActionTime;
+    bool _isMoving = false;
 public:
     Controller(GameObject *obj);
     virtual void update() {}
@@ -55,5 +55,29 @@ class BulletController : public Controller
 
 public:
     BulletController(GameObject *obj, globalTypes::Direction dir);
+    void update() override;
+};
+
+class SpawnController : public Controller
+{
+    enum SpawnStates {
+        Starting,
+        Waiting,
+        PlayingAnimation,
+        CreateObject
+    };
+
+    SpawnStates _state = PlayingAnimation;
+    const std::string _spawnableType;
+    const sf::Time _spawnTimeout;
+
+    sf::Clock _spawnAnimationclock;
+    const sf::Time _spawnAnimationTime = sf::seconds(2);
+    int _quantity;
+
+    static GameObject *createObject(std::string type);
+
+public:
+    SpawnController(GameObject *parent, std::string type, int timeout, int quantity);
     void update() override;
 };

@@ -13,6 +13,9 @@ class GameObject;
 class SpriteRenderer
 {
     friend class GameObject;
+
+private:
+    bool _hide = false;
 protected:
     GameObject *_parentObject;
 
@@ -28,20 +31,30 @@ protected:
 
     bool _animate = false;
 public:
-    SpriteRenderer(GameObject * parent);
+    SpriteRenderer(GameObject * parent, std::string type = "");
     virtual ~SpriteRenderer() {}
     void setCurrentAnimation(std::string id);
+    void hide(bool);
+    bool isHidden();
     virtual void draw();
     void playAnimation(bool);
+
 
 protected:
     void showAnimationFrame(int i);
 };
 
-
 class OneShotAnimationRenderer : public SpriteRenderer
 {
 public:
-    OneShotAnimationRenderer(GameObject * parent);
+    OneShotAnimationRenderer(GameObject * parent, std::string type = "");
     void draw() override;
 };
+
+class LoopAnimationSpriteRenderer : public SpriteRenderer
+{
+public:
+    LoopAnimationSpriteRenderer(GameObject * parent, std::string type = "");
+    void draw() override;
+};
+
