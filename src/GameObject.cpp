@@ -5,6 +5,7 @@
 #include "ObjectsPool.h"
 #include "Utils.h"
 #include "Shootable.h"
+#include "Damageable.h"
 
 #include <iostream>
 
@@ -47,12 +48,6 @@ void GameObject::setFlags(GameObject::ObjectFlags flags)
 bool GameObject::isFlagSet(GameObject::ObjectFlags f)
 {
     return (_flags & f) != 0;
-}
-
-void GameObject::createSpriteRenderer(std::string t)
-{
-    Logger::instance() << "createSpriteRenderer";
-    spriteRenderer = new SpriteRenderer(this, t);
 }
 
 void GameObject::draw()
@@ -270,6 +265,15 @@ void GameObject::setController(Controller * ctrl)
 void GameObject::setShootable(Shootable * shtbl)
 {
     _shootable = shtbl;
+}
+
+void GameObject::setRenderer(SpriteRenderer *rndr)
+{
+    spriteRenderer = rndr;
+}
+void GameObject::setDamageable(Damageable *dmgbl)
+{
+    _damageable = dmgbl;
 }
 
 void GameObject::setCurrentDirection(globalTypes::Direction dir)

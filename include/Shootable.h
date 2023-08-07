@@ -33,7 +33,7 @@ public:
         bullet->setParentId(parentObj->id());
         bullet->setFlags(GameObject::Bullet);
         bullet->setController(new BulletController(bullet, dir));
-        bullet->createSpriteRenderer();
+        bullet->setRenderer(new SpriteRenderer(bullet));
         bullet->copyParentPosition(parentObj);
 
         // add to bullet pool

@@ -192,7 +192,7 @@ GameObject *SpawnController::createObject(std::string type)
         GameObject *enemy = new GameObject("npcGreenArmoredTank");
         enemy->setShootable(new Shootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->createSpriteRenderer();
+        enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setController(new StupidController(enemy));
 
         return enemy;

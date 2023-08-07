@@ -4,7 +4,7 @@ bool Utils::isOutOfBounds(const sf::IntRect& rect) {
     using namespace globalConst;
     using namespace globalVars;
 
-    return rect.left < gameViewPort.left
+    return rect.left < gameViewPort.left-1
         || (rect.left+rect.width > gameViewPort.width + gameViewPort.left)
         || rect.top < gameViewPort.top
         || (rect.top+rect.height > gameViewPort.height + gameViewPort.top);

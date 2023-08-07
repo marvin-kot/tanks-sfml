@@ -22,7 +22,7 @@ public:
     int mapHeight() const { return map_h; }
 
 protected:
-    static GameObject *buildObject(std::string type, int x, int y);
+    static GameObject *buildObject(std::string type);
     void setupScreenBordersBasedOnMapSize();
 
 };

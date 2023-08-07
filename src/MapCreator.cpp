@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "Controller.h"
 #include "Shootable.h"
+#include "Damageable.h"
 #include "ObjectsPool.h"
 #include "GlobalConst.h"
 #include "SpriteRenderer.h"
@@ -10,7 +11,7 @@
 #include <string>
 
 
-GameObject *MapCreator::buildObject(std::string type, int x, int y)
+GameObject *MapCreator::buildObject(std::string type)
 {
     if (type == "player") {
         Logger::instance() << "Creating player...";
@@ -19,8 +20,8 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
         pc->setController(new PlayerController(pc));
         pc->setShootable(new Shootable(pc));
         pc->setFlags(GameObject::Player | GameObject::BulletKillable);
-        pc->createSpriteRenderer();
-        pc->setPos(x*64 + 32, y*64 + 32);
+        pc->setRenderer(new SpriteRenderer(pc));
+        pc->setDamageable(new Damageable(pc, 1));
         pc->setCurrentDirection(globalTypes::Up);
 
         return pc;
@@ -29,8 +30,8 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
     if (type == "eagle") {
         GameObject *eagle = new GameObject("eagle");
         eagle->setFlags(GameObject::Eagle | GameObject::BulletKillable | GameObject::Static);
-        eagle->createSpriteRenderer();
-        eagle->setPos(x*64 + 32, y*64 + 32);
+        eagle->setRenderer(new SpriteRenderer(eagle));
+        eagle->setDamageable(new Damageable(eagle, 1));
 
         return eagle;
     }
@@ -40,10 +41,9 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
         GameObject *enemy = new GameObject("npcGreenArmoredTank");
         enemy->setShootable(new Shootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->createSpriteRenderer();
+        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setDamageable(new Damageable(enemy, 3));
         enemy->setController(new StupidController(enemy));
-
-        enemy->setPos(x*64 + 32, y*64 + 32);
 
         return enemy;
     }
@@ -52,10 +52,8 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
         Logger::instance() << "Creating an enemy spawner...";
         GameObject *spawner = new GameObject("spawner_ArmoredTank");
         spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-        spawner->spriteRenderer = new LoopAnimationSpriteRenderer(spawner, "spark");
+        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
         spawner->setController(new SpawnController(spawner, "npcGreenArmoredTank", 6, 10));
-
-        spawner->setPos(x*64 + 32, y*64 + 32);
 
         return spawner;
     }
@@ -63,8 +61,8 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
     if (type == "brickWall") {
         GameObject *wall = new GameObject("brickWall");
         wall->setFlags(GameObject::BulletKillable | GameObject::Static);
-        wall->createSpriteRenderer();
-        wall->setPos(x*64 + 32, y*64 + 32);
+        wall->setRenderer(new SpriteRenderer(wall));
+        wall->setDamageable(new Damageable(wall, 1));
 
         return wall;
     }
@@ -72,8 +70,10 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
     if (type == "concreteWall") {
         GameObject *wall = new GameObject("concreteWall");
         wall->setFlags(GameObject::Static);
-        wall->createSpriteRenderer();
-        wall->setPos(x*64 + 32, y*64 + 32);
+        wall->setRenderer(new SpriteRenderer(wall));
+        auto damageable = new Damageable(wall, 0);
+        damageable->makeIncincible(true);
+        wall->setDamageable(damageable);
 
         return wall;
     }
@@ -81,8 +81,7 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
     if (type == "tree") {
         GameObject *tree = new GameObject("tree");
         tree->setFlags(GameObject::TankPassable | GameObject::BulletPassable | GameObject::Static);
-        tree->createSpriteRenderer();
-        tree->setPos(x*64 + 32, y*64 + 32);
+        tree->setRenderer(new SpriteRenderer(tree));
 
         return tree;
     }
@@ -90,8 +89,7 @@ GameObject *MapCreator::buildObject(std::string type, int x, int y)
     if (type == "water") {
         GameObject *water = new GameObject("water");
         water->setFlags(GameObject::BulletPassable | GameObject::Static);
-        water->createSpriteRenderer();
-        water->setPos(x*64 + 32, y*64 + 32);
+        water->setRenderer(new SpriteRenderer(water));
         water->setCurrentAnimation("default");
 
         return water;
@@ -157,7 +155,8 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
             auto it = charMap.find(tile);
             if (it != charMap.end()) {
                 std::string objType = it->second;
-                GameObject *object = MapCreator::buildObject(objType, x, y);
+                GameObject *object = MapCreator::buildObject(objType);
+                object->setPos(x*64 + 32, y*64 + 32);
                 if (object != nullptr) {
                     ObjectsPool::addObject(object);
                     if (object->type() == "player") {
@@ -198,8 +197,9 @@ int MapCreatorFromJson::buildMapFromData()
         int x = j["x"];
         int y = j["y"];
 
-        GameObject *object = MapCreator::buildObject(objType, x, y);
+        GameObject *object = MapCreator::buildObject(objType);
         if (object != nullptr) {
+            object->setPos(x*64 + 32, y*64 + 32);
             ObjectsPool::addObject(object);
             if (object->type() == "player") {
                 playerCreated = true;

@@ -5,6 +5,7 @@
 
 class Controller;
 class Shootable;
+class Damageable;
 
 class GameObject
 {
@@ -39,6 +40,7 @@ private:
 
     Controller *_controller = nullptr;
     Shootable *_shootable = nullptr;
+    Damageable *_damageable = nullptr;
 
     globalTypes::Direction _direction;
 
@@ -61,7 +63,6 @@ public:
 
     virtual void draw();
     void hide(bool);
-    void createSpriteRenderer(std::string type = "");
     void setPos(int x, int y);
     void move(int x, int y);
 
@@ -79,6 +80,8 @@ public:
 
     void setController(Controller *);
     void setShootable(Shootable *);
+    void setRenderer(SpriteRenderer *);
+    void setDamageable(Damageable *);
 
     void setCurrentDirection(globalTypes::Direction);
     void setCurrentAnimation(std::string animName);
