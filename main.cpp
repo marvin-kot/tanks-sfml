@@ -21,10 +21,6 @@ GameObject *ObjectsPool::playerObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
 std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
 
-
-std::default_random_engine Utils::generator = {};
-sf::RenderWindow Utils::window = {};
-
 int globalVars::borderWidth = 0;
 int globalVars::borderHeight = 0;
 sf::IntRect globalVars::gameViewPort = sf::IntRect();
@@ -113,6 +109,8 @@ int main()
     constexpr int MaxFramesToWin = 200;
     while (window.isOpen())
     {
+        Utils::currentFrame++;
+
         sf::Event event;
         while (window.pollEvent(event)) {
             switch (event.type) {
@@ -169,9 +167,17 @@ int main()
 
         assert(ObjectsPool::playerObject != nullptr);
 
-        std::vector<GameObject *> objectsToAdd;
+
         auto &allObjects = ObjectsPool::getAllObjects();
         // update object states
+        for (GameObject *obj : allObjects) {
+            if (!obj->isFlagSet(GameObject::Static))
+                obj->update();
+        }
+
+        std::vector<GameObject *> objectsToAdd;
+
+        // delete objects marked for deletion on previous step
         for (auto it = allObjects.begin(); it != allObjects.end(); ) {
             GameObject *obj = *it;
             if (obj->mustBeDeleted()) {
@@ -207,11 +213,7 @@ int main()
                     SoundPlayer::instance().playSmallExplosionSound();
                 }
                 delete obj;
-            } else {
-                if (!obj->isFlagSet(GameObject::Static))
-                    obj->update();
-                ++it;
-            }
+            } else ++it;
         }
 
         for (auto obj : objectsToAdd) {
@@ -219,7 +221,9 @@ int main()
         }
 
         // as the game just cleared all objects marked for deletion, all the existing enemies must be alive at this point
-        int countEnemiesAlive = ObjectsPool::countObjectsByTypes({"npcGreenArmoredTank", "spawner_ArmoredTank"});
+        int countEnemiesAlive = ObjectsPool::countObjectsByTypes({
+            "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank",
+            "spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank"});
         if (countEnemiesAlive < 1 && framesToWin == -1) {
             framesToWin = MaxFramesToWin;
             SoundPlayer::instance().stopAllSounds();
@@ -244,7 +248,7 @@ int main()
         std::for_each(objectsToDrawFirst.cbegin(), objectsToDrawFirst.cend(), [](GameObject *obj) { obj->draw(); });
 
         // 2. draw tanks and bullets
-        std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcGreenArmoredTank", "bullet"});
+        std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "bullet"});
         std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [](GameObject *obj) { if (obj) obj->draw(); });
 
         // 3. draw walls and trees
@@ -252,7 +256,7 @@ int main()
         std::for_each(objectsToDrawThird.cbegin(), objectsToDrawThird.cend(), [](GameObject *obj) { obj->draw(); });
 
         // 4. visual effects
-        auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({"spawner_ArmoredTank"});
+        auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({"spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank"});
         std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [](GameObject *obj) { obj->draw(); });
 
 

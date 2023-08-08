@@ -149,7 +149,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
 
     // is Hit by bullet
     if (other->isFlagSet(Bullet)) {
-        if (isFlagSet(BulletKillable)) {
+        if (isFlagSet(BulletKillable) && _damageable) {
             bool friendlyFire = false;
             // check if its my own bullet
             if (id() == other->_parentId)
@@ -162,8 +162,15 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
             }
 
             if (!friendlyFire) {
-                _deleteme = true;
-                cancelMovement = true;
+                if (_lastUpdateFrame == Utils::currentFrame)
+                    return;
+                _lastUpdateFrame = Utils::currentFrame;
+                // TODO: variable bullet damage
+                _damageable->takeDamage(1);
+                if (_damageable->isDestroyed()) {
+                    _deleteme = true;
+                    cancelMovement = true;
+                }
             }
         }
         return;
@@ -233,6 +240,25 @@ bool GameObject::collides(const GameObject& go) const
             || otherBB.contains(v2f(thisBB.left, thisBB.top + thisBB.height));
 
     return intersects;
+}
+
+bool GameObject::collidesWithAnyObject() const
+{
+    for (GameObject *o : ObjectsPool::getAllObjects()) {
+        if (this != o && collides(*o))
+            return true;
+    }
+    return false;
+}
+
+std::vector<GameObject *> GameObject::allCollisions() const
+{
+    std::vector<GameObject *> result;
+    for (GameObject *o : ObjectsPool::getAllObjects()) {
+        if (this != o && collides(*o))
+            result.push_back(o);
+    }
+    return result;
 }
 
 

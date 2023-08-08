@@ -14,6 +14,8 @@ public:
     static std::default_random_engine generator;
     static sf::RenderWindow window;
 
+    static int currentFrame;
+
     static bool isOutOfBounds(const sf::IntRect& rect);
     static void gameOver();
 

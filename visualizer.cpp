@@ -21,10 +21,6 @@ GameObject *ObjectsPool::playerObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
 std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
 
-
-std::default_random_engine Utils::generator = {};
-sf::RenderWindow Utils::window = {};
-
 int globalVars::borderWidth = 0;
 int globalVars::borderHeight = 0;
 sf::IntRect globalVars::gameViewPort = sf::IntRect();
@@ -129,7 +125,7 @@ int main(int argc, char *argv[])
         std::for_each(objectsToDrawFirst.cbegin(), objectsToDrawFirst.cend(), [](GameObject *obj) { obj->draw(); });
 
         // 2. draw tanks and bullets
-        std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcGreenArmoredTank", "bullet"});
+        std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcArmorTank", "bullet"});
         std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [](GameObject *obj) { if (obj) obj->draw(); });
 
         // 3. draw walls and trees

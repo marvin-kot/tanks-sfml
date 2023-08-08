@@ -1,5 +1,9 @@
 #include "Utils.h"
 
+std::default_random_engine Utils::generator = {};
+sf::RenderWindow Utils::window = {};
+int Utils::currentFrame = 0;
+
 bool Utils::isOutOfBounds(const sf::IntRect& rect) {
     using namespace globalConst;
     using namespace globalVars;

@@ -3,7 +3,7 @@
 #include "GameObject.h"
 
 Damageable::Damageable(GameObject *parent, int hp)
-:_gameObject(parent), _hp(hp)
+:_gameObject(parent), _hp(hp), _def(0), _invincible(false)
 {}
 
 void Damageable::takeDamage(int dmg)
@@ -17,8 +17,9 @@ void Damageable::takeDamage(int dmg)
         int realDef = _def - dmg;
         if (realDef<0) realDef = 0;
         _def = realDef;
+    } else {
+        _hp -= dmg;
     }
-    _hp -= dmg;
 }
 
 bool Damageable::isDestroyed() const

@@ -36,24 +36,44 @@ GameObject *MapCreator::buildObject(std::string type)
         return eagle;
     }
 
-    if (type == "npcGreenArmoredTank") {
+    if (type == "npcArmorTank") {
         Logger::instance() << "Creating an enemy...";
-        GameObject *enemy = new GameObject("npcGreenArmoredTank");
+        GameObject *enemy = new GameObject("npcArmorTank");
         enemy->setShootable(new Shootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 3));
-        enemy->setController(new StupidController(enemy));
+        enemy->setController(new TankRandomController(enemy, 2, 1));
 
         return enemy;
     }
 
-    if (type == "spawner_ArmoredTank") {
+    if (type == "spawner_BaseTank") {
         Logger::instance() << "Creating an enemy spawner...";
-        GameObject *spawner = new GameObject("spawner_ArmoredTank");
+        GameObject *spawner = new GameObject("spawner_BaseTank");
         spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        spawner->setController(new SpawnController(spawner, "npcGreenArmoredTank", 6, 10));
+        spawner->setController(new SpawnController(spawner, "npcBaseTank", 6, 10));
+
+        return spawner;
+    }
+
+    if (type == "spawner_FastTank") {
+        Logger::instance() << "Creating an enemy spawner...";
+        GameObject *spawner = new GameObject("spawner_FastTank");
+        spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
+        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
+        spawner->setController(new SpawnController(spawner, "npcFastTank", 7, 10));
+
+        return spawner;
+    }
+
+    if (type == "spawner_ArmorTank") {
+        Logger::instance() << "Creating an enemy spawner...";
+        GameObject *spawner = new GameObject("spawner_ArmorTank");
+        spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
+        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
+        spawner->setController(new SpawnController(spawner, "npcArmorTank", 8, 8));
 
         return spawner;
     }
@@ -112,7 +132,10 @@ MapCreatorFromCustomMatrixFile::MapCreatorFromCustomMatrixFile()
 {
     charMap = {
             {'@', "player"},
-            {'x', "spawner_ArmoredTank"},
+            {'B', "spawner_BaseTank"},
+            {'F', "spawner_FastTank"},
+            {'P', "spawner_PowerTank"},
+            {'A', "spawner_ArmorTank"},
             {'#', "brickWall"},
             {'*', "concreteWall"},
             {'!', "eagle"},
@@ -156,8 +179,8 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
             if (it != charMap.end()) {
                 std::string objType = it->second;
                 GameObject *object = MapCreator::buildObject(objType);
-                object->setPos(x*64 + 32, y*64 + 32);
                 if (object != nullptr) {
+                    object->setPos(x*64 + 32, y*64 + 32);
                     ObjectsPool::addObject(object);
                     if (object->type() == "player") {
                         playerCreated = true;

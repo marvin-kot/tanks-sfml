@@ -48,6 +48,8 @@ private:
     int _x, _y;
 
     void assignUniqueId();
+
+    int _lastUpdateFrame = 0;
 public:
     SpriteRenderer *spriteRenderer = nullptr;
 public:
@@ -71,6 +73,8 @@ public:
 
     sf::IntRect boundingBox() const;
     bool collides(const GameObject& go) const;
+    bool collidesWithAnyObject() const;
+    std::vector<GameObject *> allCollisions() const;
     void updateOnCollision(GameObject *, bool& cancelMovement);
     void updateOnCollision(GameObject *);
 
