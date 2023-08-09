@@ -37,6 +37,14 @@ int SoundPlayer::loadSounds()
         return -1;
     smallExplosionSound.setBuffer(smallExplosionBuffer);
 
+    if (!bonusAppearBuffer.loadFromFile("assets/audio/bonusAppear.wav"))
+        return -1;
+    bonusAppearSound.setBuffer(bonusAppearBuffer);
+
+    if (!bonusCollectBuffer.loadFromFile("assets/audio/bonus.wav"))
+        return -1;
+    bonusCollectSound.setBuffer(bonusCollectBuffer);
+
     return 0;
 }
 
@@ -96,3 +104,12 @@ void SoundPlayer::playSmallExplosionSound()
     smallExplosionSound.play();
 }
 
+void SoundPlayer::playBonusAppearSound()
+{
+    bonusAppearSound.play();
+}
+
+void SoundPlayer::playBonusCollectSound()
+{
+    bonusCollectSound.play();
+}

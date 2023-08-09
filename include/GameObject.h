@@ -6,11 +6,15 @@
 class Controller;
 class Shootable;
 class Damageable;
+class DropGenerator;
+class Collectable;
 
 class GameObject
 {
     friend class OneShotAnimationRenderer;
     friend class SpawnController;
+    friend class GrenadeCollectable;
+    friend class TimerCollectable;
 public:
     enum ObjectFlags
     {
@@ -25,7 +29,9 @@ public:
         NPC = 0x80,
         Player = 0x100,
         Eagle = 0x200,
-        Static = 0x400
+        Static = 0x400,
+        BonusOnHit = 0x800,
+        CollectableBonus = 0x1000
     };
 
 private:
@@ -41,6 +47,8 @@ private:
     Controller *_controller = nullptr;
     Shootable *_shootable = nullptr;
     Damageable *_damageable = nullptr;
+    DropGenerator *_dropGenerator = nullptr;
+    Collectable *_collectable = nullptr;
 
     globalTypes::Direction _direction;
 
@@ -52,6 +60,7 @@ private:
     int _lastUpdateFrame = 0;
 public:
     SpriteRenderer *spriteRenderer = nullptr;
+    GameObject *visualEffect = nullptr;
 public:
     GameObject(std::string name);
     GameObject(GameObject *, std::string name);
@@ -59,6 +68,7 @@ public:
 
     GameObject *getParentObject() const { return _parentObject; }
     void setFlags(ObjectFlags);
+    void appendFlags(ObjectFlags);
     bool isFlagSet(ObjectFlags);
 
     inline void setParentId(int pid) { _parentId = pid; }
@@ -86,6 +96,11 @@ public:
     void setShootable(Shootable *);
     void setRenderer(SpriteRenderer *);
     void setDamageable(Damageable *);
+    void setDropGenerator(DropGenerator *);
+    void generateDrop();
+
+    void setCollectable(Collectable *);
+    void getCollectedBy(GameObject *collector);
 
     void setCurrentDirection(globalTypes::Direction);
     void setCurrentAnimation(std::string animName);
@@ -94,6 +109,9 @@ public:
 
     void update();
     bool shoot();
+
+    template <typename T>
+    T *getComponent();
 };
 
 

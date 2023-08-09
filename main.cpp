@@ -24,6 +24,9 @@ std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::o
 int globalVars::borderWidth = 0;
 int globalVars::borderHeight = 0;
 sf::IntRect globalVars::gameViewPort = sf::IntRect();
+sf::Vector2i globalVars::mapSize = sf::Vector2i(0, 0);
+bool globalVars::globalTimeFreeze = false;
+sf::Clock globalVars::globalFreezeClock = sf::Clock();
 
 
 
@@ -167,7 +170,6 @@ int main()
 
         assert(ObjectsPool::playerObject != nullptr);
 
-
         auto &allObjects = ObjectsPool::getAllObjects();
         // update object states
         for (GameObject *obj : allObjects) {
@@ -192,7 +194,7 @@ int main()
 
                 if (obj->isFlagSet(GameObject::Bullet)) {
                     GameObject *explosion = new GameObject("smallExplosion");
-                    explosion->spriteRenderer = new OneShotAnimationRenderer(explosion);
+                    explosion->setRenderer(new OneShotAnimationRenderer(explosion));
                     explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
                     explosion->copyParentPosition(obj);
 
@@ -204,13 +206,18 @@ int main()
 
                 if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle)) {
                     GameObject *explosion = new GameObject("bigExplosion");
-                    explosion->spriteRenderer = new OneShotAnimationRenderer(explosion);
+                    explosion->setRenderer(new OneShotAnimationRenderer(explosion));
                     explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
                     explosion->copyParentPosition(obj);
 
                     objectsToAdd.push_back(explosion);
 
                     SoundPlayer::instance().playSmallExplosionSound();
+                }
+
+                if (obj->isFlagSet(GameObject::BonusOnHit)) {
+                    obj->generateDrop();
+                    SoundPlayer::instance().playBonusAppearSound();
                 }
                 delete obj;
             } else ++it;
@@ -256,9 +263,11 @@ int main()
         std::for_each(objectsToDrawThird.cbegin(), objectsToDrawThird.cend(), [](GameObject *obj) { obj->draw(); });
 
         // 4. visual effects
-        auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({"spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank"});
+        auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({
+            "spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank",
+            "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable"
+            });
         std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [](GameObject *obj) { obj->draw(); });
-
 
         window.display();
 

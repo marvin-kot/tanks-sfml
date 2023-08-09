@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics/Rect.hpp>
+#include <SFML/System/Clock.hpp>
 
 
 namespace globalTypes
@@ -39,4 +40,9 @@ namespace globalVars
     extern int borderHeight;
 
     extern sf::IntRect gameViewPort;
+
+    extern sf::Vector2i mapSize;
+
+    extern bool globalTimeFreeze;
+    extern sf::Clock globalFreezeClock;
 };

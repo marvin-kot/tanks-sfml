@@ -58,21 +58,34 @@ class PlayerController : public Controller
 
     std::map<sf::Keyboard::Key, sf::Time> _pressedKeys;
 
+    int _powerLevel = 0;
+
+    bool _invincible;
+    sf::Clock _invincibilityTimer;
+
 public:
     PlayerController(GameObject *obj);
     void update() override;
+    int powerLevel() const { return _powerLevel; }
+    void increasePowerLevel(bool);
+    void updatePowerLevel();
+    void setTemporaryInvincibility(int sec);
 };
 
 
 
 class BulletController : public Controller
 {
-    const int moveSpeed = 10;
+    const int _moveSpeed;
+    const int _damage;
     globalTypes::Direction _direction;
 
 public:
-    BulletController(GameObject *obj, globalTypes::Direction dir);
+    BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg);
     void update() override;
+
+    int speed() const { return _moveSpeed; }
+    int damage() const { return _damage; }
 };
 
 class SpawnController : public Controller
@@ -92,9 +105,14 @@ class SpawnController : public Controller
     const sf::Time _spawnAnimationTime = sf::seconds(2);
     int _quantity;
 
+    int _spawnBonusAtThisQuantity;
+
     static GameObject *createObject(std::string type);
 
 public:
     SpawnController(GameObject *parent, std::string type, int timeout, int quantity);
     void update() override;
+
+public:
+    void setBonusSpawnWithProbability(int);
 };

@@ -24,6 +24,9 @@ std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::o
 int globalVars::borderWidth = 0;
 int globalVars::borderHeight = 0;
 sf::IntRect globalVars::gameViewPort = sf::IntRect();
+sf::Vector2i globalVars::mapSize = sf::Vector2i(0, 0);
+bool globalVars::globalTimeFreeze = false;
+sf::Clock globalVars::globalFreezeClock = sf::Clock();
 
 
 

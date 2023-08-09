@@ -9,6 +9,7 @@ private:
     int _hp;
     int _def;
     bool _invincible;
+
 public:
     Damageable(GameObject *parent, int hp);
     void takeDamage(int dmg);
@@ -16,6 +17,6 @@ public:
 
     void setDefence(int def);
 
-    void makeIncincible(bool);
+    void makeInvincible(bool);
     bool isInvincible() const;
 };

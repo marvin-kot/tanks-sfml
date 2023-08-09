@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <SFML/System/Time.hpp>
+#include <SFML/Graphics/Rect.hpp>
 
 using namespace Assets;
 
@@ -53,11 +54,14 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
 
     _currentFrame = frameNum;
 
-    auto& frame = _currentAnimationFrames[_currentFrame];
+    sf::IntRect rect = _currentAnimationFrames[_currentFrame].rect;
 
-    _sprite.setTextureRect(frame.rect);
+    rect.left += _spriteSheetOffsetX;
+    rect.top += _spriteSheetOffsetY;
+
+    _sprite.setTextureRect(rect);
     _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-    _sprite.setOrigin(frame.rect.width/2, frame.rect.height/2);
+    _sprite.setOrigin(rect.width/2, rect.height/2);
 }
 
 void SpriteRenderer::draw()
@@ -78,6 +82,12 @@ void SpriteRenderer::draw()
 void SpriteRenderer::playAnimation(bool play)
 {
     _animate = play;
+}
+
+void SpriteRenderer::setSpriteSheetOffset(int x, int y)
+{
+    _spriteSheetOffsetX = x;
+    _spriteSheetOffsetY = y;
 }
 
 OneShotAnimationRenderer::OneShotAnimationRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}

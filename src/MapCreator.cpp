@@ -53,7 +53,9 @@ GameObject *MapCreator::buildObject(std::string type)
         GameObject *spawner = new GameObject("spawner_BaseTank");
         spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        spawner->setController(new SpawnController(spawner, "npcBaseTank", 6, 10));
+        auto controller = new SpawnController(spawner, "npcBaseTank", 6, 10);
+        controller->setBonusSpawnWithProbability(100);
+        spawner->setController(controller);
 
         return spawner;
     }
@@ -63,7 +65,9 @@ GameObject *MapCreator::buildObject(std::string type)
         GameObject *spawner = new GameObject("spawner_FastTank");
         spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        spawner->setController(new SpawnController(spawner, "npcFastTank", 7, 10));
+        auto controller = new SpawnController(spawner, "npcFastTank", 7, 10);
+        controller->setBonusSpawnWithProbability(100);
+        spawner->setController(controller);
 
         return spawner;
     }
@@ -73,7 +77,9 @@ GameObject *MapCreator::buildObject(std::string type)
         GameObject *spawner = new GameObject("spawner_ArmorTank");
         spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        spawner->setController(new SpawnController(spawner, "npcArmorTank", 8, 8));
+        auto controller = new SpawnController(spawner, "npcArmorTank", 8, 8);
+        controller->setBonusSpawnWithProbability(100);
+        spawner->setController(controller);
 
         return spawner;
     }
@@ -92,7 +98,7 @@ GameObject *MapCreator::buildObject(std::string type)
         wall->setFlags(GameObject::Static);
         wall->setRenderer(new SpriteRenderer(wall));
         auto damageable = new Damageable(wall, 0);
-        damageable->makeIncincible(true);
+        damageable->makeInvincible(true);
         wall->setDamageable(damageable);
 
         return wall;
@@ -124,6 +130,9 @@ void MapCreator::setupScreenBordersBasedOnMapSize()
     globalVars::borderWidth = (globalConst::screen_w - mapWidth()*globalConst::spriteDisplaySizeX) / 2;
     globalVars::borderHeight = (globalConst::screen_h - mapHeight()*globalConst::spriteDisplaySizeY) / 2;
     globalVars::gameViewPort = sf::IntRect(globalVars::borderWidth, globalVars::borderHeight, globalConst::screen_w - globalVars::borderWidth*2, globalConst::screen_h - globalVars::borderHeight * 2);
+
+    // WARNING: side effect - save map size globally
+    globalVars::mapSize = sf::Vector2i(mapWidth(), mapHeight());
 }
 
 // ############ Custom Matrix Text ###################

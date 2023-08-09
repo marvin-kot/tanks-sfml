@@ -30,6 +30,9 @@ protected:
     sf::Clock _clock;
 
     bool _animate = false;
+
+    int _spriteSheetOffsetX = 0;
+    int _spriteSheetOffsetY = 0;
 public:
     SpriteRenderer(GameObject * parent, std::string type = "");
     virtual ~SpriteRenderer() {}
@@ -38,6 +41,7 @@ public:
     bool isHidden();
     virtual void draw();
     void playAnimation(bool);
+    void setSpriteSheetOffset(int x, int y);
 
 
 protected:

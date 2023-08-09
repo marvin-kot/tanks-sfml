@@ -24,6 +24,12 @@ class SoundPlayer
     sf::SoundBuffer smallExplosionBuffer;
     sf::Sound       smallExplosionSound;
 
+    sf::SoundBuffer bonusAppearBuffer;
+    sf::Sound       bonusAppearSound;
+
+    sf::SoundBuffer bonusCollectBuffer;
+    sf::Sound       bonusCollectSound;
+
 public:
     bool gameOver = false;
 private:
@@ -44,5 +50,7 @@ public:
     void playShootSound();
     void playBulletHitWallSound();
     void playSmallExplosionSound();
+    void playBonusAppearSound();
+    void playBonusCollectSound();
 
 };

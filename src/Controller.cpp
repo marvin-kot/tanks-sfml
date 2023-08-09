@@ -5,6 +5,7 @@
 #include "SoundPlayer.h"
 #include "Shootable.h"
 #include "Damageable.h"
+#include "DropGenerator.h"
 
 
 Controller::Controller(GameObject *parent)
@@ -17,6 +18,21 @@ TankRandomController::TankRandomController(GameObject *parent, int speed, float 
 
 void TankRandomController::update()
 {
+    {
+        using namespace globalVars;
+        if (globalTimeFreeze) {
+            if (globalFreezeClock.getElapsedTime() < sf::seconds(10)) {
+                currMoveX = currMoveY = 0;
+                _isMoving = false;
+                _gameObject->stopAnimation();
+                _gameObject->move(currMoveX, currMoveY);
+                return;
+            }
+            else
+                globalTimeFreeze = false;
+        }
+    }
+
     if (_clock.getElapsedTime() > _actionTimeout) {
         _clock.restart();
         // change decision
@@ -80,6 +96,17 @@ bool PlayerController::wasPressed(KeysPressed flag)
 
 void PlayerController::update()
 {
+    if (_invincible) {
+        if (_invincibilityTimer.getElapsedTime() < sf::seconds(10))
+            _gameObject->visualEffect->copyParentPosition(_gameObject);
+        else {
+            _invincible = false;
+            delete _gameObject->visualEffect;
+            _gameObject->visualEffect = nullptr;
+            Damageable *d = _gameObject->getComponent<Damageable>();
+            d->makeInvincible(false);
+        }
+    }
     bool action = false;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
@@ -182,25 +209,83 @@ void PlayerController::update()
     }
 }
 
+void PlayerController::increasePowerLevel(bool inc)
+{
+    if (inc  && _powerLevel<3) _powerLevel++;
+    if (!inc && _powerLevel>0) _powerLevel--;
 
-BulletController::BulletController(GameObject *obj, globalTypes::Direction dir)
-: Controller(obj), _direction(dir)
+    updatePowerLevel();
+}
+
+void PlayerController::updatePowerLevel()
+{
+    SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
+    assert(renderer != nullptr);
+
+    Shootable *shootable = _gameObject->getComponent<Shootable>();
+    assert(shootable != nullptr);
+
+    switch (_powerLevel) {
+        case 0:
+            shootable->setActionTimeoutMs(Shootable::DefaultTimeoutMs);
+            shootable->setDamage(Shootable::DefaultDamage);
+            shootable->setBulletSpeed(Shootable::DefaultBulletSpeed);
+            renderer->setSpriteSheetOffset(0, 0);
+        case 1:
+            shootable->setActionTimeoutMs(Shootable::DefaultTimeoutMs);
+            shootable->setDamage(Shootable::DefaultDamage);
+            shootable->setBulletSpeed(Shootable::DoubleBulletSpeed);
+            renderer->setSpriteSheetOffset(0, 16);
+            break;
+        case 2:
+            shootable->setActionTimeoutMs(Shootable::HalvedTimeoutMs);
+            shootable->setDamage(Shootable::DefaultDamage);
+            shootable->setBulletSpeed(Shootable::DoubleBulletSpeed);
+            renderer->setSpriteSheetOffset(0, 32);
+            break;
+        case 3:
+            shootable->setActionTimeoutMs(Shootable::HalvedTimeoutMs);
+            shootable->setDamage(Shootable::DoubleDamage);
+            shootable->setBulletSpeed(Shootable::DoubleBulletSpeed);
+            renderer->setSpriteSheetOffset(0, 48);
+            break;
+    }
+}
+
+void PlayerController::setTemporaryInvincibility(int sec)
+{
+    _invincible = true;
+    _invincibilityTimer.restart();
+    Damageable *dmg = _gameObject->getComponent<Damageable>();
+    dmg->makeInvincible(true);
+
+    if (_gameObject->visualEffect == nullptr) {
+        GameObject *cloud = new GameObject(_gameObject, "cloud");
+        cloud->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
+        cloud->setRenderer(new LoopAnimationSpriteRenderer(cloud, "cloud"));
+        _gameObject->visualEffect = cloud;
+    }
+
+}
+
+BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg)
+: Controller(obj), _direction(dir), _moveSpeed(spd), _damage(dmg)
 {}
 
 void BulletController::update()
 {
     if (_direction == globalTypes::Left)
     {
-        _gameObject->move(-moveSpeed, 0);
+        _gameObject->move(-_moveSpeed, 0);
         _gameObject->setCurrentAnimation("left");
     } else if (_direction == globalTypes::Up) {
-        _gameObject->move(0, -moveSpeed);
+        _gameObject->move(0, -_moveSpeed);
         _gameObject->setCurrentAnimation("up");
     } else if (_direction == globalTypes::Right) {
-        _gameObject->move(moveSpeed, 0);
+        _gameObject->move(_moveSpeed, 0);
         _gameObject->setCurrentAnimation("right");
     } else if (_direction == globalTypes::Down) {
-        _gameObject->move(0, moveSpeed);
+        _gameObject->move(0, _moveSpeed);
         _gameObject->setCurrentAnimation("down");
     }
 }
@@ -243,6 +328,11 @@ void SpawnController::update()
                 if (newNpc) {
                     newNpc->copyParentPosition(_gameObject);
                     ObjectsPool::addObject(newNpc);
+
+                    if (_spawnBonusAtThisQuantity == _quantity) {
+                        newNpc->appendFlags(GameObject::BonusOnHit);
+                        newNpc->setDropGenerator(new DropGenerator(newNpc));
+                    }
                     _quantity--;
                 }
 
@@ -252,6 +342,21 @@ void SpawnController::update()
             }
             break;
     }
+}
+
+void SpawnController::setBonusSpawnWithProbability(int val)
+{
+    std::uniform_int_distribution<int> distribution(0, val);
+    int rnd = distribution(Utils::generator);
+
+    if (rnd > val) {
+        // do not generate bonus
+        _spawnBonusAtThisQuantity = -1;
+        return;
+    }
+
+    std::uniform_int_distribution<int> tankDistr(1, _quantity);
+    _spawnBonusAtThisQuantity = tankDistr(Utils::generator);
 }
 
 GameObject *SpawnController::createObject(std::string type)

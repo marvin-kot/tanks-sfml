@@ -32,7 +32,7 @@ void Damageable::setDefence(int def)
     _def = def;
 }
 
-void Damageable::makeIncincible(bool val)
+void Damageable::makeInvincible(bool val)
 {
     _invincible = val;
 }

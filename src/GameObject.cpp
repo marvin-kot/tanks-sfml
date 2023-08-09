@@ -6,6 +6,8 @@
 #include "Utils.h"
 #include "Shootable.h"
 #include "Damageable.h"
+#include "DropGenerator.h"
+#include "Collectable.h"
 
 #include <iostream>
 
@@ -38,11 +40,22 @@ GameObject::~GameObject()
 
     if (_shootable)
         delete _shootable;
+
+    if (_damageable)
+        delete _damageable;
+
+    if (_dropGenerator)
+        delete _dropGenerator;
 }
 
 void GameObject::setFlags(GameObject::ObjectFlags flags)
 {
     _flags = flags;
+}
+
+void GameObject::appendFlags(GameObject::ObjectFlags f)
+{
+    _flags = _flags | f;
 }
 
 bool GameObject::isFlagSet(GameObject::ObjectFlags f)
@@ -59,6 +72,9 @@ void GameObject::draw()
         spriteRenderer->draw();
     else
         Logger::instance() << _type << "no renderer";
+
+    if (visualEffect)
+        visualEffect->draw();
 }
 
 void GameObject::hide(bool val)
@@ -179,6 +195,11 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
     // just run into wall or another tank
     if (!other->isFlagSet(TankPassable)) {
         cancelMovement = true;
+    }
+
+    // check if player gathered a collectable
+    if (isFlagSet(Player) && other->isFlagSet(CollectableBonus)) {
+        other->getCollectedBy(this);
     }
 }
 
@@ -302,6 +323,30 @@ void GameObject::setDamageable(Damageable *dmgbl)
     _damageable = dmgbl;
 }
 
+void GameObject::setDropGenerator(DropGenerator *dg)
+{
+    _dropGenerator = dg;
+}
+
+void GameObject::generateDrop()
+{
+    if (_dropGenerator && !_dropGenerator->isUsedOnce())
+        _dropGenerator->placeRandomCollectable();
+}
+
+void GameObject::setCollectable(Collectable *col)
+{
+    _collectable = col;
+}
+
+void GameObject::getCollectedBy(GameObject *collector)
+{
+    if (_collectable)
+        _collectable->onCollected(collector);
+
+    _deleteme = true;
+}
+
 void GameObject::setCurrentDirection(globalTypes::Direction dir)
 {
     _direction = dir;
@@ -322,3 +367,46 @@ void GameObject::update()
         _controller->update();
 }
 
+template<typename T>
+T *GameObject::getComponent()
+{
+    return nullptr;
+}
+
+template<> Controller * GameObject::getComponent<Controller>()
+{
+    return _controller;
+}
+
+template<> Shootable *GameObject::getComponent<Shootable>()
+{
+    return _shootable;
+}
+template<> Damageable *GameObject::getComponent<Damageable>()
+{
+    return _damageable;
+}
+template<> DropGenerator *GameObject::getComponent<DropGenerator>()
+{
+    return _dropGenerator;
+}
+
+template<> Collectable *GameObject::getComponent<Collectable>()
+{
+    return _collectable;
+}
+
+template<> SpriteRenderer *GameObject::getComponent<SpriteRenderer>()
+{
+    return spriteRenderer;
+}
+
+template<> PlayerController *GameObject::getComponent<PlayerController>()
+{
+    return dynamic_cast<PlayerController *>(_controller);
+}
+
+template<> BulletController *GameObject::getComponent<BulletController>()
+{
+    return dynamic_cast<BulletController *>(_controller);
+}
