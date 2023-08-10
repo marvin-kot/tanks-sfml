@@ -6,6 +6,7 @@
 #include "Shootable.h"
 #include "Damageable.h"
 #include "DropGenerator.h"
+#include "Logger.h"
 
 
 Controller::Controller(GameObject *parent)
@@ -37,6 +38,7 @@ void TankRandomController::update()
         _clock.restart();
         // change decision
         int dir = distribution(Utils::generator);
+        int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) << 1) >> 1;
         switch (dir) {
             case 0: // stay / shoot
                 currMoveX = currMoveY = 0;
@@ -45,25 +47,25 @@ void TankRandomController::update()
                 _gameObject->shoot();
                 break;
             case 1: // left
-                currMoveX = -_moveSpeed; currMoveY = 0;
+                currMoveX = -speed; currMoveY = 0;
                 _gameObject->setCurrentDirection(globalTypes::Left);
                 _gameObject->setCurrentAnimation("left");
                 _isMoving = true;
                 break;
             case 2: // up
-                currMoveY = -_moveSpeed; currMoveX = 0;
+                currMoveY = -speed; currMoveX = 0;
                 _gameObject->setCurrentDirection(globalTypes::Up);
                 _gameObject->setCurrentAnimation("up");
                 _isMoving = true;
                 break;
             case 3: // right
-                currMoveX = _moveSpeed; currMoveY = 0;
+                currMoveX = speed; currMoveY = 0;
                 _gameObject->setCurrentDirection(globalTypes::Right);
                 _gameObject->setCurrentAnimation("right");
                 _isMoving = true;
                 break;
             case 4: // down
-                currMoveY = _moveSpeed; currMoveX = 0;
+                currMoveY = speed; currMoveX = 0;
                 _gameObject->setCurrentDirection(globalTypes::Down);
                 _gameObject->setCurrentAnimation("down");
                 _isMoving = true;
@@ -166,32 +168,35 @@ void PlayerController::update()
         }
     }
 
+    int speed = ((int)(moveSpeed * Utils::lastFrameTime.asSeconds()) >> 1) << 1;
+    Logger::instance() << "speed: " << speed << Utils::lastFrameTime.asSeconds();
+
     switch (recentKey) {
         case sf::Keyboard::Space:
             _isMoving = false;
             if (_gameObject->shoot())
-                SoundPlayer::instance().playShootSound();;
+                SoundPlayer::instance().playShootSound();
             break;
         case sf::Keyboard::Left:
-            _gameObject->move(-moveSpeed, 0);
+            _gameObject->move(-speed, 0);
             _gameObject->setCurrentDirection(globalTypes::Left);
             _gameObject->setCurrentAnimation("left");
             _isMoving = true;
             break;
         case sf::Keyboard::Up:
-            _gameObject->move(0, -moveSpeed);
+            _gameObject->move(0, -speed);
             _gameObject->setCurrentDirection(globalTypes::Up);
             _gameObject->setCurrentAnimation("up");
             _isMoving = true;
             break;
         case sf::Keyboard::Right:
-            _gameObject->move(moveSpeed, 0);
+            _gameObject->move(speed, 0);
             _gameObject->setCurrentDirection(globalTypes::Right);
             _gameObject->setCurrentAnimation("right");
             _isMoving = true;
             break;
         case sf::Keyboard::Down:
-            _gameObject->move(0, moveSpeed);
+            _gameObject->move(0, speed);
             _gameObject->setCurrentDirection(globalTypes::Down);
             _gameObject->setCurrentAnimation("down");
             _isMoving = true;
@@ -225,28 +230,30 @@ void PlayerController::updatePowerLevel()
     Shootable *shootable = _gameObject->getComponent<Shootable>();
     assert(shootable != nullptr);
 
+    using namespace globalConst;
+
     switch (_powerLevel) {
         case 0:
-            shootable->setActionTimeoutMs(Shootable::DefaultTimeoutMs);
-            shootable->setDamage(Shootable::DefaultDamage);
-            shootable->setBulletSpeed(Shootable::DefaultBulletSpeed);
+            shootable->setActionTimeoutMs(DefaultTimeoutMs);
+            shootable->setDamage(DefaultDamage);
+            shootable->setBulletSpeed(DefaultBulletSpeed);
             renderer->setSpriteSheetOffset(0, 0);
         case 1:
-            shootable->setActionTimeoutMs(Shootable::DefaultTimeoutMs);
-            shootable->setDamage(Shootable::DefaultDamage);
-            shootable->setBulletSpeed(Shootable::DoubleBulletSpeed);
+            shootable->setActionTimeoutMs(DefaultTimeoutMs);
+            shootable->setDamage(DefaultDamage);
+            shootable->setBulletSpeed(DoubleBulletSpeed);
             renderer->setSpriteSheetOffset(0, 16);
             break;
         case 2:
-            shootable->setActionTimeoutMs(Shootable::HalvedTimeoutMs);
-            shootable->setDamage(Shootable::DefaultDamage);
-            shootable->setBulletSpeed(Shootable::DoubleBulletSpeed);
+            shootable->setActionTimeoutMs(HalvedTimeoutMs);
+            shootable->setDamage(DefaultDamage);
+            shootable->setBulletSpeed(DoubleBulletSpeed);
             renderer->setSpriteSheetOffset(0, 32);
             break;
         case 3:
-            shootable->setActionTimeoutMs(Shootable::HalvedTimeoutMs);
-            shootable->setDamage(Shootable::DoubleDamage);
-            shootable->setBulletSpeed(Shootable::DoubleBulletSpeed);
+            shootable->setActionTimeoutMs(HalvedTimeoutMs);
+            shootable->setDamage(DoubleDamage);
+            shootable->setBulletSpeed(DoubleBulletSpeed);
             renderer->setSpriteSheetOffset(0, 48);
             break;
     }
@@ -274,18 +281,19 @@ BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, 
 
 void BulletController::update()
 {
+    int speed = (int)((float)_moveSpeed * Utils::lastFrameTime.asSeconds());
     if (_direction == globalTypes::Left)
     {
-        _gameObject->move(-_moveSpeed, 0);
+        _gameObject->move(-speed, 0);
         _gameObject->setCurrentAnimation("left");
     } else if (_direction == globalTypes::Up) {
-        _gameObject->move(0, -_moveSpeed);
+        _gameObject->move(0, -speed);
         _gameObject->setCurrentAnimation("up");
     } else if (_direction == globalTypes::Right) {
-        _gameObject->move(_moveSpeed, 0);
+        _gameObject->move(speed, 0);
         _gameObject->setCurrentAnimation("right");
     } else if (_direction == globalTypes::Down) {
-        _gameObject->move(0, _moveSpeed);
+        _gameObject->move(0, speed);
         _gameObject->setCurrentAnimation("down");
     }
 }
@@ -367,7 +375,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 1));
-        enemy->setController(new TankRandomController(enemy, 3, 0.75));
+        enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 0.75));
 
         return enemy;
     }
@@ -378,7 +386,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 1));
-        enemy->setController(new TankRandomController(enemy, 4, 0.5));
+        enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed*4/3, 0.5));
 
         return enemy;
     }
@@ -389,7 +397,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 3));
-        enemy->setController(new TankRandomController(enemy, 2, 1));
+        enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed*3/4, 1));
 
         return enemy;
     }

@@ -76,6 +76,8 @@ void HelmetCollectable::onCollected(GameObject *collector)
 {
     PlayerController *controller = collector->getComponent<PlayerController>();
     controller->setTemporaryInvincibility(10);
+
+    Collectable::onCollected(collector);
 }
 
 

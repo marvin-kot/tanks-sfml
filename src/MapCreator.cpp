@@ -43,7 +43,7 @@ GameObject *MapCreator::buildObject(std::string type)
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 3));
-        enemy->setController(new TankRandomController(enemy, 2, 1));
+        enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 1));
 
         return enemy;
     }

@@ -40,7 +40,7 @@ public:
 
 class PlayerController : public Controller
 {
-    const int moveSpeed = 5;
+    const int moveSpeed = globalConst::DefaultPlayerSpeed;
     sf::Keyboard::Key _mostRecentKey;
     enum KeysPressed {
         NothingPressed  = 0x0,

@@ -21,18 +21,21 @@ class Shootable
     int _bulletSpeed;
     int _damage;
 public:
-    Shootable(GameObject *parent) : parentObj(parent), _actionTimeoutMs(DefaultTimeoutMs),_bulletSpeed(DefaultBulletSpeed), _damage(DefaultDamage) {}
+    Shootable(GameObject *parent)
+    : parentObj(parent)
+    , _actionTimeoutMs(globalConst::DefaultTimeoutMs)
+    , _bulletSpeed(globalConst::DefaultBulletSpeed)
+    , _damage(globalConst::DefaultDamage)
+    {}
+
     void setActionTimeoutMs(int t) { _actionTimeoutMs = t; }
     void setBulletSpeed(int bs) { _bulletSpeed = bs; }
     void setDamage(int d) { _damage = d; }
     bool shoot(globalTypes::Direction dir) {
         if (sf::milliseconds(_actionTimeoutMs) > _clock.getElapsedTime())
             return false;
-
         _clock.restart();
-
         Logger::instance() << "shoot";
-
         GameObject *bullet = new GameObject(parentObj, "bullet");
         bullet->setParentId(parentObj->id());
         bullet->setFlags(GameObject::Bullet);
@@ -47,11 +50,4 @@ public:
         return true;
     }
 
-
-    static const int DefaultBulletSpeed = 8;
-    static const int DoubleBulletSpeed = 16;
-    static const int DefaultDamage = 1;
-    static const int DoubleDamage = 2;
-    static const int DefaultTimeoutMs = 1000;
-    static const int HalvedTimeoutMs = 500;
 };

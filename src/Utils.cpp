@@ -3,6 +3,8 @@
 std::default_random_engine Utils::generator = {};
 sf::RenderWindow Utils::window = {};
 int Utils::currentFrame = 0;
+sf::Time Utils::lastFrameTime = {};
+sf::Clock Utils::refreshClock = {};
 
 bool Utils::isOutOfBounds(const sf::IntRect& rect) {
     using namespace globalConst;

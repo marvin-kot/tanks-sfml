@@ -101,7 +101,8 @@ int main()
 
     Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML");
     sf::RenderWindow& window = Utils::window;
-    window.setVerticalSyncEnabled(true);
+    //window.setVerticalSyncEnabled(true);
+    window.setFramerateLimit(30);
 
 
     Logger::instance() << "Starting the Game...";
@@ -113,6 +114,8 @@ int main()
     while (window.isOpen())
     {
         Utils::currentFrame++;
+        Utils::lastFrameTime = Utils::refreshClock.getElapsedTime();
+        Utils::refreshClock.restart();
 
         sf::Event event;
         while (window.pollEvent(event)) {

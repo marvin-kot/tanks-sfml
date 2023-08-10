@@ -32,6 +32,16 @@ namespace globalConst
     constexpr int maxFieldWidth = screen_w / spriteDisplaySizeX;
     constexpr int maxFieldHeight = screen_h / spriteDisplaySizeY;
 
+    constexpr int DefaultPlayerSpeed = 240;
+    constexpr int DefaultEnemySpeed = DefaultPlayerSpeed * 3 / 4;
+
+    constexpr int DefaultBulletSpeed = DefaultPlayerSpeed * 2;
+    constexpr int DoubleBulletSpeed = DefaultBulletSpeed * 3 / 2;
+    constexpr int DefaultDamage = 1;
+    constexpr int DoubleDamage = 2;
+    constexpr int DefaultTimeoutMs = 1000;
+    constexpr int HalvedTimeoutMs = 500;
+
 };
 
 namespace globalVars

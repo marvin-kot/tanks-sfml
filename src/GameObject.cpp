@@ -232,10 +232,10 @@ sf::IntRect GameObject::boundingBox() const
     if (spriteRenderer) {
         thisBoundingBox =  sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
         // reduct rect
-        thisBoundingBox.left += 2;
-        thisBoundingBox.top += 2;
-        thisBoundingBox.width -= 4;
-        thisBoundingBox.height -= 4;
+        thisBoundingBox.left += 4;
+        thisBoundingBox.top += 4;
+        thisBoundingBox.width -= 8;
+        thisBoundingBox.height -= 8;
     }
     else
         thisBoundingBox =  sf::IntRect(_x, _y, 0, 0);
