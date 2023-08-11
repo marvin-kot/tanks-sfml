@@ -17,20 +17,6 @@
 #include "SoundPlayer.h"
 #include "SpriteRenderer.h"
 
-GameObject *ObjectsPool::playerObject = nullptr;
-std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
-std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
-
-int globalVars::borderWidth = 0;
-int globalVars::borderHeight = 0;
-sf::IntRect globalVars::gameViewPort = sf::IntRect();
-sf::Vector2i globalVars::mapSize = sf::Vector2i(0, 0);
-bool globalVars::globalTimeFreeze = false;
-sf::Clock globalVars::globalFreezeClock = sf::Clock();
-int globalVars::player1Lives = globalConst::InitialLives;
-int globalVars::player1PowerLevel = globalConst::InitialPowerLevel;
-
-
 bool loadAssets()
 {
     // load textures

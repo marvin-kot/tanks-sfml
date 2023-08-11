@@ -45,6 +45,9 @@ namespace globalConst
     constexpr int InitialLives = 3;
     constexpr int InitialPowerLevel = 0;
 
+    constexpr int MaxFramesToDie = 180;
+    constexpr int MaxFramesToWin = 200;
+
 };
 
 namespace globalVars
