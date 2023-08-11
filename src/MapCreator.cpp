@@ -13,18 +13,14 @@
 
 GameObject *MapCreator::buildObject(std::string type)
 {
-    if (type == "player") {
-        Logger::instance() << "Creating player...";
-        GameObject *pc = new GameObject("player");
+    if (type == "spawner_player") {
+        Logger::instance() << "Creating player spawner...";
+        GameObject *spawner = new GameObject("spawner_player");
+        spawner->setFlags(GameObject::PlayerSpawner | GameObject::TankPassable | GameObject::BulletPassable);
+        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
+        spawner->setController(new PlayerSpawnController(spawner, globalVars::player1Lives, globalVars::player1PowerLevel));
 
-        pc->setController(new PlayerController(pc));
-        pc->setShootable(new Shootable(pc));
-        pc->setFlags(GameObject::Player | GameObject::BulletKillable);
-        pc->setRenderer(new SpriteRenderer(pc));
-        pc->setDamageable(new Damageable(pc, 1));
-        pc->setCurrentDirection(globalTypes::Up);
-
-        return pc;
+        return spawner;
     }
 
     if (type == "eagle") {
@@ -34,18 +30,6 @@ GameObject *MapCreator::buildObject(std::string type)
         eagle->setDamageable(new Damageable(eagle, 1));
 
         return eagle;
-    }
-
-    if (type == "npcArmorTank") {
-        Logger::instance() << "Creating an enemy...";
-        GameObject *enemy = new GameObject("npcArmorTank");
-        enemy->setShootable(new Shootable(enemy));
-        enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->setRenderer(new SpriteRenderer(enemy));
-        enemy->setDamageable(new Damageable(enemy, 3));
-        enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 1));
-
-        return enemy;
     }
 
     if (type == "spawner_BaseTank") {
@@ -140,7 +124,7 @@ void MapCreator::setupScreenBordersBasedOnMapSize()
 MapCreatorFromCustomMatrixFile::MapCreatorFromCustomMatrixFile()
 {
     charMap = {
-            {'@', "player"},
+            {'@', "spawner_player"},
             {'B', "spawner_BaseTank"},
             {'F', "spawner_FastTank"},
             {'P', "spawner_PowerTank"},
@@ -191,9 +175,8 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
                 if (object != nullptr) {
                     object->setPos(x*64 + 32, y*64 + 32);
                     ObjectsPool::addObject(object);
-                    if (object->type() == "player") {
+                    if (object->type() == "spawner_player") {
                         playerCreated = true;
-                        ObjectsPool::playerObject = object;
                     }
                 }
             }

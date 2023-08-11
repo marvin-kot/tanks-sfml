@@ -80,4 +80,20 @@ void HelmetCollectable::onCollected(GameObject *collector)
     Collectable::onCollected(collector);
 }
 
+/////
+
+TankCollectable::TankCollectable(GameObject *parent)
+: Collectable(parent)
+{}
+
+void TankCollectable::onCollected(GameObject *collector)
+{
+    auto spawerObject = collector->getParentObject();
+    auto spawnerController = spawerObject->getComponent<PlayerSpawnController>();
+
+    spawnerController->appendLife();
+
+    Collectable::onCollected(collector);
+}
+
 

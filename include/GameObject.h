@@ -13,6 +13,7 @@ class GameObject
 {
     friend class OneShotAnimationRenderer;
     friend class SpawnController;
+    friend class PlayerSpawnController;
     friend class GrenadeCollectable;
     friend class TimerCollectable;
 public:
@@ -31,7 +32,8 @@ public:
         Eagle = 0x200,
         Static = 0x400,
         BonusOnHit = 0x800,
-        CollectableBonus = 0x1000
+        CollectableBonus = 0x1000,
+        PlayerSpawner = 0x2000
     };
 
 private:
@@ -66,6 +68,7 @@ public:
     GameObject(GameObject *, std::string name);
     virtual ~GameObject();
 
+    void setParent(GameObject *parent) { _parentObject = parent; }
     GameObject *getParentObject() const { return _parentObject; }
     void setFlags(ObjectFlags);
     void appendFlags(ObjectFlags);

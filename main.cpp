@@ -27,6 +27,8 @@ sf::IntRect globalVars::gameViewPort = sf::IntRect();
 sf::Vector2i globalVars::mapSize = sf::Vector2i(0, 0);
 bool globalVars::globalTimeFreeze = false;
 sf::Clock globalVars::globalFreezeClock = sf::Clock();
+int globalVars::player1Lives = globalConst::InitialLives;
+int globalVars::player1PowerLevel = globalConst::InitialPowerLevel;
 
 
 
@@ -129,6 +131,8 @@ int main()
                             window.close();
                         else if (event.key.scancode == sf::Keyboard::Scan::Space) {
                             currentLevel = 0;
+                            globalVars::player1Lives = globalConst::InitialLives;
+                            globalVars::player1PowerLevel = globalConst::InitialPowerLevel;
                             gameState = LoadNextLevel;
                         }
                     } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Escape) {
@@ -149,7 +153,11 @@ int main()
             showTitleScreen(window);
             continue;
         } else if (gameState == LoadNextLevel) {
-            assert (currentLevel < levelMaps.size());
+            if (currentLevel >= levelMaps.size()) {
+                gameState = TitleScreen;
+                continue;
+            }
+
             framesToWin = -1; framesToDie = -1;
             SoundPlayer::instance().stopAllSounds();
             ObjectsPool::clearEverything();
@@ -171,7 +179,7 @@ int main()
             continue;
         }
 
-        assert(ObjectsPool::playerObject != nullptr);
+        //assert(ObjectsPool::playerObject != nullptr);
 
         auto &allObjects = ObjectsPool::getAllObjects();
         // update object states
@@ -188,7 +196,12 @@ int main()
             if (obj->mustBeDeleted()) {
                 it = allObjects.erase(it);
 
-                if (obj->isFlagSet(GameObject::Player | GameObject::Eagle)) {
+                if (obj->isFlagSet(GameObject::Player)) {
+                    globalVars::player1Lives--;
+                    ObjectsPool::playerObject = nullptr;
+                }
+
+                if (obj->isFlagSet(GameObject::Eagle)) {
                     framesToDie = MaxFramesToDie;
                     SoundPlayer::instance().stopAllSounds();
                     SoundPlayer::instance().gameOver = true;
@@ -240,6 +253,13 @@ int main()
             SoundPlayer::instance().gameOver = true;
         }
 
+        int countPlayerObjects = ObjectsPool::countObjectsByTypes({"player", "spawner_player"});
+        if (countPlayerObjects < 1 && framesToDie == -1) {
+            framesToDie = MaxFramesToDie;
+            SoundPlayer::instance().stopAllSounds();
+            SoundPlayer::instance().gameOver = true;
+        }
+
         window.clear();
         // draw objects (order matter)
         // draw border
@@ -267,7 +287,7 @@ int main()
 
         // 4. visual effects
         auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({
-            "spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank",
+            "spawner_player", "spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank",
             "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable"
             });
         std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [](GameObject *obj) { obj->draw(); });

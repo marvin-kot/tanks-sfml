@@ -42,6 +42,9 @@ namespace globalConst
     constexpr int DefaultTimeoutMs = 1000;
     constexpr int HalvedTimeoutMs = 500;
 
+    constexpr int InitialLives = 3;
+    constexpr int InitialPowerLevel = 0;
+
 };
 
 namespace globalVars
@@ -55,4 +58,7 @@ namespace globalVars
 
     extern bool globalTimeFreeze;
     extern sf::Clock globalFreezeClock;
+
+    extern int player1Lives;
+    extern int player1PowerLevel;
 };

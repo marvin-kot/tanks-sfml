@@ -23,7 +23,7 @@ void DropGenerator::placeRandomCollectable()
         //"shovelCollectable",
         "starCollectable",
         "grenadeCollectable",
-        //"tankCollectable"
+        "tankCollectable"
     };
 
     int x = x_distr(Utils::generator);
@@ -57,6 +57,8 @@ GameObject * DropGenerator::createObject(std::string type)
             component = new GrenadeCollectable(collectable);
         else if (type == "starCollectable")
             component = new StarCollectable(collectable);
+        else if (type == "tankCollectable")
+            component = new TankCollectable(collectable);
         else
             component = new Collectable(collectable); // default collectable (useless)
 

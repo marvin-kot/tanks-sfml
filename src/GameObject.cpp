@@ -406,6 +406,11 @@ template<> PlayerController *GameObject::getComponent<PlayerController>()
     return dynamic_cast<PlayerController *>(_controller);
 }
 
+template<> PlayerSpawnController *GameObject::getComponent<PlayerSpawnController>()
+{
+    return dynamic_cast<PlayerSpawnController *>(_controller);
+}
+
 template<> BulletController *GameObject::getComponent<BulletController>()
 {
     return dynamic_cast<BulletController *>(_controller);

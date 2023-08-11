@@ -33,3 +33,9 @@ struct HelmetCollectable : public Collectable
     HelmetCollectable(GameObject *parent);
     void onCollected(GameObject *collector) override;
 };
+
+struct TankCollectable : public Collectable
+{
+    TankCollectable(GameObject *parent);
+    void onCollected(GameObject *collector) override;
+};

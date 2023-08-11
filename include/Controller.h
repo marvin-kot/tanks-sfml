@@ -62,6 +62,7 @@ class PlayerController : public Controller
 
     bool _invincible;
     sf::Clock _invincibilityTimer;
+    int _invincibilityTimeout;
 
 public:
     PlayerController(GameObject *obj);
@@ -97,7 +98,7 @@ class SpawnController : public Controller
         CreateObject
     };
 
-    SpawnStates _state = PlayingAnimation;
+    SpawnStates _state;
     const std::string _spawnableType;
     const sf::Time _spawnTimeout;
 
@@ -115,4 +116,27 @@ public:
 
 public:
     void setBonusSpawnWithProbability(int);
+};
+
+class PlayerSpawnController : public Controller
+{
+        enum SpawnStates {
+        Starting,
+        Waiting,
+        PlayingAnimation,
+        CreateObject
+    };
+
+    SpawnStates _state;
+    sf::Clock _spawnAnimationclock;
+    const sf::Time _spawnAnimationTime = sf::seconds(1);
+    int _lives;
+    int _initialPowerLevel;
+
+    static GameObject *createObject();
+
+public:
+    PlayerSpawnController(GameObject *parent, int livesm, int powerLevel);
+    void update() override;
+    void appendLife();
 };
