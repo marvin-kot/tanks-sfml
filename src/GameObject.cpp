@@ -96,10 +96,10 @@ void GameObject::setPos(int x, int y)
 }
 
 
-void GameObject::move(int x, int y)
+int GameObject::move(int x, int y)
 {
     if (_deleteme)
-        return;
+        return -1;
 
     if (spriteRenderer) {
         spriteRenderer->_sprite.move(x, y);
@@ -126,11 +126,14 @@ void GameObject::move(int x, int y)
         if (cancelMovement) {
             spriteRenderer->_sprite.move(-x, -y);
             _x -= x, _y -= y;
-        }
+            return 0;
+        } else
+            return 1;
     }
     else {
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
         _x += x, _y += y;
+        return 1;
     }
 }
 
@@ -382,6 +385,13 @@ template<> Shootable *GameObject::getComponent<Shootable>()
 {
     return _shootable;
 }
+
+template<> PlayerShootable *GameObject::getComponent<PlayerShootable>()
+{
+    return dynamic_cast<PlayerShootable *>(_shootable);
+}
+
+
 template<> Damageable *GameObject::getComponent<Damageable>()
 {
     return _damageable;

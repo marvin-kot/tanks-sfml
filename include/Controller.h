@@ -29,8 +29,8 @@ class TankRandomController : public Controller
     const int _moveSpeed;
     const sf::Time _actionTimeout;
 
-    int currMoveX = 0;
-    int currMoveY = 0;
+    int _currMoveX = 0;
+    int _currMoveY = 0;
 
     std::uniform_int_distribution<int> distribution;
 public:

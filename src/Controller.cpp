@@ -16,7 +16,7 @@ Controller::Controller(GameObject *parent)
 /////
 
 TankRandomController::TankRandomController(GameObject *parent, int speed, float timeoutSec)
-: Controller(parent), _moveSpeed(speed), _actionTimeout(sf::seconds(timeoutSec)),distribution(0, 4)
+: Controller(parent), _moveSpeed(speed), _actionTimeout(sf::seconds(timeoutSec)),distribution(1, 4)
 {}
 
 void TankRandomController::update()
@@ -25,10 +25,10 @@ void TankRandomController::update()
         using namespace globalVars;
         if (globalTimeFreeze) {
             if (globalFreezeClock.getElapsedTime() < sf::seconds(10)) {
-                currMoveX = currMoveY = 0;
+                _currMoveX = _currMoveY = 0;
                 _isMoving = false;
                 _gameObject->stopAnimation();
-                _gameObject->move(currMoveX, currMoveY);
+                _gameObject->move(_currMoveX, _currMoveY);
                 return;
             }
             else
@@ -36,46 +36,56 @@ void TankRandomController::update()
         }
     }
 
-    if (_clock.getElapsedTime() > _actionTimeout) {
-        _clock.restart();
-        // change decision
-        int dir = distribution(Utils::generator);
-        int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) << 1) >> 1;
-        switch (dir) {
-            case 0: // stay / shoot
-                currMoveX = currMoveY = 0;
-                _isMoving = false;
-                _gameObject->stopAnimation();
-                _gameObject->shoot();
-                break;
-            case 1: // left
-                currMoveX = -speed; currMoveY = 0;
-                _gameObject->setCurrentDirection(globalTypes::Left);
-                _gameObject->setCurrentAnimation("left");
-                _isMoving = true;
-                break;
-            case 2: // up
-                currMoveY = -speed; currMoveX = 0;
-                _gameObject->setCurrentDirection(globalTypes::Up);
-                _gameObject->setCurrentAnimation("up");
-                _isMoving = true;
-                break;
-            case 3: // right
-                currMoveX = speed; currMoveY = 0;
-                _gameObject->setCurrentDirection(globalTypes::Right);
-                _gameObject->setCurrentAnimation("right");
-                _isMoving = true;
-                break;
-            case 4: // down
-                currMoveY = speed; currMoveX = 0;
-                _gameObject->setCurrentDirection(globalTypes::Down);
-                _gameObject->setCurrentAnimation("down");
-                _isMoving = true;
-                break;
+
+    int tries = 4;
+    int moved = 0; // TODO remove magic numbers
+    bool resetTimeout = false;
+    do {
+        if (_clock.getElapsedTime() > _actionTimeout) {
+            // change decision
+            resetTimeout = true;
+            int dir = distribution(Utils::generator);
+            int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) << 1) >> 1;
+            switch (dir) {
+                case 1: // left
+                    _currMoveX = -speed; _currMoveY = 0;
+                    _gameObject->setCurrentDirection(globalTypes::Left);
+                    _gameObject->setCurrentAnimation("left");
+                    _isMoving = true;
+                    break;
+                case 2: // up
+                    _currMoveY = -speed; _currMoveX = 0;
+                    _gameObject->setCurrentDirection(globalTypes::Up);
+                    _gameObject->setCurrentAnimation("up");
+                    _isMoving = true;
+                    break;
+                case 3: // right
+                    _currMoveX = speed; _currMoveY = 0;
+                    _gameObject->setCurrentDirection(globalTypes::Right);
+                    _gameObject->setCurrentAnimation("right");
+                    _isMoving = true;
+                    break;
+                case 4: // down
+                    _currMoveY = speed; _currMoveX = 0;
+                    _gameObject->setCurrentDirection(globalTypes::Down);
+                    _gameObject->setCurrentAnimation("down");
+                    _isMoving = true;
+                    break;
+            }
         }
+
+        moved = _gameObject->move(_currMoveX, _currMoveY);
+    } while (resetTimeout && --tries && moved == 0);
+
+    if (resetTimeout) {
+        _clock.restart();
+        int shotChance = distribution(Utils::generator);
+        if (shotChance > 2)
+            _gameObject->shoot();
     }
 
-    _gameObject->move(currMoveX, currMoveY);
+
+
 }
 
 /////
@@ -176,7 +186,8 @@ GameObject *SpawnController::createObject(std::string type)
 {
     if (type == "npcBaseTank") {
         GameObject *enemy = new GameObject("npcBaseTank");
-        enemy->setShootable(new Shootable(enemy));
+        //enemy->setShootable(new Shootable(enemy, globalConst::DefaultTimeoutMs));
+        enemy->setShootable(new PlayerShootable(enemy, 0));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 1));
@@ -187,7 +198,8 @@ GameObject *SpawnController::createObject(std::string type)
 
     if (type == "npcFastTank") {
         GameObject *enemy = new GameObject("npcFastTank");
-        enemy->setShootable(new Shootable(enemy));
+        //enemy->setShootable(new Shootable(enemy, globalConst::HalvedTimeoutMs));
+        enemy->setShootable(new PlayerShootable(enemy, 0));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 1));
@@ -198,7 +210,8 @@ GameObject *SpawnController::createObject(std::string type)
 
     if (type == "npcArmorTank") {
         GameObject *enemy = new GameObject("npcArmorTank");
-        enemy->setShootable(new Shootable(enemy));
+        //enemy->setShootable(new Shootable(enemy, globalConst::DefaultTimeoutMs));
+        enemy->setShootable(new PlayerShootable(enemy, 0));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 3));
@@ -224,7 +237,7 @@ GameObject * PlayerSpawnController::createObject()
 {
     Logger::instance() << "Creating player...";
     GameObject *pc = new GameObject("player");
-    pc->setShootable(new Shootable(pc));
+    pc->setShootable(new PlayerShootable(pc, 0));
     pc->setFlags(GameObject::Player | GameObject::BulletKillable);
     pc->setRenderer(new SpriteRenderer(pc));
     pc->setDamageable(new Damageable(pc, 1));
@@ -237,15 +250,15 @@ GameObject * PlayerSpawnController::createObject()
 
 void PlayerSpawnController::update()
 {
-    if (_lives < 1) {
-        _gameObject->_deleteme = true;
-        return;
-    }
-
     switch (_state) {
         case Waiting:
             if (ObjectsPool::playerObject == nullptr) {
+                if (_lives < 1) {
+                    _gameObject->_deleteme = true;
+                    return;
+                }
                 _initialPowerLevel = 0; // as player was killed, its power resets to 0
+                globalVars::player1PowerLevel = 0;
                 _state = Starting;
             }
             break;
@@ -287,4 +300,5 @@ void PlayerSpawnController::update()
 void PlayerSpawnController::appendLife()
 {
     _lives++;
+    globalVars::player1Lives++;
 }

@@ -64,7 +64,7 @@ bool Game::update()
     }
     // else if 1 - proceed
 
-    updateAllObjects();
+    updateAllObjectControllers();
     processDeletedObjects();
 
     drawGameScreen();
@@ -170,7 +170,7 @@ bool Game::buildLevelMap(std::string fileName)
     return true;
 }
 
-void Game::updateAllObjects()
+void Game::updateAllObjectControllers()
 {
     auto &allObjects = ObjectsPool::getAllObjects();
     // update object states
@@ -189,8 +189,6 @@ void Game::processDeletedObjects()
         for (auto it = allObjects.begin(); it != allObjects.end(); ) {
             GameObject *obj = *it;
             if (obj->mustBeDeleted()) {
-                it = allObjects.erase(it);
-
                 if (obj->isFlagSet(GameObject::Player)) {
                     globalVars::player1Lives--;
                     ObjectsPool::playerObject = nullptr;
@@ -223,13 +221,17 @@ void Game::processDeletedObjects()
 
                     objectsToAdd.push_back(explosion);
 
-                    SoundPlayer::instance().playSmallExplosionSound();
+                    if (obj->isFlagSet(GameObject::Player | GameObject::Eagle))
+                        SoundPlayer::instance().playBigExplosionSound();
+                    else
+                        SoundPlayer::instance().playSmallExplosionSound();
                 }
 
                 if (obj->isFlagSet(GameObject::BonusOnHit)) {
                     obj->generateDrop();
                     SoundPlayer::instance().playBonusAppearSound();
                 }
+                it = ObjectsPool::kill(it);
                 delete obj;
             } else ++it;
         }

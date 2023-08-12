@@ -21,6 +21,7 @@ public:
     static void clearEverything();
 
     static void kill(GameObject * obj);
+    static decltype(allGameObjects)::iterator kill(decltype(allGameObjects)::iterator);
 
     static void addObject(GameObject *obj);
 

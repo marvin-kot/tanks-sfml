@@ -43,12 +43,8 @@ void PlayerController::update()
     bool action = false;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-        if (!wasPressed(SpacePressed))
-            _pressedKeys[sf::Keyboard::Space] = _clock.getElapsedTime();
-        setPressedFlag(SpacePressed, true);
-    } else {
-        setPressedFlag(SpacePressed, false);
-        _pressedKeys.erase(sf::Keyboard::Space);
+        if (_gameObject->shoot())
+            SoundPlayer::instance().playShootSound();
     }
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
@@ -102,11 +98,6 @@ void PlayerController::update()
     int speed = ((int)(moveSpeed * Utils::lastFrameTime.asSeconds()) >> 1) << 1;
 
     switch (recentKey) {
-        case sf::Keyboard::Space:
-            _isMoving = false;
-            if (_gameObject->shoot())
-                SoundPlayer::instance().playShootSound();
-            break;
         case sf::Keyboard::Left:
             _gameObject->move(-speed, 0);
             _gameObject->setCurrentDirection(globalTypes::Left);
@@ -157,31 +148,33 @@ void PlayerController::updatePowerLevel()
     SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
     assert(renderer != nullptr);
 
-    Shootable *shootable = _gameObject->getComponent<Shootable>();
+    PlayerShootable *shootable = _gameObject->getComponent<PlayerShootable>();
     assert(shootable != nullptr);
 
     using namespace globalConst;
 
     switch (_powerLevel) {
         case 0:
-            shootable->setActionTimeoutMs(DefaultTimeoutMs);
+            shootable->resetLevel();
             shootable->setDamage(DefaultDamage);
             shootable->setBulletSpeed(DefaultBulletSpeed);
             renderer->setSpriteSheetOffset(0, 0);
         case 1:
-            shootable->setActionTimeoutMs(DefaultTimeoutMs);
+            shootable->resetLevel();
             shootable->setDamage(DefaultDamage);
             shootable->setBulletSpeed(DoubleBulletSpeed);
             renderer->setSpriteSheetOffset(0, 16);
             break;
         case 2:
-            shootable->setActionTimeoutMs(HalvedTimeoutMs);
+            shootable->resetLevel();
+            shootable->increaseLevel();
             shootable->setDamage(DefaultDamage);
             shootable->setBulletSpeed(DoubleBulletSpeed);
             renderer->setSpriteSheetOffset(0, 32);
             break;
         case 3:
-            shootable->setActionTimeoutMs(HalvedTimeoutMs);
+            shootable->resetLevel();
+            shootable->increaseLevel();
             shootable->setDamage(DoubleDamage);
             shootable->setBulletSpeed(DoubleBulletSpeed);
             renderer->setSpriteSheetOffset(0, 48);

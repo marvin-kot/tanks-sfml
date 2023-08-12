@@ -41,6 +41,7 @@ namespace globalConst
     constexpr int DoubleDamage = 2;
     constexpr int DefaultTimeoutMs = 1000;
     constexpr int HalvedTimeoutMs = 500;
+    constexpr int PlayerShootTimeoutMs = 100;
 
     constexpr int InitialLives = 3;
     constexpr int InitialPowerLevel = 0;

@@ -34,7 +34,7 @@ private:
     void processWindowEvents();
     int processStateChange();
     bool buildLevelMap(std::string);
-    void updateAllObjects();
+    void updateAllObjectControllers();
     void processDeletedObjects();
     void drawGameScreen();
     void drawObjects();

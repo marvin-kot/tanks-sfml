@@ -20,9 +20,11 @@ class SoundPlayer
     sf::SoundBuffer bulletHitWallBuffer;
     sf::Sound       bulletHitWallSound;
 
-
     sf::SoundBuffer smallExplosionBuffer;
     sf::Sound       smallExplosionSound;
+
+    sf::SoundBuffer bigExplosionBuffer;
+    sf::Sound       bigExplosionSound;
 
     sf::SoundBuffer bonusAppearBuffer;
     sf::Sound       bonusAppearSound;
@@ -50,6 +52,7 @@ public:
     void playShootSound();
     void playBulletHitWallSound();
     void playSmallExplosionSound();
+    void playBigExplosionSound();
     void playBonusAppearSound();
     void playBonusCollectSound();
 

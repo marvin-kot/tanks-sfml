@@ -88,8 +88,15 @@ TankCollectable::TankCollectable(GameObject *parent)
 
 void TankCollectable::onCollected(GameObject *collector)
 {
-    auto spawerObject = collector->getParentObject();
-    auto spawnerController = spawerObject->getComponent<PlayerSpawnController>();
+    assert(collector != nullptr);
+    assert(collector->isFlagSet(GameObject::Player));
+
+    auto spawnerObject = collector->getParentObject();
+    assert(spawnerObject != nullptr);
+
+    auto spawnerController = spawnerObject->getComponent<PlayerSpawnController>();
+
+    assert(spawnerController != nullptr);
 
     spawnerController->appendLife();
 

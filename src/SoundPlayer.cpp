@@ -37,6 +37,10 @@ int SoundPlayer::loadSounds()
         return -1;
     smallExplosionSound.setBuffer(smallExplosionBuffer);
 
+    if (!bigExplosionBuffer.loadFromFile("assets/audio/bigExplosion.wav"))
+        return -1;
+    bigExplosionSound.setBuffer(bigExplosionBuffer);
+
     if (!bonusAppearBuffer.loadFromFile("assets/audio/bonusAppear.wav"))
         return -1;
     bonusAppearSound.setBuffer(bonusAppearBuffer);
@@ -103,6 +107,12 @@ void SoundPlayer::playSmallExplosionSound()
 {
     smallExplosionSound.play();
 }
+
+void SoundPlayer::playBigExplosionSound()
+{
+    bigExplosionSound.play();
+}
+
 
 void SoundPlayer::playBonusAppearSound()
 {

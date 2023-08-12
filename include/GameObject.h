@@ -33,7 +33,6 @@ public:
         Static = 0x400,
         BonusOnHit = 0x800,
         CollectableBonus = 0x1000,
-        PlayerSpawner = 0x2000
     };
 
 private:
@@ -75,11 +74,12 @@ public:
     bool isFlagSet(ObjectFlags);
 
     inline void setParentId(int pid) { _parentId = pid; }
+    inline int parentId() { return _parentId; }
 
     virtual void draw();
     void hide(bool);
     void setPos(int x, int y);
-    void move(int x, int y);
+    int move(int x, int y);
 
     sf::Vector2i position() const;
     void copyParentPosition(const GameObject * parent);

@@ -18,7 +18,8 @@ void ObjectsPool::clearEverything()
     }
 }
 
-void ObjectsPool::kill(GameObject * obj) {
+void ObjectsPool::kill(GameObject * obj)
+{
     auto it = allGameObjects.find(obj);
     if (it != allGameObjects.end()) {
         allGameObjects.erase(it);
@@ -33,6 +34,23 @@ void ObjectsPool::kill(GameObject * obj) {
         delete obj;
         return;
     }
+}
+
+decltype(ObjectsPool::allGameObjects)::iterator ObjectsPool::kill(decltype(allGameObjects)::iterator it)
+{
+    assert(it != allGameObjects.end());
+
+    GameObject *obj = *it;
+
+    auto result = allGameObjects.erase(it);
+
+    auto& objByType = objectsByType.at(obj->type());
+    auto it2 = objByType.find(obj);
+    assert(it2 != objByType.end());
+
+    objByType.erase(it2);
+
+    return result;
 }
 
 void ObjectsPool::addObject(GameObject *obj)
@@ -69,7 +87,7 @@ std::unordered_set<GameObject *>& ObjectsPool::getAllObjects()
 
 std::unordered_set<GameObject *>& ObjectsPool::getObjectsByType(std::string type)
 {
-    return objectsByType.at(type);
+    return objectsByType[type];
 }
 
 /*    static std::unordered_set<GameObject *> getObjectsByTypes(std::vector<std::string> types)
