@@ -16,7 +16,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "spawner_player") {
         Logger::instance() << "Creating player spawner...";
         GameObject *spawner = new GameObject("spawner_player");
-        spawner->setFlags(GameObject::PlayerSpawner | GameObject::TankPassable | GameObject::BulletPassable);
+        spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
         spawner->setController(new PlayerSpawnController(spawner, globalVars::player1Lives, globalVars::player1PowerLevel));
 
@@ -132,7 +132,7 @@ MapCreatorFromCustomMatrixFile::MapCreatorFromCustomMatrixFile()
             {'#', "brickWall"},
             {'*', "concreteWall"},
             {'!', "eagle"},
-            {'T', "tree"},
+            {'&', "tree"},
             {'~', "water"},
             {'_', "ice"}};
 }
