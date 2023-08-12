@@ -1,7 +1,9 @@
 #pragma once
+
 #include <string>
 
 class GameObject;
+
 class DropGenerator
 {
 private:

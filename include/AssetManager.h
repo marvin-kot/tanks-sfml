@@ -7,8 +7,6 @@
 #include <fstream>
 #include <cassert>
 
-
-
 using json = nlohmann::json;
 
 namespace Assets

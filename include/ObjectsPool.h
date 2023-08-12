@@ -1,12 +1,12 @@
 #pragma once
 
-#include "GameObject.h"
-#include "Logger.h"
-#include "GlobalConst.h"
-
+#include <string>
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
+
+class GameObject;
+
 class ObjectsPool
 {
 private:

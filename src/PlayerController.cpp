@@ -1,13 +1,14 @@
-#include "Controller.h"
-#include "GameObject.h"
+#include "PlayerController.h"
+
 #include "Damageable.h"
+#include "GameObject.h"
+#include "GlobalConst.h"
 #include "Shootable.h"
 #include "SoundPlayer.h"
 #include "Utils.h"
 
-
 PlayerController::PlayerController(GameObject *obj)
-: Controller(obj)
+: Controller(obj), _moveSpeed(globalConst::DefaultPlayerSpeed)
 {
 
 }
@@ -95,7 +96,7 @@ void PlayerController::update()
         }
     }
 
-    int speed = ((int)(moveSpeed * Utils::lastFrameTime.asSeconds()) >> 1) << 1;
+    int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) >> 1) << 1;
 
     switch (recentKey) {
         case sf::Keyboard::Left:

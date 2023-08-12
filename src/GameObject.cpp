@@ -1,13 +1,14 @@
-#include "GameObject.h"
-#include "Logger.h"
+#include "Collectable.h"
 #include "Controller.h"
-#include "GlobalConst.h"
-#include "ObjectsPool.h"
-#include "Utils.h"
-#include "Shootable.h"
 #include "Damageable.h"
 #include "DropGenerator.h"
-#include "Collectable.h"
+#include "GameObject.h"
+#include "GlobalConst.h"
+#include "Logger.h"
+#include "ObjectsPool.h"
+#include "PlayerController.h"
+#include "Shootable.h"
+#include "Utils.h"
 
 #include <iostream>
 

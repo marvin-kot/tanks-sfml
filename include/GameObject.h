@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SpriteRenderer.h"
-#include "GlobalConst.h"
+#include "GlobalTypes.h"
 
 class Controller;
 class Shootable;

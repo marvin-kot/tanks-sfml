@@ -1,6 +1,7 @@
 #pragma once
 
 class GameObject;
+
 class Collectable
 {
     GameObject *_gameObject;

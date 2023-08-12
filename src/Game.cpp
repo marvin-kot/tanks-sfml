@@ -1,6 +1,7 @@
 #include "Game.h"
 
 #include "AssetManager.h"
+#include "GameObject.h"
 #include "GlobalConst.h"
 #include "ObjectsPool.h"
 #include "Logger.h"
@@ -231,6 +232,7 @@ void Game::processDeletedObjects()
                     obj->generateDrop();
                     SoundPlayer::instance().playBonusAppearSound();
                 }
+
                 it = ObjectsPool::kill(it);
                 delete obj;
             } else ++it;
@@ -271,7 +273,8 @@ void Game::drawObjects()
     std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [](GameObject *obj) { if (obj) obj->draw(); });
 
     // 3. draw walls and trees
-    auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({"brickWall", "concreteWall", "tree", "smallExplosion", "bigExplosion"});
+    auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({"brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2",
+                "concreteWall", "tree", "smallExplosion", "bigExplosion"});
     std::for_each(objectsToDrawThird.cbegin(), objectsToDrawThird.cend(), [](GameObject *obj) { obj->draw(); });
 
     // 4. visual effects

@@ -10,7 +10,75 @@
                         "x"  : 256,
                         "y"  : 0,
                         "w"  : 16,
-                        "h"  : 16 
+                        "h"  : 16
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "brickWall1x1",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 256,
+                        "y"  : 0,
+                        "w"  : 8,
+                        "h"  : 8
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "brickWall2x1",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 264,
+                        "y"  : 0,
+                        "w"  : 8,
+                        "h"  : 8
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "brickWall1x2",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 256,
+                        "y"  : 8,
+                        "w"  : 8,
+                        "h"  : 8
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "brickWall2x2",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 264,
+                        "y"  : 8,
+                        "w"  : 8,
+                        "h"  : 8
                     }
                 ]
             }

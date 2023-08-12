@@ -1,3 +1,7 @@
+
+#include "GameObject.h"
+#include "GlobalConst.h"
+#include "Logger.h"
 #include "ObjectsPool.h"
 
 GameObject *ObjectsPool::playerObject = nullptr;

@@ -3,18 +3,6 @@
 #include <SFML/Graphics/Rect.hpp>
 #include <SFML/System/Clock.hpp>
 
-
-namespace globalTypes
-{
-    enum Direction
-    {
-        Up,
-        Left,
-        Down,
-        Right
-    };
-}
-
 namespace globalConst
 {
     constexpr int screen_w = 1920;

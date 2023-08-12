@@ -76,6 +76,16 @@ GameObject *MapCreator::buildObject(std::string type)
 
         return wall;
     }
+    // wall parts
+    if (type == "brickWall1x1" || type == "brickWall2x1" || type == "brickWall1x2" || type == "brickWall2x2") {
+        GameObject *wall = new GameObject(type);
+        wall->setFlags(GameObject::BulletKillable | GameObject::Static);
+        wall->setRenderer(new SpriteRenderer(wall));
+        wall->setDamageable(new Damageable(wall, 1));
+
+        return wall;
+    }
+
 
     if (type == "concreteWall") {
         GameObject *wall = new GameObject("concreteWall");
@@ -170,7 +180,20 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
             char tile = mapString[y*map_w + x];
             auto it = charMap.find(tile);
             if (it != charMap.end()) {
-                std::string objType = it->second;
+                using namespace std;
+                string objType = it->second;
+                if (objType == "brickWall") {
+                    vector<string> parts = {"brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2"};
+                    int i=0;
+                    for (auto part : parts) {
+                        GameObject *object = MapCreator::buildObject(part);
+                        assert(object != nullptr);
+                        object->setPos(x*64 + 16 + (i%2)*32, y*64 + 16 + (i/2)*32);
+                        ObjectsPool::addObject(object);
+                        i++;
+                    }
+                    continue;
+                }
                 GameObject *object = MapCreator::buildObject(objType);
                 if (object != nullptr) {
                     object->setPos(x*64 + 32, y*64 + 32);

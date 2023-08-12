@@ -4,7 +4,7 @@
 #include "ObjectsPool.h"
 #include "SoundPlayer.h"
 #include "SpriteRenderer.h"
-#include "Controller.h"
+#include "PlayerController.h"
 #include "GlobalConst.h"
 
 Collectable::Collectable(GameObject *parent)
