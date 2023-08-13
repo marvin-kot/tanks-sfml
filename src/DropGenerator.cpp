@@ -7,9 +7,10 @@
 #include "Collectable.h"
 
 #include <random>
+#include <map>
 
-DropGenerator::DropGenerator(GameObject *parent)
-: _gameObject(parent)
+DropGenerator::DropGenerator(GameObject *parent, int xp)
+: _gameObject(parent), _xp(xp)
 {}
 
 void DropGenerator::placeRandomCollectable()
@@ -17,13 +18,13 @@ void DropGenerator::placeRandomCollectable()
     std::uniform_int_distribution<int> x_distr(1, (globalVars::mapSize.x/globalConst::spriteOriginalSizeX)-1);
     std::uniform_int_distribution<int> y_distr(1, (globalVars::mapSize.y/globalConst::spriteOriginalSizeY)-1);
 
-    std::vector<std::string> types = {
+    const std::vector<std::string> types = {
         "helmetCollectable",
         "timerCollectable",
         //"shovelCollectable",
         "starCollectable",
         "grenadeCollectable",
-        "tankCollectable"
+        "tankCollectable",
     };
 
     int x = x_distr(Utils::generator);
@@ -39,6 +40,22 @@ void DropGenerator::placeRandomCollectable()
     }
 
     _used = true;
+}
+
+void DropGenerator::dropXp()
+{
+    const std::map<int, std::string> xpTypes = {
+        {100, "100xp"},
+        {200, "200xp"},
+        {300, "300xp"},
+        {400, "400xp"},
+        {500, "500xp"},
+    };
+    GameObject *collectable = createObject(xpTypes.at(_xp));
+    if (collectable) {
+        collectable->copyParentPosition(_gameObject);
+        ObjectsPool::addObject(collectable);
+    }
 }
 
 GameObject * DropGenerator::createObject(std::string type)
@@ -59,6 +76,16 @@ GameObject * DropGenerator::createObject(std::string type)
             component = new StarCollectable(collectable);
         else if (type == "tankCollectable")
             component = new TankCollectable(collectable);
+        else if (type == "100xp")
+            component = new XpCollectable(collectable, 100);
+        else if (type == "200xp")
+            component = new XpCollectable(collectable, 200);
+        else if (type == "300xp")
+            component = new XpCollectable(collectable, 300);
+        else if (type == "400xp")
+            component = new XpCollectable(collectable, 400);
+        else if (type == "500xp")
+            component = new XpCollectable(collectable, 500);
         else
             component = new Collectable(collectable); // default collectable (useless)
 
@@ -68,3 +95,4 @@ GameObject * DropGenerator::createObject(std::string type)
     }
     return nullptr;
 }
+

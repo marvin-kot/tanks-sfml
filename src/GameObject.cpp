@@ -357,6 +357,12 @@ void GameObject::generateDrop()
         _dropGenerator->placeRandomCollectable();
 }
 
+void GameObject::dropXp()
+{
+    if (_dropGenerator && !_dropGenerator->isUsedOnce())
+        _dropGenerator->dropXp();
+}
+
 void GameObject::setCollectable(Collectable *col)
 {
     _collectable = col;

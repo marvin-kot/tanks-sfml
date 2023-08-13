@@ -38,6 +38,12 @@ class SoundPlayer
     sf::SoundBuffer pauseBuffer;
     sf::Sound       pauseSound;
 
+    sf::SoundBuffer xpCollectBuffer;
+    sf::Sound       xpCollectSound;
+
+    sf::SoundBuffer tickBuffer;
+    sf::Sound       tickSound;
+
 public:
     bool gameOver = false;
 private:
@@ -63,5 +69,6 @@ public:
     void playBonusCollectSound();
     void playIceSkidSound();
     void playPauseSound();
-
+    void playXpCollectSound();
+    void playTickSound();
 };

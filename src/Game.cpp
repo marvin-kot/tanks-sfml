@@ -56,6 +56,12 @@ void Game::initializeVariables()
 
 bool Game::update()
 {
+    if (!_levelUpMenu && globalVars::openLevelUpMenu) {
+        _levelUpMenu = true;
+        SoundPlayer::instance().stopAllSounds();
+        SoundPlayer::instance().playBonusCollectSound();
+    }
+
     updateFrameClock();
     processWindowEvents();
     int stateResult = processStateChange();
@@ -66,19 +72,23 @@ bool Game::update()
     }
     // else if 1 - proceed
 
-    if (!_paused) {
+    if (!_paused && !_levelUpMenu) {
         updateAllObjectControllers();
         processDeletedObjects();
     }
 
     drawGameScreen();
-    if (!_paused)
+    if (!_paused && !_levelUpMenu)
         recalculateViewPort();
     drawObjects();
-    HUD::instance().drawPlayerLives();
+    HUD::instance().draw();
+
+    if (_levelUpMenu)
+        HUD::instance().drawLevelUpPopupMenu(_currentUpgradeCursor);
+
     updateDisplay();
 
-    if (!_paused)
+    if (!_paused && !_levelUpMenu)
         checkStatePostFrame();
 
     return true;
@@ -115,13 +125,27 @@ void Game::processWindowEvents()
                         gameState = LoadNextLevel;
                     }
                 } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Escape) {
+                    // TODO: ask player confirmation
                     gameState = GameOver;
-                } else if (event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::P) {
+                } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::P) {
                     if (!_paused) {
                         SoundPlayer::instance().stopAllSounds();
                         SoundPlayer::instance().playPauseSound();
                     }
                     _paused = !_paused;
+                } else if (gameState == PlayingLevel && _levelUpMenu) {
+                    if (event.key.scancode == sf::Keyboard::Scan::Enter) {
+                        _levelUpMenu = false;
+                        globalVars::openLevelUpMenu = false;
+                    } else if (event.key.scancode == sf::Keyboard::Scan::Left) {
+                        SoundPlayer::instance().playTickSound();
+                        if (--_currentUpgradeCursor < 0)
+                            _currentUpgradeCursor = 2;
+                    } if (event.key.scancode == sf::Keyboard::Scan::Right) {
+                        SoundPlayer::instance().playTickSound();
+                        if (++_currentUpgradeCursor > 2)
+                            _currentUpgradeCursor = 0;
+                    }
                 }
                 break;
             case sf::Event::Resized:
@@ -206,6 +230,9 @@ void Game::processDeletedObjects()
             if (obj->mustBeDeleted()) {
                 if (obj->isFlagSet(GameObject::Player)) {
                     globalVars::player1Lives--;
+                    globalVars::player1XP = 0;
+                    globalVars::player1Level = 1;
+
                     ObjectsPool::playerObject = nullptr;
                 }
 
@@ -245,6 +272,8 @@ void Game::processDeletedObjects()
                 if (obj->isFlagSet(GameObject::BonusOnHit)) {
                     obj->generateDrop();
                     SoundPlayer::instance().playBonusAppearSound();
+                } else {
+                    obj->dropXp();
                 }
 
                 it = ObjectsPool::kill(it);
@@ -333,6 +362,7 @@ void Game::drawObjects()
     auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({
         "spawner_player", "spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank",
         "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable",
+        "100xp", "200xp", "300xp", "400xp", "500xp",
         "smallExplosion", "bigExplosion"
         });
     std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(_paused); });
@@ -415,3 +445,5 @@ void Game::drawTitleScreen()
     Utils::window.draw(textInstruction);
     Utils::window.display();
 }
+
+

@@ -101,3 +101,15 @@ void TankCollectable::onCollected(GameObject *collector)
 }
 
 
+XpCollectable::XpCollectable(GameObject *parent, int value)
+: Collectable(parent), _value(value)
+{}
+
+void XpCollectable::onCollected(GameObject *collector)
+{
+    PlayerController *controller = collector->getComponent<PlayerController>();
+    controller->addXP(_value);
+
+    //Collectable::onCollected(collector);
+    SoundPlayer::instance().playXpCollectSound();
+}

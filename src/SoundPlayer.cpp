@@ -57,6 +57,14 @@ int SoundPlayer::loadSounds()
         return -1;
     pauseSound.setBuffer(pauseBuffer);
 
+    if (!xpCollectBuffer.loadFromFile("assets/audio/xpCollect.wav"))
+        return -1;
+    xpCollectSound.setBuffer(xpCollectBuffer);
+
+    if (!tickBuffer.loadFromFile("assets/audio/tick.wav"))
+        return -1;
+    tickSound.setBuffer(tickBuffer);
+
     return 0;
 }
 
@@ -142,4 +150,14 @@ void SoundPlayer::playIceSkidSound()
 void SoundPlayer::playPauseSound()
 {
     pauseSound.play();
+}
+
+void SoundPlayer::playXpCollectSound()
+{
+    xpCollectSound.play();
+}
+
+void SoundPlayer::playTickSound()
+{
+    tickSound.play();
 }

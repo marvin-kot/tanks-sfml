@@ -11,8 +11,12 @@ class HUD
     HUD(HUD &) = delete;
     void operator=(const HUD&) = delete;
 
+    void drawPlayerLives();
+    void drawPlayerXP();
 public:
     static HUD& instance();
 
-    void drawPlayerLives();
+    void draw();
+    void drawLevelUpPopupMenu(int pos);
+
 };

@@ -40,3 +40,13 @@ struct TankCollectable : public Collectable
     TankCollectable(GameObject *parent);
     void onCollected(GameObject *collector) override;
 };
+
+struct XpCollectable : public Collectable
+{
+
+    XpCollectable(GameObject *parent, int value);
+    void onCollected(GameObject *collector) override;
+
+private:
+    int _value;
+};

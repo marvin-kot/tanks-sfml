@@ -204,3 +204,39 @@ void PlayerController::setTemporaryInvincibility(int sec)
     }
 
 }
+
+std::vector<int> xpNeededForLevelUp = {
+    400,
+    1000,
+    2000,
+    3500,
+    5000
+};
+
+void PlayerController::addXP(int val)
+{
+    _xp += val;
+    globalVars::player1XP += val;
+    if (_xp > xpNeededForLevelUp[_level]) {
+        levelUp();
+    }
+
+}
+
+void PlayerController::resetXP()
+{
+    _xp = 0;
+    _level = 0;
+
+    globalVars::player1XP = 0;
+    globalVars::player1Level = 1;
+}
+
+void PlayerController::levelUp()
+{
+    _level++;
+    globalVars::player1Level++;
+    //SoundPlayer::instance().stopAllSounds();
+    //SoundPlayer::instance().playBonusCollectSound();
+    globalVars::openLevelUpMenu = true;
+}

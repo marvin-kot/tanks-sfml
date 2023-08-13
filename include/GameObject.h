@@ -103,6 +103,7 @@ public:
     void setDamageable(Damageable *);
     void setDropGenerator(DropGenerator *);
     void generateDrop();
+    void dropXp();
 
     void setCollectable(Collectable *);
     void getCollectedBy(GameObject *collector);

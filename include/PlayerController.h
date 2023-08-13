@@ -26,6 +26,8 @@ class PlayerController : public Controller
     std::map<sf::Keyboard::Key, sf::Time> _pressedKeys;
 
     int _powerLevel = 0;
+    int _xp;
+    int _level = 0;
 
     bool _invincible;
     sf::Clock _invincibilityTimer;
@@ -38,6 +40,9 @@ public:
     void increasePowerLevel(bool);
     void updatePowerLevel();
     void setTemporaryInvincibility(int sec);
+    void addXP(int val);
+    void resetXP();
+    void levelUp();
 };
 
 struct PlayerSignal

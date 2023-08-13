@@ -12,9 +12,11 @@ private:
     static GameObject *createObject(std::string parent);
 
     bool _used = false;
+    int _xp;
 public:
-    DropGenerator(GameObject *parent);
+    DropGenerator(GameObject *parent, int xp);
     void placeRandomCollectable();
+    void dropXp();
 
     bool isUsedOnce() const { return _used; }
 };

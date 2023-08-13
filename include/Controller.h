@@ -25,6 +25,7 @@ protected:
     void prepareMoveInDirection(globalTypes::Direction);
 public:
     Controller(GameObject *obj, int spd);
+    virtual ~Controller() {}
     virtual void update() {}
 };
 

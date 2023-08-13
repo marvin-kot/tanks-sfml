@@ -43,10 +43,10 @@ void SpawnController::update()
                     newNpc->copyParentPosition(_gameObject);
                     ObjectsPool::addObject(newNpc);
 
-                    if (_spawnBonusAtThisQuantity == _quantity) {
+                    /*if (_spawnBonusAtThisQuantity == _quantity) {
                         newNpc->appendFlags(GameObject::BonusOnHit);
-                        newNpc->setDropGenerator(new DropGenerator(newNpc));
-                    }
+                    }*/
+                    //newNpc->setDropGenerator(new DropGenerator(newNpc));
                     _quantity--;
                 }
 
@@ -83,6 +83,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 1));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 0.75));
+        enemy->setDropGenerator(new DropGenerator(enemy, 100));
 
         return enemy;
     }
@@ -95,6 +96,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 1));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed*4/3, 0.5));
+        enemy->setDropGenerator(new DropGenerator(enemy, 300));
 
         return enemy;
     }
@@ -107,6 +109,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 3));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed*3/4, 1));
+        enemy->setDropGenerator(new DropGenerator(enemy, 400));
 
         return enemy;
     }

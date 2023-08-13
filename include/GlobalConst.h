@@ -60,4 +60,8 @@ namespace globalVars
 
     extern int player1Lives;
     extern int player1PowerLevel;
+    extern int player1XP;
+    extern int player1Level;
+
+    extern bool openLevelUpMenu;
 };
