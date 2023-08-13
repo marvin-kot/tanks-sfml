@@ -65,16 +65,19 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
     _sprite.setOrigin(rect.width/2, rect.height/2);
 }
 
-void SpriteRenderer::draw()
+void SpriteRenderer::draw(bool paused)
 {
     if (isHidden()) return;
-    int framesCount = _currentAnimationFrames.size();
-    // play set next frame if duration of current frame passed
-    if (framesCount > 1 && _animate) {
-        if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
-            int nextFrame = _currentFrame+1 < framesCount ? _currentFrame+1 : 0;
-            showAnimationFrame(nextFrame);
-            _clock.restart();
+
+    if (!paused) {
+        int framesCount = _currentAnimationFrames.size();
+        // play set next frame if duration of current frame passed
+        if (framesCount > 1 && _animate) {
+            if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
+                int nextFrame = _currentFrame+1 < framesCount ? _currentFrame+1 : 0;
+                showAnimationFrame(nextFrame);
+                _clock.restart();
+            }
         }
     }
     Utils::window.draw(_sprite);
@@ -93,21 +96,23 @@ void SpriteRenderer::setSpriteSheetOffset(int x, int y)
 
 OneShotAnimationRenderer::OneShotAnimationRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}
 
-void OneShotAnimationRenderer::draw()
+void OneShotAnimationRenderer::draw(bool paused)
 {
     if (isHidden()) return;
-    int framesCount = _currentAnimationFrames.size();
-    // play set next frame if duration of current frame passed
-    if (framesCount > 1 && _animate) {
-        if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
-            int nextFrame = _currentFrame+1;
+    if (!paused) {
+        int framesCount = _currentAnimationFrames.size();
+        // play set next frame if duration of current frame passed
+        if (framesCount > 1 && _animate) {
+            if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
+                int nextFrame = _currentFrame+1;
 
-            if (nextFrame == framesCount) {
-                _parentObject->_deleteme = true;
-                return;
+                if (nextFrame == framesCount) {
+                    _parentObject->_deleteme = true;
+                    return;
+                }
+                showAnimationFrame(nextFrame);
+                _clock.restart();
             }
-            showAnimationFrame(nextFrame);
-            _clock.restart();
         }
     }
     Utils::window.draw(_sprite);
@@ -115,21 +120,24 @@ void OneShotAnimationRenderer::draw()
 
 LoopAnimationSpriteRenderer::LoopAnimationSpriteRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}
 
-void LoopAnimationSpriteRenderer::draw()
+void LoopAnimationSpriteRenderer::draw(bool paused)
 {
     if (isHidden()) return;
-    //Logger::instance() << "LoopAnimationSpriteRenderer::draw()";
-    int framesCount = _currentAnimationFrames.size();
-    // play set next frame if duration of current frame passed
-    if (framesCount > 1 && _animate) {
-        if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
-            int nextFrame = _currentFrame+1;
 
-            if (nextFrame >= framesCount) {
-                nextFrame = 0;
+    if (!paused) {
+        //Logger::instance() << "LoopAnimationSpriteRenderer::draw()";
+        int framesCount = _currentAnimationFrames.size();
+        // play set next frame if duration of current frame passed
+        if (framesCount > 1 && _animate) {
+            if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
+                int nextFrame = _currentFrame+1;
+
+                if (nextFrame >= framesCount) {
+                    nextFrame = 0;
+                }
+                showAnimationFrame(nextFrame);
+                _clock.restart();
             }
-            showAnimationFrame(nextFrame);
-            _clock.restart();
         }
     }
 

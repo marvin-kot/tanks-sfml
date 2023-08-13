@@ -18,6 +18,8 @@ private:
 
     int framesToDie, framesToWin;
 
+    bool _paused = false;
+
 
 public:
     Game();

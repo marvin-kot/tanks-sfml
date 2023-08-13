@@ -66,15 +66,20 @@ bool Game::update()
     }
     // else if 1 - proceed
 
-    updateAllObjectControllers();
-    processDeletedObjects();
+    if (!_paused) {
+        updateAllObjectControllers();
+        processDeletedObjects();
+    }
 
     drawGameScreen();
-    recalculateViewPort();
+    if (!_paused)
+        recalculateViewPort();
     drawObjects();
     HUD::instance().drawPlayerLives();
     updateDisplay();
-    checkStatePostFrame();
+
+    if (!_paused)
+        checkStatePostFrame();
 
     return true;
 }
@@ -111,6 +116,12 @@ void Game::processWindowEvents()
                     }
                 } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Escape) {
                     gameState = GameOver;
+                } else if (event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::P) {
+                    if (!_paused) {
+                        SoundPlayer::instance().stopAllSounds();
+                        SoundPlayer::instance().playPauseSound();
+                    }
+                    _paused = !_paused;
                 }
                 break;
             case sf::Event::Resized:
@@ -310,7 +321,7 @@ void Game::drawObjects()
 
     // 2. draw tanks and bullets
     std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "bullet"});
-    std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [](GameObject *obj) { if (obj) obj->draw(); });
+    std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(_paused); });
 
     // 3. draw walls and trees
     auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({
@@ -324,7 +335,7 @@ void Game::drawObjects()
         "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable",
         "smallExplosion", "bigExplosion"
         });
-    std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [](GameObject *obj) { obj->draw(); });
+    std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(_paused); });
 }
 
 void Game::updateDisplay()

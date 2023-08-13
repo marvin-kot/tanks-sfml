@@ -39,7 +39,7 @@ public:
     void setCurrentAnimation(std::string id);
     void hide(bool);
     bool isHidden();
-    virtual void draw();
+    virtual void draw(bool paused = false);
     void playAnimation(bool);
     void setSpriteSheetOffset(int x, int y);
 
@@ -52,13 +52,13 @@ class OneShotAnimationRenderer : public SpriteRenderer
 {
 public:
     OneShotAnimationRenderer(GameObject * parent, std::string type = "");
-    void draw() override;
+    void draw(bool paused = false) override;
 };
 
 class LoopAnimationSpriteRenderer : public SpriteRenderer
 {
 public:
     LoopAnimationSpriteRenderer(GameObject * parent, std::string type = "");
-    void draw() override;
+    void draw(bool paused = false) override;
 };
 

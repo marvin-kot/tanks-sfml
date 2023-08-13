@@ -76,7 +76,7 @@ public:
     inline void setParentId(int pid) { _parentId = pid; }
     inline int parentId() { return _parentId; }
 
-    virtual void draw();
+    virtual void draw(bool paused = false);
     void hide(bool);
     void setPosition(int x, int y);
     int move(int x, int y);

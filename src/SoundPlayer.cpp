@@ -53,6 +53,10 @@ int SoundPlayer::loadSounds()
         return -1;
     iceSkidSound.setBuffer(iceSkidBuffer);
 
+    if (!pauseBuffer.loadFromFile("assets/audio/pause.wav"))
+        return -1;
+    pauseSound.setBuffer(pauseBuffer);
+
     return 0;
 }
 
@@ -133,4 +137,9 @@ void SoundPlayer::playIceSkidSound()
     sf::SoundSource::Status skidStatus = iceSkidSound.getStatus();
     if (skidStatus != sf::SoundSource::Status::Playing)
         iceSkidSound.play();
+}
+
+void SoundPlayer::playPauseSound()
+{
+    pauseSound.play();
 }

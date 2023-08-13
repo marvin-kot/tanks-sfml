@@ -35,6 +35,9 @@ class SoundPlayer
     sf::SoundBuffer iceSkidBuffer;
     sf::Sound       iceSkidSound;
 
+    sf::SoundBuffer pauseBuffer;
+    sf::Sound       pauseSound;
+
 public:
     bool gameOver = false;
 private:
@@ -59,5 +62,6 @@ public:
     void playBonusAppearSound();
     void playBonusCollectSound();
     void playIceSkidSound();
+    void playPauseSound();
 
 };

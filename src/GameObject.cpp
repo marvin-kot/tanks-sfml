@@ -64,7 +64,7 @@ bool GameObject::isFlagSet(GameObject::ObjectFlags f)
     return (_flags & f) != 0;
 }
 
-void GameObject::draw()
+void GameObject::draw(bool paused)
 {
     if (_deleteme)
         return;
@@ -90,13 +90,13 @@ void GameObject::draw()
         int screenX = mappedX + globalVars::gameViewPort.left;
         int screenY = mappedY + globalVars::gameViewPort.top;
         spriteRenderer->_sprite.setPosition(screenX, screenY);
-        spriteRenderer->draw();
+        spriteRenderer->draw(paused);
     }
     else
         Logger::instance() << _type << "no renderer";
 
     if (visualEffect)
-        visualEffect->draw();
+        visualEffect->draw(paused);
 }
 
 void GameObject::hide(bool val)
