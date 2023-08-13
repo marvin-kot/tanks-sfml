@@ -85,7 +85,7 @@ void GameObject::hide(bool val)
         spriteRenderer->hide(val);
 }
 
-void GameObject::setPos(int x, int y)
+void GameObject::setPosition(int x, int y)
 {
     if (spriteRenderer) {
         int mappedX = x + globalVars::gameViewPort.left;
@@ -95,6 +95,8 @@ void GameObject::setPos(int x, int y)
     _x = x + globalVars::gameViewPort.left;
     _y = y + globalVars::gameViewPort.top;
 }
+
+
 
 
 int GameObject::move(int x, int y)
@@ -127,9 +129,12 @@ int GameObject::move(int x, int y)
         if (cancelMovement) {
             spriteRenderer->_sprite.move(-x, -y);
             _x -= x, _y -= y;
+            moving = false;
             return 0;
-        } else
+        } else {
+            moving = true;
             return 1;
+        }
     }
     else {
         Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
@@ -155,7 +160,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
 
     if (isBullet) {
         // just hit non-transparent target (and it's not its own creator)
-        if (!other->isFlagSet(BulletPassable) && !isFlagSet(PiercingBullet) && _parentId != other->id()) {
+        if (!other->isFlagSet(BulletPassable) && _parentId != other->id()) {
             _deleteme = true;
         }
 
@@ -207,6 +212,15 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
     }
 }
 
+bool GameObject::isOnIce() const
+{
+    for (GameObject *o : ObjectsPool::getAllObjects()) {
+        if (this != o && collides(*o) && o->isFlagSet(GameObject::Ice))
+            return true;
+    }
+    return false;
+}
+
 void GameObject::updateOnCollision(GameObject *other)
 {
     bool _;
@@ -219,13 +233,6 @@ sf::Vector2i GameObject::position() const
         return sf::Vector2i(spriteRenderer->_sprite.getPosition());
     else
         return sf::Vector2i(_x, _y);
-}
-
-void GameObject::copyParentPosition(const GameObject * parent)
-{
-    auto pos = parent->position();
-    spriteRenderer->_sprite.setPosition(pos.x, pos.y);
-    _x = pos.x; _y = pos.y;
 }
 
 sf::IntRect GameObject::boundingBox() const

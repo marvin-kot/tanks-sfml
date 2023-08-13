@@ -34,7 +34,7 @@ void DropGenerator::placeRandomCollectable()
 
     GameObject *collectable = createObject(types[typeIndex]);
     if (collectable) {
-        collectable->setPos(x*64, y*64);
+        collectable->setPosition(x*64, y*64);
         ObjectsPool::addObject(collectable);
     }
 

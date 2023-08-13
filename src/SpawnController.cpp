@@ -7,7 +7,7 @@
 #include "Utils.h"
 
 SpawnController::SpawnController(GameObject *parent, std::string type, int timeout, int quantity)
-: Controller(parent), _spawnableType(type), _spawnTimeout(sf::seconds(timeout)), _quantity(quantity)
+: Controller(parent, 0), _spawnableType(type), _spawnTimeout(sf::seconds(timeout)), _quantity(quantity)
 {
     _gameObject->hide(true);
     _state = Starting;

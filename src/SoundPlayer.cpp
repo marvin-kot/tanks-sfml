@@ -49,6 +49,10 @@ int SoundPlayer::loadSounds()
         return -1;
     bonusCollectSound.setBuffer(bonusCollectBuffer);
 
+    if (!iceSkidBuffer.loadFromFile("assets/audio/ice.wav"))
+        return -1;
+    iceSkidSound.setBuffer(iceSkidBuffer);
+
     return 0;
 }
 
@@ -122,4 +126,11 @@ void SoundPlayer::playBonusAppearSound()
 void SoundPlayer::playBonusCollectSound()
 {
     bonusCollectSound.play();
+}
+
+void SoundPlayer::playIceSkidSound()
+{
+    sf::SoundSource::Status skidStatus = iceSkidSound.getStatus();
+    if (skidStatus != sf::SoundSource::Status::Playing)
+        iceSkidSound.play();
 }

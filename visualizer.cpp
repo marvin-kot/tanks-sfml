@@ -96,7 +96,6 @@ int main(int argc, char *argv[])
             }
         }
 
-
         window.clear();
         // draw objects (order matter)
         // draw border

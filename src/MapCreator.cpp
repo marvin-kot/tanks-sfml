@@ -115,6 +115,15 @@ GameObject *MapCreator::buildObject(std::string type)
         return water;
     }
 
+    if (type == "ice") {
+        GameObject *water = new GameObject("ice");
+        water->setFlags(GameObject::BulletPassable | GameObject::TankPassable | GameObject::Static | GameObject::Ice);
+        water->setRenderer(new SpriteRenderer(water));
+        water->setCurrentAnimation("default");
+
+        return water;
+    }
+
     return nullptr;
 }
 
@@ -188,7 +197,7 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
                     for (auto part : parts) {
                         GameObject *object = MapCreator::buildObject(part);
                         assert(object != nullptr);
-                        object->setPos(x*64 + 16 + (i%2)*32, y*64 + 16 + (i/2)*32);
+                        object->setPosition(x*64 + 16 + (i%2)*32, y*64 + 16 + (i/2)*32);
                         ObjectsPool::addObject(object);
                         i++;
                     }
@@ -196,7 +205,7 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
                 }
                 GameObject *object = MapCreator::buildObject(objType);
                 if (object != nullptr) {
-                    object->setPos(x*64 + 32, y*64 + 32);
+                    object->setPosition(x*64 + 32, y*64 + 32);
                     ObjectsPool::addObject(object);
                     if (object->type() == "spawner_player") {
                         playerCreated = true;
@@ -237,7 +246,7 @@ int MapCreatorFromJson::buildMapFromData()
 
         GameObject *object = MapCreator::buildObject(objType);
         if (object != nullptr) {
-            object->setPos(x*64 + 32, y*64 + 32);
+            object->setPosition(x*64 + 32, y*64 + 32);
             ObjectsPool::addObject(object);
             if (object->type() == "player") {
                 playerCreated = true;

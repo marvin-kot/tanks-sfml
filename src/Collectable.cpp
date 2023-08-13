@@ -38,7 +38,6 @@ StarCollectable::StarCollectable(GameObject *parent)
 : Collectable(parent)
 {}
 
-
 void StarCollectable::onCollected(GameObject *collector)
 {
     assert(collector->isFlagSet(GameObject::Player));
@@ -46,8 +45,6 @@ void StarCollectable::onCollected(GameObject *collector)
     PlayerController *controller = collector->getComponent<PlayerController>();
     assert(controller != nullptr);
     controller->increasePowerLevel(true);
-
-
     Collectable::onCollected(collector);
 }
 

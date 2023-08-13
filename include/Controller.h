@@ -17,22 +17,24 @@ protected:
     sf::Clock _clock;
     sf::Time _lastActionTime;
     bool _isMoving = false;
+
+    int _currMoveX = 0;
+    int _currMoveY = 0;
+    const int _moveSpeed;
+
+    void prepareMoveInDirection(globalTypes::Direction);
 public:
-    Controller(GameObject *obj);
+    Controller(GameObject *obj, int spd);
     virtual void update() {}
 };
 
 class TankRandomController : public Controller
 {
-    const int _moveSpeed;
     const sf::Time _actionTimeout;
-
-    int _currMoveX = 0;
-    int _currMoveY = 0;
 
     std::uniform_int_distribution<int> distribution;
 public:
-    TankRandomController(GameObject *parent, int speed, float timeoutSec);
+    TankRandomController(GameObject *parent, int spd, float timeoutSec);
     void update() override;
 };
 
@@ -41,7 +43,6 @@ public:
 
 class BulletController : public Controller
 {
-    const int _moveSpeed;
     const int _damage;
     globalTypes::Direction _direction;
 

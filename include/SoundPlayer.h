@@ -32,6 +32,9 @@ class SoundPlayer
     sf::SoundBuffer bonusCollectBuffer;
     sf::Sound       bonusCollectSound;
 
+    sf::SoundBuffer iceSkidBuffer;
+    sf::Sound       iceSkidSound;
+
 public:
     bool gameOver = false;
 private:
@@ -55,5 +58,6 @@ public:
     void playBigExplosionSound();
     void playBonusAppearSound();
     void playBonusCollectSound();
+    void playIceSkidSound();
 
 };

@@ -24,25 +24,22 @@ public:
         TankPassable = 0x2,
         BulletPassable = 0x4,
         Bullet = 0x8,
-        PiercingBullet = 0x10,
-        MegaBullet = 0x20,
-        Ice = 0x40,
-        NPC = 0x80,
-        Player = 0x100,
-        Eagle = 0x200,
-        Static = 0x400,
-        BonusOnHit = 0x800,
-        CollectableBonus = 0x1000,
+        PowerBullet = 0x10,
+        Ice = 0x20,
+        NPC = 0x40,
+        Player = 0x80,
+        Eagle = 0x100,
+        Static = 0x200,
+        BonusOnHit = 0x400,
+        CollectableBonus = 0x800
     };
 
 private:
     std::string _type;
     int _id;
-
     int _parentId = -1;
 
     ObjectFlags _flags = None;
-
     bool _deleteme = false;
 
     Controller *_controller = nullptr;
@@ -62,6 +59,7 @@ private:
 public:
     SpriteRenderer *spriteRenderer = nullptr;
     GameObject *visualEffect = nullptr;
+    bool moving = false;
 public:
     GameObject(std::string name);
     GameObject(GameObject *, std::string name);
@@ -78,8 +76,9 @@ public:
 
     virtual void draw();
     void hide(bool);
-    void setPos(int x, int y);
+    void setPosition(int x, int y);
     int move(int x, int y);
+    bool isOnIce() const;
 
     sf::Vector2i position() const;
     void copyParentPosition(const GameObject * parent);
@@ -106,6 +105,7 @@ public:
     void getCollectedBy(GameObject *collector);
 
     void setCurrentDirection(globalTypes::Direction);
+    inline globalTypes::Direction direction() const {return _direction; }
     void setCurrentAnimation(std::string animName);
     void stopAnimation();
     void restartAnimation();

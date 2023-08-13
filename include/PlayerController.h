@@ -8,7 +8,6 @@
 
 class PlayerController : public Controller
 {
-    const int _moveSpeed;
     sf::Keyboard::Key _mostRecentKey;
     enum KeysPressed {
         NothingPressed  = 0x0,
@@ -39,5 +38,22 @@ public:
     void increasePowerLevel(bool);
     void updatePowerLevel();
     void setTemporaryInvincibility(int sec);
+};
+
+struct PlayerSignal
+{
+    int pid;
+    int direction; // 1-4
+    bool shoot;
+    int moveX, moveY;
+};
+
+struct PlayerState
+{
+    int pid;
+    int power;
+    int lives;
+    int direction;
+    int coordX, coordY;
 };
 

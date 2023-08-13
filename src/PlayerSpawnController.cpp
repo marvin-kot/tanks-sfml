@@ -7,7 +7,7 @@
 #include "ObjectsPool.h"
 
 PlayerSpawnController::PlayerSpawnController(GameObject *parent, int lives, int powerLevel)
-: Controller(parent), _lives(lives), _initialPowerLevel(powerLevel)
+: Controller(parent, 0), _lives(lives), _initialPowerLevel(powerLevel)
 {
     _gameObject->hide(true);
     _state = Starting;

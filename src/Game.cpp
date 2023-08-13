@@ -3,6 +3,7 @@
 #include "AssetManager.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
+#include "HUD.h"
 #include "ObjectsPool.h"
 #include "Logger.h"
 #include "MapCreator.h"
@@ -70,6 +71,7 @@ bool Game::update()
 
     drawGameScreen();
     drawObjects();
+    HUD::instance().drawPlayerLives();
     updateDisplay();
     checkStatePostFrame();
 
@@ -273,14 +275,16 @@ void Game::drawObjects()
     std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [](GameObject *obj) { if (obj) obj->draw(); });
 
     // 3. draw walls and trees
-    auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({"brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2",
-                "concreteWall", "tree", "smallExplosion", "bigExplosion"});
+    auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({
+                "brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2",
+                "concreteWall", "tree"});
     std::for_each(objectsToDrawThird.cbegin(), objectsToDrawThird.cend(), [](GameObject *obj) { obj->draw(); });
 
     // 4. visual effects
     auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({
         "spawner_player", "spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank",
-        "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable"
+        "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable",
+        "smallExplosion", "bigExplosion"
         });
     std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [](GameObject *obj) { obj->draw(); });
 }

@@ -18,7 +18,7 @@ bool Shootable::shoot(globalTypes::Direction dir)
     bullet->setParentId(_gameObject->id());
     bullet->setFlags(GameObject::Bullet);
     if (_damage == 2) {
-        bullet->setFlags(GameObject::PiercingBullet);
+        bullet->setFlags(GameObject::PowerBullet);
     }
     bullet->setController(new BulletController(bullet, dir, _bulletSpeed, _damage));
     bullet->setRenderer(new SpriteRenderer(bullet));

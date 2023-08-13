@@ -8,9 +8,8 @@
 #include "Utils.h"
 
 PlayerController::PlayerController(GameObject *obj)
-: Controller(obj), _moveSpeed(globalConst::DefaultPlayerSpeed)
+: Controller(obj, globalConst::DefaultPlayerSpeed)
 {
-
 }
 
 
@@ -96,43 +95,47 @@ void PlayerController::update()
         }
     }
 
-    int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) >> 1) << 1;
 
+    int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) >> 1) << 1;
+    globalTypes::Direction direction = _gameObject->direction();
     switch (recentKey) {
         case sf::Keyboard::Left:
-            _gameObject->move(-speed, 0);
-            _gameObject->setCurrentDirection(globalTypes::Left);
-            _gameObject->setCurrentAnimation("left");
+            direction = globalTypes::Left;
             _isMoving = true;
             break;
         case sf::Keyboard::Up:
-            _gameObject->move(0, -speed);
-            _gameObject->setCurrentDirection(globalTypes::Up);
-            _gameObject->setCurrentAnimation("up");
+            direction = globalTypes::Up;
             _isMoving = true;
             break;
         case sf::Keyboard::Right:
-            _gameObject->move(speed, 0);
-            _gameObject->setCurrentDirection(globalTypes::Right);
-            _gameObject->setCurrentAnimation("right");
+            direction = globalTypes::Right;
             _isMoving = true;
             break;
         case sf::Keyboard::Down:
-            _gameObject->move(0, speed);
-            _gameObject->setCurrentDirection(globalTypes::Down);
-            _gameObject->setCurrentAnimation("down");
+            direction = globalTypes::Down;
             _isMoving = true;
+            break;
         default:
+            _gameObject->moving = false;
             _isMoving = false;
+            break;
     }
 
     if (_isMoving) {
+        prepareMoveInDirection(direction);
+        _gameObject->move(_currMoveX, _currMoveY);
         _lastActionTime = _clock.getElapsedTime();
         SoundPlayer::instance().playTankMoveSound();
         _gameObject->restartAnimation();
     } else {
-        SoundPlayer::instance().playTankStandSound();
-        _gameObject->stopAnimation();
+        // check if on ice
+        if (_gameObject->isOnIce()) {
+            SoundPlayer::instance().playIceSkidSound();
+            _gameObject->move(_currMoveX, _currMoveY);
+        } else {
+            SoundPlayer::instance().playTankStandSound();
+            _gameObject->stopAnimation();
+        }
     }
 }
 

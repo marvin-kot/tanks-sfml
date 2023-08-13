@@ -36,34 +36,27 @@ class AssetManager
     sf::Font _titleFont;
 
 public:
-
     std::unordered_map<std::string, Assets::AnimationMap> objectTypeAnimations;
 
-public:
-
-public:
     static AssetManager& instance();
 
     bool loadSpriteSheet(std::string textureName);
 
     std::vector<Assets::AnimationFrame> getAnimationFrames(std::string type, std::string animation);
-
     Assets::AnimationFrame getAnimationFrame(std::string type, std::string animation, int frameNum);
 
     bool loadFont(std::string file);
-
     sf::Font& defaultFont() { return _titleFont; }
     const sf::Texture& mainSpriteSheetTexture() const { return _spriteSheetTexture; }
 
-    AssetManager(AssetManager& ) = delete;
-    void operator=(const AssetManager&) = delete;
 protected:
     bool loadTexture(std::string textureName);
-
     bool parseJsonFileToJsonStruct(std::string jsonName);
     bool parseJsonToDataStructure();
-private:
 
+private:
     AssetManager() {}
     ~AssetManager() {}
+    AssetManager(AssetManager& ) = delete;
+    void operator=(const AssetManager&) = delete;
 };

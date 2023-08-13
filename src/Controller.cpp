@@ -8,14 +8,40 @@
 #include "Logger.h"
 
 
-Controller::Controller(GameObject *parent)
-: _gameObject(parent)
+Controller::Controller(GameObject *parent, int spd)
+: _gameObject(parent), _moveSpeed(spd)
 {}
+
+void Controller::prepareMoveInDirection(globalTypes::Direction dir)
+{
+    _gameObject->setCurrentDirection(dir);
+    int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) << 1) >> 1;
+    switch (dir) {
+        case globalTypes::Left:
+            _currMoveX = -speed; _currMoveY = 0;
+            _gameObject->setCurrentAnimation("left");
+            break;
+        case globalTypes::Up:
+            _currMoveY = -speed; _currMoveX = 0;
+            _gameObject->setCurrentAnimation("up");
+            break;
+        case globalTypes::Right: // right
+            _currMoveX = speed; _currMoveY = 0;
+            _gameObject->setCurrentAnimation("right");
+            break;
+        case globalTypes::Down: // down
+            _currMoveY = speed; _currMoveX = 0;
+            _gameObject->setCurrentAnimation("down");
+            break;
+        default:
+            _currMoveY = 0; _currMoveX = 0;
+    }
+}
 
 /////
 
-TankRandomController::TankRandomController(GameObject *parent, int speed, float timeoutSec)
-: Controller(parent), _moveSpeed(speed), _actionTimeout(sf::seconds(timeoutSec)),distribution(1, 4)
+TankRandomController::TankRandomController(GameObject *parent, int spd, float timeoutSec)
+: Controller(parent, spd), _actionTimeout(sf::seconds(timeoutSec)),distribution(1, 4)
 {}
 
 void TankRandomController::update()
@@ -43,38 +69,14 @@ void TankRandomController::update()
         if (_clock.getElapsedTime() > _actionTimeout) {
             // change decision
             resetTimeout = true;
-            int dir = distribution(Utils::generator);
-            int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) << 1) >> 1;
-            switch (dir) {
-                case 1: // left
-                    _currMoveX = -speed; _currMoveY = 0;
-                    _gameObject->setCurrentDirection(globalTypes::Left);
-                    _gameObject->setCurrentAnimation("left");
-                    _isMoving = true;
-                    break;
-                case 2: // up
-                    _currMoveY = -speed; _currMoveX = 0;
-                    _gameObject->setCurrentDirection(globalTypes::Up);
-                    _gameObject->setCurrentAnimation("up");
-                    _isMoving = true;
-                    break;
-                case 3: // right
-                    _currMoveX = speed; _currMoveY = 0;
-                    _gameObject->setCurrentDirection(globalTypes::Right);
-                    _gameObject->setCurrentAnimation("right");
-                    _isMoving = true;
-                    break;
-                case 4: // down
-                    _currMoveY = speed; _currMoveX = 0;
-                    _gameObject->setCurrentDirection(globalTypes::Down);
-                    _gameObject->setCurrentAnimation("down");
-                    _isMoving = true;
-                    break;
-            }
+            globalTypes::Direction dir = static_cast<globalTypes::Direction> (distribution(Utils::generator));
+            prepareMoveInDirection(dir);
         }
 
         moved = _gameObject->move(_currMoveX, _currMoveY);
     } while (resetTimeout && --tries && moved == 0);
+
+    _isMoving = (moved == 1);
 
     if (resetTimeout) {
         _clock.restart();
@@ -90,7 +92,7 @@ void TankRandomController::update()
 /////
 
 BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg)
-: Controller(obj), _direction(dir), _moveSpeed(spd), _damage(dmg)
+: Controller(obj, spd), _direction(dir), _damage(dmg)
 {}
 
 void BulletController::update()
