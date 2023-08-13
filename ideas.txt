@@ -1,0 +1,89 @@
+Main idea: crossover of Battle City and Vampire Survivors
+
+Gameplay:
+
+Survive waves of enemy tanks while protecting your base!
+
+
+Base mechanics like in original Battle City game:
+- 4 directions
+- shot speed depends on how many bullets are currently in air
+- player protects base ("eagle" surrounded by destroyable walls)
+- enemies move randomly (mostly)
+- two players can play cooperatively (in furure versions)
+- 2 colliding bullets cancel each other
+
+Initial state:
+- 3 lives
+- base speed
+- base bullet speed
+- only one bullet can be shot
+- base surrounded by one layer of bricks
+- base is destroyed by a single shot
+
+game rules:
+- player spawns on stage near to the base (eagle surrounded by bricks)
+- player is invincible for 5 seconds
+- there are several enemy spawn points on the map. some are open from beginning, some open after some time
+- player needs to survive on the map for some time (5-10 min)
+- spawn rate and enemy powers increase with time
+- [optional] the can be a boss in the end of the level
+- every killed enemy leaves piece of XP. amount depends on the tank type
+- player needs to collect XP to gain it
+- on level up player can choose one of 3 random upgrades
+- upgrades can be: player upgrades (1-4 levels), base upgrades (1-4 levels), one time bonuses
+- when losing a life, player loses all XP and levels
+- base can be destroyed by friendly fire!
+
+
+Upgrade ideas:
+
+- PLAYER LEVELING
+    1) faster bullet (up to x4)
+    2) more simultaneous bullets (up to 4)
+    3) faster tank (up to x3)
+    4) powerful bullets (up to x4) (on max level bullets can destroy concrete walls)
+    5) additional protection (up to 4) (survide bullets without losing a life)
+    6) XP attracting circle (up to 4 tiles)
+    7) modern machinery (lvl 1-4) - makes all one time bonuses more effective
+    8) explosive bullet - when bullet hits something, it explodes with bigger hitbox, which can kill enemies (but the base too!)
+    9) improved optics - can see invisible tanks
+    10) piercing bullet  (1 level) - synergy of 1 and 4 - when powerful bullet kills weak enemy, it loses part of its power, but continues to fly
+    11) splitting bullet (1 level) - synergy of 4 and 8 - when exploded, bullet splits in two (with half power) bullets flying in opposite directions
+
+- BASE LEVELING
+    1) can survive more hits (up to 4)
+    2) [!]phoenix - can revive in initial state when destroyed
+    3) can rebuild wall once per X seconds (60, 45, 30, 15)
+    4) can restore 1 hp if not shot during {20, 15, 10} seconds (depends on upgrade 1)
+    5) reflecting bullets - requires at least 1 level of 1)
+
+- ONE TIME BONUSES
+    1) freeze all enemies (10/15/20/25 sec)
+    2) kill every enemy with 50/75/90/100% probability
+    3) make base walls concrete for some time (15/20/30/45 sec )
+    4) make player invincible for some time (10/15/20/30 sec)
+    5) additional life (+1 in machinery level > 2)
+    6) build random walls on the map (not near the base)
+    7) kills everything near the base (4/6/8/10 tiles)
+
+Enemy ideas
+
+1) basic tank (std speed, std bullet speed, shots one bullet) - 100 pt
+2) fast tank (fast speed, normal bullets) - 200pt
+3) armor tank (slow speed, 3 hp) - 400pt
+4) power tank (fast bullets) - 300pt
+5) miner tank (fast speed, leaves landmines which explodes on player collision) - 500pt
+6) vampire tank (can kill other tanks, increases hp on every kill) - 200pt * hp
+7) invisible tank (only bullets are seen - improved optics skill makes it visible) - 600pt
+
+Bonus Tanks
+
+any tank randomly can be a bonus tank - when killed, droppes a loot box
+box, when opened, provides one random upgrade
+
+
+
+BOSS ideas
+
+- super armor tank - takes 4 tiles, slow speed, 2 muzzles, shots 2 parallel bullets, which can destroy concrete. A lot of HP (10-20?)
