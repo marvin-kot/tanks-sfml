@@ -70,6 +70,7 @@ bool Game::update()
     processDeletedObjects();
 
     drawGameScreen();
+    recalculateViewPort();
     drawObjects();
     HUD::instance().drawPlayerLives();
     updateDisplay();
@@ -258,10 +259,47 @@ void Game::drawGameScreen()
     Utils::window.draw(greyRect);
 
     // draw view port
-    sf::RectangleShape blackRect(sf::Vector2f(globalVars::gameViewPort.width, globalVars::gameViewPort.height));
+
+    int w = std::min<int>(globalVars::mapSize.x*globalConst::spriteDisplaySizeX, globalVars::gameViewPort.width);
+    int h = std::min<int>(globalVars::mapSize.y*globalConst::spriteDisplaySizeY, globalVars::gameViewPort.height);
+    sf::RectangleShape blackRect(sf::Vector2f(w, h));
     blackRect.setPosition(sf::Vector2f(globalVars::gameViewPort.left, globalVars::gameViewPort.top));
     blackRect.setFillColor(sf::Color(50, 0, 0));
     Utils::window.draw(blackRect);
+}
+
+void Game::recalculateViewPort()
+{
+    GameObject *centerObject = nullptr;
+
+    if (ObjectsPool::playerObject)
+        centerObject = ObjectsPool::playerObject;
+    else if (ObjectsPool::playerSpawnerObject)
+        centerObject = ObjectsPool::playerSpawnerObject;
+    else
+        return;
+
+    using namespace globalConst;
+    using namespace globalVars;
+    // get (mapped) player coordinates
+    auto ppos = centerObject->position();
+    int mpX = ppos.x * spriteScaleX;
+    int mpY = ppos.y * spriteScaleY;
+
+    mapViewPort.left = mpX - mapViewPort.width/2;
+    mapViewPort.top = mpY - mapViewPort.height/2;
+
+    if (mapViewPort.left < 0)
+        mapViewPort.left = 0;
+    if (mapViewPort.top < 0)
+        mapViewPort.top = 0;
+
+    int realMapSizeX = mapSize.x * globalConst::spriteScaleX;
+    int realMapSizeY = mapSize.y * globalConst::spriteScaleY;
+    if (mapViewPort.left + mapViewPort.width > realMapSizeX)
+        mapViewPort.left = realMapSizeX - mapViewPort.width;
+    if (mapViewPort.top + mapViewPort.height > realMapSizeY)
+        mapViewPort.top = realMapSizeY - mapViewPort.height;
 }
 
 void Game::drawObjects()

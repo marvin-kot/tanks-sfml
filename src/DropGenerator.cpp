@@ -14,8 +14,8 @@ DropGenerator::DropGenerator(GameObject *parent)
 
 void DropGenerator::placeRandomCollectable()
 {
-    std::uniform_int_distribution<int> x_distr(1, globalVars::mapSize.x-1);
-    std::uniform_int_distribution<int> y_distr(1, globalVars::mapSize.y-1);
+    std::uniform_int_distribution<int> x_distr(1, (globalVars::mapSize.x/globalConst::spriteOriginalSizeX)-1);
+    std::uniform_int_distribution<int> y_distr(1, (globalVars::mapSize.y/globalConst::spriteOriginalSizeY)-1);
 
     std::vector<std::string> types = {
         "helmetCollectable",
@@ -34,7 +34,7 @@ void DropGenerator::placeRandomCollectable()
 
     GameObject *collectable = createObject(types[typeIndex]);
     if (collectable) {
-        collectable->setPosition(x*64, y*64);
+        collectable->setPosition(x*globalConst::spriteOriginalSizeX, y*globalConst::spriteOriginalSizeX);
         ObjectsPool::addObject(collectable);
     }
 

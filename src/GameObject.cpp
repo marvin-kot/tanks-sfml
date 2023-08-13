@@ -69,8 +69,29 @@ void GameObject::draw()
     if (_deleteme)
         return;
 
-    if (spriteRenderer)
+    using namespace globalVars;
+
+    if (spriteRenderer) {
+        int mappedX = _x * globalConst::spriteScaleX;
+        int mappedY = _y * globalConst::spriteScaleY;
+
+        // check if tile is outside view port
+        if (mappedX < mapViewPort.left || mappedX > (mapViewPort.left+mapViewPort.width)
+                || mappedY < mapViewPort.top || mappedY > (mapViewPort.top+mapViewPort.height)) {
+            if (_type == "smallExplosion" || _type == "bigExplosion")
+                _deleteme = true;
+            return;
+        }
+
+        mappedX = mappedX - mapViewPort.left;
+        mappedY = mappedY - mapViewPort.top;
+
+
+        int screenX = mappedX + globalVars::gameViewPort.left;
+        int screenY = mappedY + globalVars::gameViewPort.top;
+        spriteRenderer->_sprite.setPosition(screenX, screenY);
         spriteRenderer->draw();
+    }
     else
         Logger::instance() << _type << "no renderer";
 
@@ -87,15 +108,20 @@ void GameObject::hide(bool val)
 
 void GameObject::setPosition(int x, int y)
 {
-    if (spriteRenderer) {
-        int mappedX = x + globalVars::gameViewPort.left;
-        int mappedY = y + globalVars::gameViewPort.top;
-        spriteRenderer->_sprite.setPosition(mappedX, mappedY);
-    }
-    _x = x + globalVars::gameViewPort.left;
-    _y = y + globalVars::gameViewPort.top;
+    _x = x;
+    _y = y;
 }
 
+sf::Vector2i GameObject::position() const
+{
+    return sf::Vector2i(_x, _y);
+}
+
+void GameObject::copyParentPosition(const GameObject * parent)
+{
+    auto pos = parent->position();
+    _x = pos.x; _y = pos.y;
+}
 
 
 
@@ -105,14 +131,18 @@ int GameObject::move(int x, int y)
         return -1;
 
     if (spriteRenderer) {
-        spriteRenderer->_sprite.move(x, y);
+        int mappedMoveX = x * globalConst::spriteScaleX;
+        int mappedMoveY = y * globalConst::spriteScaleY;
+        spriteRenderer->_sprite.move(mappedMoveX, mappedMoveY);
         _x += x, _y += y;
 
         GameObject *collider = nullptr;
         bool cancelMovement = false;
-        sf::IntRect thisBoundingBox = sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
+        sf::IntRect bb = boundingBox();// sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
 
-        if (Utils::isOutOfBounds(thisBoundingBox)) {
+        bool outOfBounds = bb.left < 0 || (bb.left+bb.width) > globalVars::mapSize.x || bb.top < 0 || (bb.top+bb.height) > globalVars::mapSize.y;
+
+        if (outOfBounds) {
             updateOnCollision(collider, cancelMovement);
         }
         else {
@@ -127,7 +157,8 @@ int GameObject::move(int x, int y)
         }
 
         if (cancelMovement) {
-            spriteRenderer->_sprite.move(-x, -y);
+
+            spriteRenderer->_sprite.move(-mappedMoveX, -mappedMoveY);
             _x -= x, _y -= y;
             moving = false;
             return 0;
@@ -227,31 +258,12 @@ void GameObject::updateOnCollision(GameObject *other)
     updateOnCollision(other, _);
 }
 
-sf::Vector2i GameObject::position() const
-{
-    if (spriteRenderer)
-        return sf::Vector2i(spriteRenderer->_sprite.getPosition());
-    else
-        return sf::Vector2i(_x, _y);
-}
-
 sf::IntRect GameObject::boundingBox() const
 {
+    int left = _x - _w/2;
+    int top = _y - _h/2;
 
-    sf::IntRect thisBoundingBox;
-
-    if (spriteRenderer) {
-        thisBoundingBox =  sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
-        // reduct rect
-        thisBoundingBox.left += 4;
-        thisBoundingBox.top += 4;
-        thisBoundingBox.width -= 8;
-        thisBoundingBox.height -= 8;
-    }
-    else
-        thisBoundingBox =  sf::IntRect(_x, _y, 0, 0);
-
-    return thisBoundingBox;
+    return sf::IntRect(left+1, top+1, _w-2, _h-2);
 }
 
 bool GameObject::collides(const GameObject& go) const

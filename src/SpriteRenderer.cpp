@@ -58,7 +58,8 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
 
     rect.left += _spriteSheetOffsetX;
     rect.top += _spriteSheetOffsetY;
-
+    Logger::instance() << rect.width << "," << rect.height;
+    _parentObject->setSize(rect.width, rect.height);
     _sprite.setTextureRect(rect);
     _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
     _sprite.setOrigin(rect.width/2, rect.height/2);

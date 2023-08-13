@@ -5,6 +5,7 @@
 #include "ObjectsPool.h"
 
 GameObject *ObjectsPool::playerObject = nullptr;
+GameObject *ObjectsPool::playerSpawnerObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
 std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
 

@@ -22,6 +22,7 @@ public:
     static sf::Clock refreshClock;
 
     static bool isOutOfBounds(const sf::IntRect& rect);
+    static bool isOutOfBounds(int x, int y);
     static void gameOver();
 
 };

@@ -12,6 +12,7 @@ class Collectable;
 class GameObject
 {
     friend class OneShotAnimationRenderer;
+    friend class SpriteRenderer;
     friend class SpawnController;
     friend class PlayerSpawnController;
     friend class GrenadeCollectable;
@@ -52,6 +53,7 @@ private:
 
     GameObject *_parentObject;
     int _x, _y;
+    int _w, _h;
 
     void assignUniqueId();
 
@@ -79,6 +81,7 @@ public:
     void setPosition(int x, int y);
     int move(int x, int y);
     bool isOnIce() const;
+    void setSize(int w, int h) { _w = w; _h = h; }
 
     sf::Vector2i position() const;
     void copyParentPosition(const GameObject * parent);

@@ -37,6 +37,7 @@ private:
     void updateAllObjectControllers();
     void processDeletedObjects();
     void drawGameScreen();
+    void recalculateViewPort();
     void drawObjects();
     void updateDisplay();
     void checkStatePostFrame();

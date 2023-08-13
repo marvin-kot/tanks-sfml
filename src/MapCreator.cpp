@@ -37,7 +37,7 @@ GameObject *MapCreator::buildObject(std::string type)
         GameObject *spawner = new GameObject("spawner_BaseTank");
         spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        auto controller = new SpawnController(spawner, "npcBaseTank", 6, 10);
+        auto controller = new SpawnController(spawner, "npcBaseTank", 7, 8);
         controller->setBonusSpawnWithProbability(100);
         spawner->setController(controller);
 
@@ -49,7 +49,7 @@ GameObject *MapCreator::buildObject(std::string type)
         GameObject *spawner = new GameObject("spawner_FastTank");
         spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        auto controller = new SpawnController(spawner, "npcFastTank", 7, 10);
+        auto controller = new SpawnController(spawner, "npcFastTank", 10, 6);
         controller->setBonusSpawnWithProbability(100);
         spawner->setController(controller);
 
@@ -61,7 +61,7 @@ GameObject *MapCreator::buildObject(std::string type)
         GameObject *spawner = new GameObject("spawner_ArmorTank");
         spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        auto controller = new SpawnController(spawner, "npcArmorTank", 8, 8);
+        auto controller = new SpawnController(spawner, "npcArmorTank", 9, 6);
         controller->setBonusSpawnWithProbability(100);
         spawner->setController(controller);
 
@@ -130,12 +130,12 @@ GameObject *MapCreator::buildObject(std::string type)
 void MapCreator::setupScreenBordersBasedOnMapSize()
 {
     assert(map_w > 0 && map_h > 0);
-    globalVars::borderWidth = (globalConst::screen_w - mapWidth()*globalConst::spriteDisplaySizeX) / 2;
-    globalVars::borderHeight = (globalConst::screen_h - mapHeight()*globalConst::spriteDisplaySizeY) / 2;
-    globalVars::gameViewPort = sf::IntRect(globalVars::borderWidth, globalVars::borderHeight, globalConst::screen_w - globalVars::borderWidth*2, globalConst::screen_h - globalVars::borderHeight * 2);
+    globalVars::borderWidth = (globalConst::screen_w - globalVars::mapViewPort.width)/2; //(globalConst::screen_w - mapWidth()*globalConst::spriteDisplaySizeX) / 2;
+    globalVars::borderHeight = (globalConst::screen_h - globalVars::mapViewPort.height)/2;// (globalConst::screen_h - mapHeight()*globalConst::spriteDisplaySizeY) / 2;
+    globalVars::gameViewPort = sf::IntRect(globalVars::borderWidth, globalVars::borderHeight, globalVars::mapViewPort.width, globalVars::mapViewPort.height);
 
     // WARNING: side effect - save map size globally
-    globalVars::mapSize = sf::Vector2i(mapWidth(), mapHeight());
+    globalVars::mapSize = sf::Vector2i(mapWidth() * globalConst::spriteOriginalSizeX, mapHeight() * globalConst::spriteOriginalSizeX);
 }
 
 // ############ Custom Matrix Text ###################
@@ -181,6 +181,10 @@ int MapCreatorFromCustomMatrixFile::parseMapFile(std::string fileName)
 
 int MapCreatorFromCustomMatrixFile::buildMapFromData()
 {
+    constexpr int basicTileSize = globalConst::spriteOriginalSizeX;
+    constexpr int tileCenter = basicTileSize / 2;
+    constexpr int subtileSize = basicTileSize / 2;
+    constexpr int subtileCenter = subtileSize / 2;
     // screen border properties must be set before building the map to place objects correctly
     setupScreenBordersBasedOnMapSize();
     bool playerCreated = false;
@@ -197,7 +201,10 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
                     for (auto part : parts) {
                         GameObject *object = MapCreator::buildObject(part);
                         assert(object != nullptr);
-                        object->setPosition(x*64 + 16 + (i%2)*32, y*64 + 16 + (i/2)*32);
+                        object->setSize(subtileSize, subtileSize);
+                        object->setPosition(
+                            x*basicTileSize + subtileCenter + (i%2)*subtileSize,
+                            y*basicTileSize + subtileCenter + (i/2)*subtileSize);
                         ObjectsPool::addObject(object);
                         i++;
                     }
@@ -205,9 +212,11 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
                 }
                 GameObject *object = MapCreator::buildObject(objType);
                 if (object != nullptr) {
-                    object->setPosition(x*64 + 32, y*64 + 32);
+                    object->setSize(basicTileSize, basicTileSize);
+                    object->setPosition(x*basicTileSize + tileCenter, y*basicTileSize + tileCenter);
                     ObjectsPool::addObject(object);
                     if (object->type() == "spawner_player") {
+                        ObjectsPool::playerSpawnerObject = object;
                         playerCreated = true;
                     }
                 }
@@ -235,6 +244,8 @@ int MapCreatorFromJson::parseMapFile(std::string jsonName)
 
 int MapCreatorFromJson::buildMapFromData()
 {
+    constexpr int tileCenter = globalConst::spriteOriginalSizeX / 2;
+
     setupScreenBordersBasedOnMapSize();
     bool playerCreated = false;
     for (json::iterator it = data.begin(); it != data.end(); ++it) {
@@ -246,7 +257,7 @@ int MapCreatorFromJson::buildMapFromData()
 
         GameObject *object = MapCreator::buildObject(objType);
         if (object != nullptr) {
-            object->setPosition(x*64 + 32, y*64 + 32);
+            object->setPosition(x*globalConst::spriteOriginalSizeX + tileCenter, y*globalConst::spriteOriginalSizeX + tileCenter);
             ObjectsPool::addObject(object);
             if (object->type() == "player") {
                 playerCreated = true;

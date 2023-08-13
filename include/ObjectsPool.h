@@ -15,6 +15,7 @@ private:
 
 public:
     static GameObject *playerObject;
+    static GameObject *playerSpawnerObject;
 
     ~ObjectsPool();
 
