@@ -27,7 +27,7 @@ public:
     template <typename T>
     Logger& operator<<(T&& t) // provide a generic operator<<
     {
-       out << t << std::endl;
+       out << t;
        return *this;
     }
 

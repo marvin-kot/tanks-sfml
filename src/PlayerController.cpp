@@ -3,6 +3,7 @@
 #include "Damageable.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
+#include "ObjectsPool.h"
 #include "Shootable.h"
 #include "SoundPlayer.h"
 #include "Utils.h"
@@ -10,8 +11,19 @@
 PlayerController::PlayerController(GameObject *obj)
 : Controller(obj, globalConst::DefaultPlayerSpeed)
 {
+    _clock.reset(true);
+    resetXP();
 }
 
+PlayerController::~PlayerController()
+{
+    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ) {
+        PlayerUpgrade *obj = (*it).second;
+        it = _collectedUpgrades.erase(it);
+        delete obj;
+    }
+    resetXP();
+}
 
 void PlayerController::setPressedFlag(KeysPressed flag, bool state)
 {
@@ -28,6 +40,9 @@ bool PlayerController::wasPressed(KeysPressed flag)
 
 void PlayerController::update()
 {
+    checkForGamePause();
+    if (_pause) return;
+
     assert(_gameObject != nullptr);
     if (_invincible) {
         if (_invincibilityTimer.getElapsedTime() < sf::seconds(_invincibilityTimeout))
@@ -123,7 +138,10 @@ void PlayerController::update()
 
     if (_isMoving) {
         prepareMoveInDirection(direction);
-        _gameObject->move(_currMoveX, _currMoveY);
+        if (_gameObject->move(_currMoveX, _currMoveY) == 0) {
+            // try same direction but +1/-1 pixes aside
+            trySqueeze();
+        }
         _lastActionTime = _clock.getElapsedTime();
         SoundPlayer::instance().playTankMoveSound();
         _gameObject->restartAnimation();
@@ -131,11 +149,25 @@ void PlayerController::update()
         // check if on ice
         if (_gameObject->isOnIce()) {
             SoundPlayer::instance().playIceSkidSound();
-            _gameObject->move(_currMoveX, _currMoveY);
+            if (_gameObject->move(_currMoveX, _currMoveY) == 0) {
+                SoundPlayer::instance().playTankStandSound();
+                _gameObject->stopAnimation();
+            }
         } else {
             SoundPlayer::instance().playTankStandSound();
             _gameObject->stopAnimation();
         }
+    }
+}
+
+void PlayerController::trySqueeze()
+{
+    if (_currMoveX == 0) {
+        if (_gameObject->move(2, _currMoveY) == 0)
+            _gameObject->move(-2, _currMoveY);
+    } else if (_currMoveY == 0) {
+        if (_gameObject->move(_currMoveX, 2) == 0)
+            _gameObject->move(_currMoveX, -2);
     }
 }
 
@@ -188,6 +220,34 @@ void PlayerController::updatePowerLevel()
     globalVars::player1PowerLevel = _powerLevel;
 }
 
+void PlayerController::updateAppearance()
+{
+    SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
+    assert(renderer != nullptr);
+    Damageable *damageable = _gameObject->getComponent<Damageable>();
+    assert(damageable != nullptr);
+
+    switch (damageable->defence()) {
+        case 0:
+            renderer->setSpriteSheetOffset(0, 0);
+            break;
+        case 1:
+            renderer->setSpriteSheetOffset(0, 16);
+            break;
+        case 2:
+            renderer->setSpriteSheetOffset(0, 32);
+            break;
+        case 3:
+            renderer->setSpriteSheetOffset(0, 48);
+            break;
+        case 4:
+            renderer->setSpriteSheetOffset(0, 48);
+            break;
+    }
+
+    renderer->showAnimationFrame(0);
+}
+
 void PlayerController::setTemporaryInvincibility(int sec)
 {
     _invincible = true;
@@ -206,21 +266,25 @@ void PlayerController::setTemporaryInvincibility(int sec)
 }
 
 std::vector<int> xpNeededForLevelUp = {
-    400,
-    1000,
-    2000,
-    3500,
-    5000
-};
+    400, // 400
+    1000, // 600
+    2000, // 1000
+    3500, // 1500
+    5500,  // 2000
+    8000, // 2500
+    11000, // 3000
+    16000, // 5000
+    24000 // 8000
+ };
 
 void PlayerController::addXP(int val)
 {
     _xp += val;
+    Logger::instance() << "collect " << val << "xp\n";
     globalVars::player1XP += val;
-    if (_xp > xpNeededForLevelUp[_level]) {
+    if (_xp >= xpNeededForLevelUp[_level]) {
         levelUp();
     }
-
 }
 
 void PlayerController::resetXP()
@@ -230,13 +294,78 @@ void PlayerController::resetXP()
 
     globalVars::player1XP = 0;
     globalVars::player1Level = 1;
+
+    if (ObjectsPool::eagleObject) {
+        ObjectsPool::eagleObject->getComponent<Damageable>()->setDefence(0);
+        ObjectsPool::eagleObject->getComponent<EagleController>()->updateAppearance();
+    }
 }
 
 void PlayerController::levelUp()
 {
+    // if we already lost, no sense to level up
+    if (ObjectsPool::eagleObject == nullptr)
+        return;
+    Logger::instance() << "Level up!\n";
     _level++;
     globalVars::player1Level++;
-    //SoundPlayer::instance().stopAllSounds();
-    //SoundPlayer::instance().playBonusCollectSound();
+
+    PlayerUpgrade::generateThreeRandomUpgradesForPlayer(_gameObject);
     globalVars::openLevelUpMenu = true;
+}
+
+void PlayerController::chooseUpgrade(int index)
+{
+    assert(index>=0 && index <= 3);
+    assert(PlayerUpgrade::currentThreeRandomUpgrades.size() == 3);
+    auto upgrade = PlayerUpgrade::currentThreeRandomUpgrades[index];
+    assert(upgrade != nullptr);
+
+    if (upgrade->category() == PlayerUpgrade::OneTimeBonus) {
+        upgrade->onCollect(_gameObject);
+        delete upgrade;
+    } else {
+        auto tp = upgrade->type();
+        int lvl = hasLevelOfUpgrade(tp);
+        // TODO magic names
+        if (lvl > -1 && lvl < 3) {
+            _collectedUpgrades[tp]->increaseLevel();
+        } else {
+            _collectedUpgrades[tp] = upgrade;
+        }
+    }
+
+    // re-new all bonuses (like, armor protection etc) on every level-up
+    for (auto it : _collectedUpgrades) {
+        it.second->onCollect(_gameObject);
+    }
+
+    updateAppearance();
+}
+
+int PlayerController::hasLevelOfUpgrade(PlayerUpgrade::UpgradeType type) const
+{
+    if (_collectedUpgrades.find(type) == _collectedUpgrades.end())
+        return -1;
+    else
+        return _collectedUpgrades.at(type)->currentLevel();
+}
+
+int PlayerController::numberOfUpgrades() const
+{
+    return _collectedUpgrades.size();
+}
+
+PlayerUpgrade *PlayerController::getUpgrade(int index) const
+{
+    assert(index < _collectedUpgrades.size());
+
+    int i = 0;
+    for (auto u : _collectedUpgrades) {
+        if (i == index)
+            return u.second;
+        i++;
+    }
+
+    return nullptr;
 }

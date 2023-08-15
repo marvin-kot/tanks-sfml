@@ -5,6 +5,7 @@
 #include "GlobalConst.h"
 #include "HUD.h"
 #include "ObjectsPool.h"
+#include "PlayerController.h"
 #include "Logger.h"
 #include "MapCreator.h"
 #include "SoundPlayer.h"
@@ -57,9 +58,12 @@ void Game::initializeVariables()
 bool Game::update()
 {
     if (!_levelUpMenu && globalVars::openLevelUpMenu) {
+        assert(ObjectsPool::playerObject != nullptr);
         _levelUpMenu = true;
+        globalVars::gameIsPaused = true;
         SoundPlayer::instance().stopAllSounds();
         SoundPlayer::instance().playBonusCollectSound();
+        globalVars::globalFreezeChronometer.pause();
     }
 
     updateFrameClock();
@@ -72,13 +76,14 @@ bool Game::update()
     }
     // else if 1 - proceed
 
-    if (!_paused && !_levelUpMenu) {
-        updateAllObjectControllers();
+    updateAllObjectControllers();
+
+    if (!globalVars::gameIsPaused && !_levelUpMenu) {
         processDeletedObjects();
     }
 
     drawGameScreen();
-    if (!_paused && !_levelUpMenu)
+    if (!globalVars::gameIsPaused && !_levelUpMenu)
         recalculateViewPort();
     drawObjects();
     HUD::instance().draw();
@@ -88,7 +93,7 @@ bool Game::update()
 
     updateDisplay();
 
-    if (!_paused && !_levelUpMenu)
+    if (!globalVars::gameIsPaused && !_levelUpMenu)
         checkStatePostFrame();
 
     return true;
@@ -128,15 +133,21 @@ void Game::processWindowEvents()
                     // TODO: ask player confirmation
                     gameState = GameOver;
                 } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::P) {
-                    if (!_paused) {
+                    if (!globalVars::gameIsPaused) {
                         SoundPlayer::instance().stopAllSounds();
                         SoundPlayer::instance().playPauseSound();
+                        globalVars::globalFreezeChronometer.pause();
+                    } else {
+                        globalVars::globalFreezeChronometer.resume();
                     }
-                    _paused = !_paused;
+                    globalVars::gameIsPaused = !globalVars::gameIsPaused;
                 } else if (gameState == PlayingLevel && _levelUpMenu) {
                     if (event.key.scancode == sf::Keyboard::Scan::Enter) {
+                        getSelectedUpgrade();
                         _levelUpMenu = false;
+                        globalVars::gameIsPaused = false;
                         globalVars::openLevelUpMenu = false;
+                        globalVars::globalFreezeChronometer.resume();
                     } else if (event.key.scancode == sf::Keyboard::Scan::Left) {
                         SoundPlayer::instance().playTickSound();
                         if (--_currentUpgradeCursor < 0)
@@ -173,14 +184,18 @@ int Game::processStateChange()
         SoundPlayer::instance().stopAllSounds();
         ObjectsPool::clearEverything();
 
-        Logger::instance() << "Building map..." << levelMaps[currentLevel];
+        globalVars::player1Lives = globalConst::InitialLives;
+        globalVars::player1PowerLevel = globalConst::InitialPowerLevel;
+
+        Logger::instance() << "Building map..." << levelMaps[currentLevel] << "\n";
         if (!buildLevelMap(levelMaps[currentLevel])) {
             Utils::window.close();
-            Logger::instance() << "Failed to build map";
+            Logger::instance() << "Failed to build map\n";
             return -1;
         }
-        Logger::instance() << "Level map is built";
+        Logger::instance() << "Level map is built\n";
         SoundPlayer::instance().gameOver = false;
+
         gameState = PlayingLevel;
         return 0;
     } else if (gameState == GameOver) {
@@ -230,9 +245,6 @@ void Game::processDeletedObjects()
             if (obj->mustBeDeleted()) {
                 if (obj->isFlagSet(GameObject::Player)) {
                     globalVars::player1Lives--;
-                    globalVars::player1XP = 0;
-                    globalVars::player1Level = 1;
-
                     ObjectsPool::playerObject = nullptr;
                 }
 
@@ -240,7 +252,12 @@ void Game::processDeletedObjects()
                     framesToDie = globalConst::MaxFramesToDie;
                     SoundPlayer::instance().stopAllSounds();
                     SoundPlayer::instance().gameOver = true;
+                    ObjectsPool::eagleObject = nullptr;
                     // do not break here - we still need to create explosion few lines later!
+                }
+
+                if (obj->isFlagSet(GameObject::PlayerSpawner)) {
+                    ObjectsPool::playerSpawnerObject = nullptr;
                 }
 
                 if (obj->isFlagSet(GameObject::Bullet)) {
@@ -350,7 +367,7 @@ void Game::drawObjects()
 
     // 2. draw tanks and bullets
     std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "bullet"});
-    std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(_paused); });
+    std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(globalVars::gameIsPaused); });
 
     // 3. draw walls and trees
     auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({
@@ -365,7 +382,7 @@ void Game::drawObjects()
         "100xp", "200xp", "300xp", "400xp", "500xp",
         "smallExplosion", "bigExplosion"
         });
-    std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(_paused); });
+    std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(globalVars::gameIsPaused); });
 }
 
 void Game::updateDisplay()
@@ -417,7 +434,7 @@ void Game::drawTitleScreen()
     text.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 - titleSize);
 
     sf::Text textSub;
-    std::string subtitle = "version  0.1";
+    std::string subtitle = "version  0.2";
     textSub.setFont(AssetManager::instance().defaultFont());
     textSub.setString(subtitle);
     textSub.setCharacterSize(titleSize/6);
@@ -447,3 +464,11 @@ void Game::drawTitleScreen()
 }
 
 
+void Game::getSelectedUpgrade()
+{
+    assert(ObjectsPool::playerObject != nullptr);
+    PlayerController *controller = ObjectsPool::playerObject->getComponent<PlayerController>();
+
+    assert(controller != nullptr);
+    controller->chooseUpgrade(_currentUpgradeCursor);
+}

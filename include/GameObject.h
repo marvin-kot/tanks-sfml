@@ -32,7 +32,8 @@ public:
         Eagle = 0x100,
         Static = 0x200,
         BonusOnHit = 0x400,
-        CollectableBonus = 0x800
+        CollectableBonus = 0x800,
+        PlayerSpawner = 0x1000
     };
 
 private:
@@ -71,7 +72,7 @@ public:
     GameObject *getParentObject() const { return _parentObject; }
     void setFlags(ObjectFlags);
     void appendFlags(ObjectFlags);
-    bool isFlagSet(ObjectFlags);
+    bool isFlagSet(ObjectFlags) const;
 
     inline void setParentId(int pid) { _parentId = pid; }
     inline int parentId() { return _parentId; }
@@ -96,6 +97,7 @@ public:
     inline std::string type() const { return _type; }
     inline int id() const { return _id; }
     inline bool mustBeDeleted() const { return _deleteme; }
+    inline void markForDeletion() { _deleteme = true; }
 
     void setController(Controller *);
     void setShootable(Shootable *);

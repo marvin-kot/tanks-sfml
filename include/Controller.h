@@ -5,6 +5,8 @@
 #include <SFML/System/Time.hpp>
 #include <SFML/System/Clock.hpp>
 
+#include <sftools/Chronometer.hpp>
+
 #include <random>
 
 class GameObject;
@@ -14,15 +16,18 @@ class Controller
 
 protected:
     GameObject *_gameObject;
-    sf::Clock _clock;
+    //sf::Clock _clock;
+    sftools::Chronometer _clock;
+    bool _pause = false;
     sf::Time _lastActionTime;
     bool _isMoving = false;
 
     int _currMoveX = 0;
     int _currMoveY = 0;
-    const int _moveSpeed;
+    int _moveSpeed;
 
     void prepareMoveInDirection(globalTypes::Direction);
+    void checkForGamePause();
 public:
     Controller(GameObject *obj, int spd);
     virtual ~Controller() {}
@@ -58,6 +63,7 @@ public:
 class SpawnController : public Controller
 {
     enum SpawnStates {
+        StartDelay,
         Starting,
         Waiting,
         PlayingAnimation,
@@ -67,6 +73,7 @@ class SpawnController : public Controller
     SpawnStates _state;
     const std::string _spawnableType;
     const sf::Time _spawnTimeout;
+    const sf::Time _startSpawnDelay;
 
     sf::Clock _spawnAnimationclock;
     const sf::Time _spawnAnimationTime = sf::seconds(2);
@@ -77,7 +84,7 @@ class SpawnController : public Controller
     static GameObject *createObject(std::string type);
 
 public:
-    SpawnController(GameObject *parent, std::string type, int timeout, int quantity);
+    SpawnController(GameObject *parent, std::string type, int delay, int timeout, int quantity);
     void update() override;
 
 public:
@@ -102,7 +109,28 @@ class PlayerSpawnController : public Controller
     static GameObject *createObject();
 
 public:
-    PlayerSpawnController(GameObject *parent, int livesm, int powerLevel);
+    PlayerSpawnController(GameObject *parent, int lives, int powerLevel);
+    ~PlayerSpawnController();
     void update() override;
     void appendLife();
+};
+
+
+class EagleController : public Controller
+{
+    enum EagleStates {
+        Starting,
+        BuildingWalls,
+        Waiting,
+        Reswawning
+    };
+
+    EagleStates _state;
+    std::vector<GameObject *> _surroundingWalls;
+public:
+    EagleController(GameObject *parent);
+    ~EagleController();
+
+    void update() override;
+    void updateAppearance();
 };

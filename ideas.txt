@@ -46,7 +46,7 @@ Upgrade ideas:
     5) additional protection (up to 4) (survide bullets without losing a life)
     6) XP attracting circle (up to 4 tiles)
     7) modern machinery (lvl 1-4) - makes all one time bonuses more effective
-    8) explosive bullet - when bullet hits something, it explodes with bigger hitbox, which can kill enemies (but the base too!)
+    8) rocket (explosive) - when rocket hits something, it explodes with bigger hitbox, which can kill enemies (but the base too!)
     9) improved optics - can see invisible tanks
     10) piercing bullet  (1 level) - synergy of 1 and 4 - when powerful bullet kills weak enemy, it loses part of its power, but continues to fly
     11) splitting bullet (1 level) - synergy of 4 and 8 - when exploded, bullet splits in two (with half power) bullets flying in opposite directions
@@ -66,6 +66,7 @@ Upgrade ideas:
     5) additional life (+1 in machinery level > 2)
     6) build random walls on the map (not near the base)
     7) kills everything near the base (4/6/8/10 tiles)
+    8) collect all free XP at once
 
 Enemy ideas
 

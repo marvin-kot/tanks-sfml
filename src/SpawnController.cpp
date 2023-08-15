@@ -6,22 +6,34 @@
 #include "Shootable.h"
 #include "Utils.h"
 
-SpawnController::SpawnController(GameObject *parent, std::string type, int timeout, int quantity)
-: Controller(parent, 0), _spawnableType(type), _spawnTimeout(sf::seconds(timeout)), _quantity(quantity)
+SpawnController::SpawnController(GameObject *parent, std::string type, int delay, int timeout, int quantity)
+: Controller(parent, 0)
+, _spawnableType(type)
+, _startSpawnDelay(sf::seconds(delay))
+, _spawnTimeout(sf::seconds(timeout))
+, _quantity(quantity)
 {
+    _clock.reset(true);
     _gameObject->hide(true);
-    _state = Starting;
+    _state = StartDelay;
 }
 
 
 void SpawnController::update()
 {
+    checkForGamePause();
+    if (_pause) return;
+
     if (_quantity < 1) {
-        _gameObject->_deleteme = true;
+        _gameObject->markForDeletion();
         return;
     }
 
     switch (_state) {
+        case StartDelay:
+            if (_clock.getElapsedTime() > _startSpawnDelay)
+                _state = Starting;
+            break;
         case Waiting:
             if (_clock.getElapsedTime() > _spawnTimeout)
                 _state = Starting;
@@ -50,7 +62,7 @@ void SpawnController::update()
                     _quantity--;
                 }
 
-                _clock.restart();
+                _clock.reset(true);
                 _gameObject->hide(true);
                 _state = Waiting;
             }
@@ -96,7 +108,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setRenderer(new SpriteRenderer(enemy));
         enemy->setDamageable(new Damageable(enemy, 1));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed*4/3, 0.5));
-        enemy->setDropGenerator(new DropGenerator(enemy, 300));
+        enemy->setDropGenerator(new DropGenerator(enemy, 200));
 
         return enemy;
     }
@@ -110,6 +122,22 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setDamageable(new Damageable(enemy, 3));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed*3/4, 1));
         enemy->setDropGenerator(new DropGenerator(enemy, 400));
+
+        return enemy;
+    }
+
+    if (type == "npcPowerTank") {
+        GameObject *enemy = new GameObject("npcArmorTank");
+        //enemy->setShootable(new Shootable(enemy, globalConst::DefaultTimeoutMs));
+        Shootable *shootable = new PlayerShootable(enemy, 1);
+        shootable->setDamage(2);
+        shootable->setBulletSpeed(globalConst::DoubleBulletSpeed);
+        enemy->setShootable(shootable);
+        enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
+        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setDamageable(new Damageable(enemy, 2));
+        enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 0.5));
+        enemy->setDropGenerator(new DropGenerator(enemy, 500));
 
         return enemy;
     }

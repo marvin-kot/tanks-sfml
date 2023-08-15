@@ -13,9 +13,13 @@ PlayerSpawnController::PlayerSpawnController(GameObject *parent, int lives, int 
     _state = Starting;
 }
 
+PlayerSpawnController::~PlayerSpawnController()
+{
+}
+
 GameObject * PlayerSpawnController::createObject()
 {
-    Logger::instance() << "Creating player...";
+    Logger::instance() << "Creating player...\n";
     GameObject *pc = new GameObject("player");
     pc->setShootable(new PlayerShootable(pc, 0));
     pc->setFlags(GameObject::Player | GameObject::BulletKillable);
@@ -30,11 +34,14 @@ GameObject * PlayerSpawnController::createObject()
 
 void PlayerSpawnController::update()
 {
+    checkForGamePause();
+    if (_pause) return;
+
     switch (_state) {
         case Waiting:
             if (ObjectsPool::playerObject == nullptr) {
                 if (_lives < 1) {
-                    _gameObject->_deleteme = true;
+                    _gameObject->markForDeletion();
                     return;
                 }
                 _initialPowerLevel = 0; // as player was killed, its power resets to 0
@@ -43,7 +50,6 @@ void PlayerSpawnController::update()
             }
             break;
         case Starting:
-            Logger::instance() << "Starting";
             _gameObject->hide(false);
             _spawnAnimationclock.restart();
             _state = PlayingAnimation;
@@ -69,7 +75,7 @@ void PlayerSpawnController::update()
                     _lives--;
                 }
 
-                _clock.restart();
+                _clock.reset(true);
                 _gameObject->hide(true);
                 _state = Waiting;
             }

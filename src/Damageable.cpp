@@ -32,6 +32,11 @@ void Damageable::setDefence(int def)
     _def = def;
 }
 
+int Damageable::defence() const
+{
+    return _def;
+}
+
 void Damageable::makeInvincible(bool val)
 {
     _invincible = val;

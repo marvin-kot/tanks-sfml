@@ -18,7 +18,6 @@ private:
 
     int framesToDie, framesToWin;
 
-    bool _paused = false;
     bool _levelUpMenu = false;
     int _currentUpgradeCursor = 0;
 
@@ -47,4 +46,5 @@ private:
     void checkStatePostFrame();
     void drawTitleScreen();
     void drawLevelUpPopupMenu();
+    void getSelectedUpgrade();
 };

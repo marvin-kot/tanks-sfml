@@ -1,7 +1,57 @@
 #include "AssetManager.h"
+#include "GameObject.h"
 #include "GlobalConst.h"
 #include "HUD.h"
+#include "ObjectsPool.h"
+#include "PlayerUpgrade.h"
+#include "PlayerController.h"
 #include "Utils.h"
+
+void drawText(std::string str, int fontSize, int x, int y, bool leftOrientation = false)
+{
+    sf::Text text;
+    text.setFont(AssetManager::instance().defaultFont());
+    text.setString(str);
+    text.setCharacterSize(fontSize);
+    text.setFillColor(sf::Color::White);
+
+    if (leftOrientation)
+        text.setOrigin(0, fontSize/2);
+    else {
+        size_t length = str.find("\n");
+        if (length == std::string::npos)
+            length = str.length();
+        text.setOrigin(fontSize * length / 2.5, fontSize/2);
+    }
+    text.setPosition(x, y);
+    Utils::window.draw(text);
+}
+
+void drawCursor(sf::RectangleShape& parentRect, int pos)
+{
+    int cursorX = 0;
+    int cursorY = parentRect.getPosition().y - parentRect.getSize().y/8;
+    switch (pos) {
+        case 0:
+            cursorX = parentRect.getPosition().x - parentRect.getSize().x/4;
+            break;
+        case 1:
+            cursorX = parentRect.getPosition().x;
+            break;
+        case 2:
+            cursorX = parentRect.getPosition().x + parentRect.getSize().x/4;
+            break;
+    }
+
+    sf::RectangleShape whiteRect(sf::Vector2f(18, 18));
+    whiteRect.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
+    whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
+    whiteRect.setPosition(cursorX, cursorY);
+    whiteRect.setFillColor(sf::Color(200, 200, 200));
+    Utils::window.draw(whiteRect);
+}
+
+////////////////////////////////////////
 
 HUD::HUD()
 {
@@ -18,47 +68,91 @@ void HUD::draw()
 {
     drawPlayerLives();
     drawPlayerXP();
+    drawPlayerUpgrades();
 }
 
 void HUD::drawPlayerLives()
 {
     constexpr int iconWidth = 7;
     constexpr int iconHeight = 8;
-    constexpr int iconWidthScaled = iconWidth * globalConst::spriteScaleX;
+    constexpr int iconWidthScaled = iconWidth * globalConst::spriteScaleX/2;
 
     sf::IntRect rect = sf::IntRect(377, 144, iconWidth, iconHeight);
-    _sprite.setTextureRect(rect);
-    _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-    _sprite.setOrigin(0, 0);
+    drawMiniIcon(rect, 16, 32);
 
-    _sprite.setPosition(16, 16);
-
-    Utils::window.draw(_sprite);
-
-    sf::Text text;
-    text.setFont(AssetManager::instance().defaultFont());
     std::string lives = std::to_string(globalVars::player1Lives);
-    text.setString(lives);
     const int titleSize = 24;
-    text.setCharacterSize(titleSize);
-    text.setFillColor(sf::Color::White);
-    text.setOrigin(0, 0);
-    text.setPosition(16 + iconWidthScaled + 8, 16);
-    Utils::window.draw(text);
+    drawText(lives, titleSize, 16 + iconWidthScaled + 8, 32, true);
 }
 
 void HUD::drawPlayerXP()
 {
-    sf::Text text;
-    text.setFont(AssetManager::instance().defaultFont());
-    std::string lives = std::to_string(globalVars::player1Level) + "/" + std::to_string(globalVars::player1XP);
-    text.setString(lives);
-    const int titleSize = 24;
-    text.setCharacterSize(titleSize);
-    text.setFillColor(sf::Color::White);
-    text.setOrigin(0, 0);
-    text.setPosition(16, 16 + titleSize + 8);
-    Utils::window.draw(text);
+    const int fontSize = 24;
+    std::string levelAndXp = std::to_string(globalVars::player1Level) + "/" + std::to_string(globalVars::player1XP);
+    drawText(levelAndXp, fontSize, 8, 32 + fontSize + 8, true);
+}
+
+void HUD::drawPlayerUpgrades()
+{
+    if (ObjectsPool::playerObject == nullptr)
+        return;
+
+    auto pController = ObjectsPool::playerObject->getComponent<PlayerController>();
+
+    const int upgradesNumber = pController->numberOfUpgrades();
+
+    for (int i=0; i<upgradesNumber; i++) {
+        drawMiniIcon(
+            pController->getUpgrade(i)->iconRect(),
+            32 + i * (32 + 16),
+            32 + 24 + 64
+        );
+
+        drawText(
+            std::to_string(pController->getUpgrade(i)->currentLevel()+1),
+            24,
+            32 + i * (32 + 16),
+            32 + 24 + 64 + 24
+        );
+    }
+}
+
+void HUD::drawMiniIcon(const sf::IntRect& iconRect, int x, int y)
+{
+    _sprite.setTextureRect(iconRect);
+    _sprite.setScale(globalConst::spriteScaleX / 2, globalConst::spriteScaleY / 2);
+    _sprite.setOrigin(iconRect.width/2, iconRect.height/2);
+    _sprite.setPosition(x, y);
+
+    Utils::window.draw(_sprite);
+}
+
+void HUD::drawIcon(const sf::IntRect& iconRect, int x, int y)
+{
+    _sprite.setTextureRect(iconRect);
+    _sprite.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
+    _sprite.setOrigin(iconRect.width/2, iconRect.height/2);
+    _sprite.setPosition(x, y);
+
+    Utils::window.draw(_sprite);
+}
+
+void HUD::drawUpgrade(int index, int x, int y)
+{
+    assert(index >=0 && index < PlayerUpgrade::currentThreeRandomUpgrades.size());
+    auto upgrade = PlayerUpgrade::currentThreeRandomUpgrades[index];
+
+    assert(upgrade != nullptr);
+    drawIcon(upgrade->iconRect(), x, y);
+
+    std::string caption = upgrade->name();
+    const int captionFontSize = 16;
+    drawText(caption, captionFontSize, x, y + 100 + captionFontSize);
+
+    std::string description = upgrade->currentEffectDescription();
+    const int descriptionFontSize = 12;
+    drawText(description, descriptionFontSize, x, y + 100 + captionFontSize + 20 + descriptionFontSize);
+
 }
 
 void HUD::drawLevelUpPopupMenu(int cursorPos)
@@ -73,63 +167,30 @@ void HUD::drawLevelUpPopupMenu(int cursorPos)
     greyRect.setFillColor(sf::Color(102, 102, 102));
     Utils::window.draw(greyRect);
 
-    // draw cursor
-    int cursorX = 0;
-    int cursorY = greyRect.getPosition().y - greyRect.getSize().y/4;
-    switch (cursorPos) {
-        case 0:
-            cursorX = greyRect.getPosition().x - greyRect.getSize().x/4;
-            break;
-        case 1:
-            cursorX = greyRect.getPosition().x;
-            break;
-        case 2:
-            cursorX = greyRect.getPosition().x + greyRect.getSize().x/4;
-            break;
+    // draw title
+    {
+        std::string lvl = "You reached level " + std::to_string(globalVars::player1Level) + "!";
+        const int titleFontSize = 24;
+        drawText( lvl, titleFontSize,
+            greyRect.getPosition().x,
+            greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize);
+
+        const int subtitleSize = 16;
+        drawText( "Select one of these upgrades:", subtitleSize,
+            greyRect.getPosition().x,
+            greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize + subtitleSize*2);
     }
 
-    sf::RectangleShape whiteRect(sf::Vector2f(20, 20));
-    whiteRect.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-    whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
-    whiteRect.setPosition(cursorX, cursorY);
-    whiteRect.setFillColor(sf::Color(200, 200, 200));
-    Utils::window.draw(whiteRect);
+
+    // draw cursor
+    drawCursor(greyRect, cursorPos);
+
+    const int iconY = greyRect.getPosition().y - greyRect.getSize().y/8;
+    const int centerX = greyRect.getPosition().x;
+    const int offsetX = greyRect.getSize().x/4;
 
     // draw icons
-    {
-        sf::IntRect rect = AssetManager::instance().getAnimationFrame("grenadeCollectable", "default", 0).rect;
-        _sprite.setTextureRect(rect);
-        _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-        _sprite.setOrigin(rect.width/2, rect.height/2);
-        _sprite.setPosition(greyRect.getPosition().x - greyRect.getSize().x/4, cursorY);
-        Utils::window.draw(_sprite);
-
-        sf::Text text;
-        text.setFont(AssetManager::instance().defaultFont());
-        std::string lvl = "Level 1";
-        text.setString(lvl);
-        const int titleSize = 16;
-        text.setCharacterSize(titleSize);
-        text.setFillColor(sf::Color::White);
-        text.setOrigin(titleSize * lvl.length() / 2.5, titleSize/2);
-        text.setPosition(greyRect.getPosition().x - greyRect.getSize().x/4, cursorY + 100 + 16);
-        Utils::window.draw(text);
-    }
-    {
-        sf::IntRect rect = AssetManager::instance().getAnimationFrame("starCollectable", "default", 0).rect;
-        _sprite.setTextureRect(rect);
-        _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-        _sprite.setOrigin(rect.width/2, rect.width/2);
-        _sprite.setPosition(greyRect.getPosition().x, cursorY);
-        Utils::window.draw(_sprite);
-    }
-    {
-        sf::IntRect rect = AssetManager::instance().getAnimationFrame("helmetCollectable", "default", 0).rect;
-        _sprite.setTextureRect(rect);
-        _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
-        _sprite.setOrigin(rect.width/2, rect.width/2);
-        _sprite.setPosition(greyRect.getPosition().x + greyRect.getSize().x/4, cursorY);
-        Utils::window.draw(_sprite);
-    }
-
+    drawUpgrade(0, centerX - offsetX, iconY);
+    drawUpgrade(1, centerX, iconY);
+    drawUpgrade(2, centerX + offsetX, iconY);
 }

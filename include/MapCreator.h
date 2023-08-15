@@ -10,11 +10,21 @@ using json = nlohmann::json;
 
 
 class GameObject;
+class SpawnController;
 
 class MapCreator
 {
 protected:
     int map_w, map_h;
+    int _wavesNum;
+    struct EnemyWave
+    {
+        int delay;
+        int timeout;
+        int quantity;
+    };
+
+    std::vector<EnemyWave> _waves;
 public:
     virtual int parseMapFile(std::string fileName) = 0;
     virtual int buildMapFromData() = 0;
@@ -22,7 +32,9 @@ public:
     int mapHeight() const { return map_h; }
 
 protected:
-    static GameObject *buildObject(std::string type);
+    GameObject *buildObject(std::string type);
+    SpawnController *createSpawnController(GameObject *parent, std::string type, int wave);
+
     void setupScreenBordersBasedOnMapSize();
 
 };
@@ -37,18 +49,4 @@ public:
 
     int parseMapFile(std::string fileName) override;
     int buildMapFromData() override;
-};
-
-
-
-class MapCreatorFromJson : public MapCreator
-{
-    json data;
-
-public:
-    MapCreatorFromJson() {}
-
-    int parseMapFile(std::string jsonName) override;
-    int buildMapFromData() override;
-
 };

@@ -19,18 +19,18 @@ bool AssetManager::loadSpriteSheet(std::string textureName)
 {
     std::string pngFileName = assetFolderPath + "/" + textureName + ".png";
     if (!std::filesystem::exists(pngFileName)) {
-        Logger::instance() << pngFileName << " does not exist";
+        Logger::instance() << pngFileName << " does not exist\n";
         return false;
     }
 
     std::string jsonFileName = assetFolderPath + "/" + textureName + ".json";
     if (!std::filesystem::exists(jsonFileName)) {
-        Logger::instance() << jsonFileName << " does not exist";
+        Logger::instance() << jsonFileName << " does not exist\n";
         return false;
     }
 
     if (!_spriteSheetTexture.loadFromFile(pngFileName)) {
-        Logger::instance() << pngFileName << " failed to load texture";
+        Logger::instance() << pngFileName << " failed to load texture\n";
         return false;
     }
 
@@ -66,7 +66,7 @@ bool AssetManager::parseJsonFileToJsonStruct(std::string jsonName)
 
     std::ifstream f(jsonName);
 
-    Logger::instance() << jsonName;
+    Logger::instance() << jsonName << "\n";
 
     try {
         data = json::parse(f);

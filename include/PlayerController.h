@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Controller.h"
+#include "PlayerUpgrade.h"
 
 #include <SFML/Window/Keyboard.hpp>
 
 #include <map>
+
 
 class PlayerController : public Controller
 {
@@ -25,6 +27,8 @@ class PlayerController : public Controller
 
     std::map<sf::Keyboard::Key, sf::Time> _pressedKeys;
 
+    std::map<PlayerUpgrade::UpgradeType, PlayerUpgrade *> _collectedUpgrades;
+
     int _powerLevel = 0;
     int _xp;
     int _level = 0;
@@ -33,16 +37,26 @@ class PlayerController : public Controller
     sf::Clock _invincibilityTimer;
     int _invincibilityTimeout;
 
+    void trySqueeze();
+
 public:
     PlayerController(GameObject *obj);
+    ~PlayerController();
     void update() override;
     int powerLevel() const { return _powerLevel; }
     void increasePowerLevel(bool);
     void updatePowerLevel();
+    void updateAppearance();
+    void updateMoveSpeed(int speed) { _moveSpeed = speed; }
+    int numberOfUpgrades() const;
     void setTemporaryInvincibility(int sec);
     void addXP(int val);
     void resetXP();
     void levelUp();
+
+    void chooseUpgrade(int index);
+    int hasLevelOfUpgrade(PlayerUpgrade::UpgradeType) const;
+    PlayerUpgrade *getUpgrade(int) const;
 };
 
 struct PlayerSignal

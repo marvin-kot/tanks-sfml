@@ -23,23 +23,26 @@ file(GLOB ALL_SOURCES
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
     )
 
-add_executable(game WIN32 main.cpp ${ALL_SOURCES})
+# sftools
+include_directories(${CMAKE_SOURCE_DIR}/lib/sftools/include)
 
-add_executable(visualizer WIN32 visualizer.cpp ${ALL_SOURCES})
+add_executable(game WIN32 main.cpp ${ALL_SOURCES})
+#add_executable(visualizer WIN32 visualizer.cpp ${ALL_SOURCES})
 
 target_link_libraries(game PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(visualizer PRIVATE nlohmann_json::nlohmann_json)
+#target_link_libraries(visualizer PRIVATE nlohmann_json::nlohmann_json)
 
 add_custom_target(copy-assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets
-    DEPENDS game visualizer)
+    DEPENDS game #visualizer
+)
 
 add_custom_target(copy-libs ALL
     COMMAND ${CMAKE_COMMAND} -E copy ${SFML_LIB_DIR}/sfml-graphics-2.dll ${CMAKE_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy ${SFML_LIB_DIR}/sfml-window-2.dll ${CMAKE_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy ${SFML_LIB_DIR}/sfml-system-2.dll ${CMAKE_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy ${SFML_LIB_DIR}/sfml-audio-2.dll ${CMAKE_BINARY_DIR}
-    DEPENDS game visualizer
+    DEPENDS game #visualizer
 )
 
 set(CMAKE_BUILD_TYPE Debug)

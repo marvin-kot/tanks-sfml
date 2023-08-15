@@ -42,9 +42,6 @@ public:
     virtual void draw(bool paused = false);
     void playAnimation(bool);
     void setSpriteSheetOffset(int x, int y);
-
-
-protected:
     void showAnimationFrame(int i);
 };
 

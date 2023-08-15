@@ -59,7 +59,7 @@ void GameObject::appendFlags(GameObject::ObjectFlags f)
     _flags = _flags | f;
 }
 
-bool GameObject::isFlagSet(GameObject::ObjectFlags f)
+bool GameObject::isFlagSet(GameObject::ObjectFlags f) const
 {
     return (_flags & f) != 0;
 }
@@ -93,7 +93,7 @@ void GameObject::draw(bool paused)
         spriteRenderer->draw(paused);
     }
     else
-        Logger::instance() << _type << "no renderer";
+        Logger::instance() << _type << "no renderer\n";
 
     if (visualEffect)
         visualEffect->draw(paused);
@@ -101,7 +101,7 @@ void GameObject::draw(bool paused)
 
 void GameObject::hide(bool val)
 {
-    Logger::instance() << "GameObject::hide" << val;
+    Logger::instance() << "GameObject::hide " << val << "\n";
     if (spriteRenderer)
         spriteRenderer->hide(val);
 }
@@ -168,7 +168,7 @@ int GameObject::move(int x, int y)
         }
     }
     else {
-        Logger::instance() << "[ERROR] GameObject - no spriteRenderer found";
+        Logger::instance() << "[ERROR] GameObject - no spriteRenderer found\n";
         _x += x, _y += y;
         return 1;
     }
@@ -195,7 +195,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
             _deleteme = true;
         }
 
-        if (other->isFlagSet(Bullet))
+        if (other->isFlagSet(Bullet) && _parentId != other->_parentId)
             _deleteme = true;
 
         return;
@@ -222,7 +222,17 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                     return;
                 _lastUpdateFrame = Utils::currentFrame;
                 // TODO: variable bullet damage
-                _damageable->takeDamage(1);
+                auto bullet = dynamic_cast<BulletController *>(other->_controller);
+                assert(bullet != nullptr);
+                _damageable->takeDamage(bullet->damage());
+                if (isFlagSet(Player)) {
+                    auto ctr = dynamic_cast<PlayerController *>(_controller);
+                    ctr->updateAppearance();
+                }
+                if (isFlagSet(Eagle)) {
+                    auto ctr = dynamic_cast<EagleController *>(_controller);
+                    ctr->updateAppearance();
+                }
                 if (_damageable->isDestroyed()) {
                     _deleteme = true;
                     cancelMovement = true;
@@ -263,7 +273,9 @@ sf::IntRect GameObject::boundingBox() const
     int left = _x - _w/2;
     int top = _y - _h/2;
 
-    return sf::IntRect(left+1, top+1, _w-2, _h-2);
+    const int modif = (isFlagSet(GameObject::Bullet)) ? 0 : 1;
+
+    return sf::IntRect(left+modif, top+modif, _w-modif*2, _h-modif*2);
 }
 
 bool GameObject::collides(const GameObject& go) const
@@ -289,7 +301,7 @@ bool GameObject::collides(const GameObject& go) const
 bool GameObject::collidesWithAnyObject() const
 {
     for (GameObject *o : ObjectsPool::getAllObjects()) {
-        if (this != o && collides(*o))
+        if (this != o && collides(*o) && !o->isFlagSet(TankPassable) && !o->isFlagSet(BulletPassable))
             return true;
     }
     return false;
@@ -440,6 +452,11 @@ template<> SpriteRenderer *GameObject::getComponent<SpriteRenderer>()
 template<> PlayerController *GameObject::getComponent<PlayerController>()
 {
     return dynamic_cast<PlayerController *>(_controller);
+}
+
+template<> EagleController *GameObject::getComponent<EagleController>()
+{
+    return dynamic_cast<EagleController *>(_controller);
 }
 
 template<> PlayerSpawnController *GameObject::getComponent<PlayerSpawnController>()

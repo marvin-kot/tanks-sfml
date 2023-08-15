@@ -38,18 +38,36 @@ void Controller::prepareMoveInDirection(globalTypes::Direction dir)
     }
 }
 
+void Controller::checkForGamePause()
+{
+    if (!_pause && globalVars::gameIsPaused) {
+        _clock.pause();
+        _pause = true;
+    } else if (_pause && ! globalVars::gameIsPaused) {
+        _clock.resume();
+        _pause = false;
+    }
+}
+
 /////
 
 TankRandomController::TankRandomController(GameObject *parent, int spd, float timeoutSec)
 : Controller(parent, spd), _actionTimeout(sf::seconds(timeoutSec)),distribution(1, 4)
-{}
+{
+    _clock.reset(true);
+}
 
 void TankRandomController::update()
 {
+    checkForGamePause();
+
+    if (_pause)
+        return;
+
     {
         using namespace globalVars;
         if (globalTimeFreeze) {
-            if (globalFreezeClock.getElapsedTime() < sf::seconds(10)) {
+            if (globalFreezeChronometer.getElapsedTime() < sf::seconds(globalFreezeTimeout)) {
                 _currMoveX = _currMoveY = 0;
                 _isMoving = false;
                 _gameObject->stopAnimation();
@@ -79,7 +97,7 @@ void TankRandomController::update()
     _isMoving = (moved == 1);
 
     if (resetTimeout) {
-        _clock.restart();
+        _clock.reset(true);
         int shotChance = distribution(Utils::generator);
         if (shotChance > 2)
             _gameObject->shoot();
@@ -97,6 +115,9 @@ BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, 
 
 void BulletController::update()
 {
+    checkForGamePause();
+    if (_pause) return;
+
     int speed = (int)((float)_moveSpeed * Utils::lastFrameTime.asSeconds());
     if (_direction == globalTypes::Left)
     {
@@ -115,6 +136,47 @@ void BulletController::update()
 }
 
 
+/////
 
+EagleController::EagleController(GameObject *obj)
+: Controller(obj, 0)
+{}
 
+EagleController::~EagleController()
+{
+    ObjectsPool::eagleObject = nullptr;
+}
 
+void EagleController::update()
+{
+    checkForGamePause();
+    if (_pause) return;
+}
+
+void EagleController::updateAppearance()
+{
+    SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
+    assert(renderer != nullptr);
+    Damageable *damageable = _gameObject->getComponent<Damageable>();
+    assert(damageable != nullptr);
+
+    switch (damageable->defence()) {
+        case 0:
+            renderer->setSpriteSheetOffset(0, 0);
+            break;
+        case 1:
+            renderer->setSpriteSheetOffset(0, 16);
+            break;
+        case 2:
+            renderer->setSpriteSheetOffset(0, 16);
+            break;
+        case 3:
+            renderer->setSpriteSheetOffset(0, 32);
+            break;
+        case 4:
+            renderer->setSpriteSheetOffset(0, 32);
+            break;
+    }
+
+    renderer->showAnimationFrame(0);
+}

@@ -5,6 +5,7 @@
 #include "ObjectsPool.h"
 
 GameObject *ObjectsPool::playerObject = nullptr;
+GameObject *ObjectsPool::eagleObject = nullptr;
 GameObject *ObjectsPool::playerSpawnerObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
 std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
@@ -19,6 +20,19 @@ void ObjectsPool::clearEverything()
     for (auto it = allGameObjects.begin(); it != allGameObjects.end(); ) {
         GameObject *obj = *it;
         it = allGameObjects.erase(it);
+        if (obj->isFlagSet(GameObject::Player))
+            ObjectsPool::playerObject = nullptr;
+        if (obj->isFlagSet(GameObject::PlayerSpawner))
+            ObjectsPool::playerSpawnerObject = nullptr;
+        if (obj->isFlagSet(GameObject::Eagle))
+            ObjectsPool::eagleObject = nullptr;
+
+        auto& objByType = objectsByType.at(obj->type());
+        auto it2 = objByType.find(obj);
+        assert(it2 != objByType.end());
+
+        objByType.erase(it2);
+
         delete obj;
     }
 }
@@ -28,7 +42,7 @@ void ObjectsPool::kill(GameObject * obj)
     auto it = allGameObjects.find(obj);
     if (it != allGameObjects.end()) {
         allGameObjects.erase(it);
-        Logger::instance() << "Killing an object: " << obj->type() << " " << obj->id();
+        Logger::instance() << "Killing an object: " << obj->type() << " " << obj->id() << "\n";
 
         auto& objByType = objectsByType.at(obj->type());
         auto it2 = objByType.find(obj);
@@ -63,7 +77,7 @@ void ObjectsPool::addObject(GameObject *obj)
     assert(obj != nullptr);
 
     if (allGameObjects.find(obj) != allGameObjects.end()) {
-        Logger::instance() << "object already exists. Ingoring";
+        Logger::instance() << "object already exists. Ingoring\n";
         return;
     }
 

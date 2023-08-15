@@ -39,7 +39,7 @@ void SpriteRenderer::setCurrentAnimation(std::string id)
 
 void SpriteRenderer::hide(bool val)
 {
-    Logger::instance() << "SpriteRenderer::hide()";
+    //Logger::instance() << "SpriteRenderer::hide()";
     _hide = val;
 }
 
@@ -58,7 +58,6 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
 
     rect.left += _spriteSheetOffsetX;
     rect.top += _spriteSheetOffsetY;
-    Logger::instance() << rect.width << "," << rect.height;
     _parentObject->setSize(rect.width, rect.height);
     _sprite.setTextureRect(rect);
     _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
@@ -107,7 +106,7 @@ void OneShotAnimationRenderer::draw(bool paused)
                 int nextFrame = _currentFrame+1;
 
                 if (nextFrame == framesCount) {
-                    _parentObject->_deleteme = true;
+                    _parentObject->markForDeletion();
                     return;
                 }
                 showAnimationFrame(nextFrame);

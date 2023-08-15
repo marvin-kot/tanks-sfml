@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics/Rect.hpp>
 #include <SFML/System/Clock.hpp>
+#include <sftools/Chronometer.hpp>
 
 namespace globalConst
 {
@@ -35,13 +36,15 @@ namespace globalConst
     constexpr int DoubleDamage = 2;
     constexpr int DefaultTimeoutMs = 1000;
     constexpr int HalvedTimeoutMs = 500;
-    constexpr int PlayerShootTimeoutMs = 100;
+    constexpr int PlayerShootTimeoutMs = 200;
 
     constexpr int InitialLives = 3;
     constexpr int InitialPowerLevel = 0;
 
     constexpr int MaxFramesToDie = 180;
     constexpr int MaxFramesToWin = 200;
+
+    constexpr int UpgradesLimit = 4;
 
 };
 
@@ -55,8 +58,11 @@ namespace globalVars
 
     extern sf::Vector2i mapSize;
 
+    extern bool gameIsPaused;
     extern bool globalTimeFreeze;
-    extern sf::Clock globalFreezeClock;
+
+    extern sftools::Chronometer globalFreezeChronometer;
+    extern int globalFreezeTimeout;
 
     extern int player1Lives;
     extern int player1PowerLevel;

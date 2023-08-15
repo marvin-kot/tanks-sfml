@@ -16,6 +16,7 @@ public:
     bool isDestroyed() const;
 
     void setDefence(int def);
+    int defence() const;
 
     void makeInvincible(bool);
     bool isInvincible() const;
