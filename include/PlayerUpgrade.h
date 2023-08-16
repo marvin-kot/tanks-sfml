@@ -32,7 +32,7 @@ public:
         FreezeEnemies,
         InstantKillEnemies,
         TempConcreteBaseWalls,
-        TempPlayerInvincibility,
+        TempTankInvincibility,
         AdditionalLife,
         RandomWalls,
         InstantKillBaseArea,
@@ -62,7 +62,7 @@ public:
 
     virtual void onCollect(GameObject *collector) = 0;
 
-    std::string name() const { return _name + "{lvl." + std::to_string(_currentLevel+1) + "}"; }
+    std::string name() const;
     UpgradeType type() const { return _type; }
     UpgradeCategory category() const { return _category; }
     int currentLevel() const { return _currentLevel; }
@@ -104,6 +104,23 @@ class KillEnemiesBonus : public PlayerUpgrade
 
 public:
     KillEnemiesBonus(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class TankInvincibilityBonus : public PlayerUpgrade
+{
+    std::vector<int> _timeBasedOnLevel;
+
+public:
+    TankInvincibilityBonus(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class TankAdditionalLifeBonus : public PlayerUpgrade
+{
+    std::vector<int> _numberBasedOnLevel;
+public:
+    TankAdditionalLifeBonus(int level);
     void onCollect(GameObject *collector) override;
 };
 

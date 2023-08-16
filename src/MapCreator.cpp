@@ -10,31 +10,34 @@
 
 #include <string>
 
-SpawnController *MapCreator::createSpawnController(GameObject *parent, std::string type, int wave)
+int MapCreator::placeSpawnerObjects()
 {
-    assert(!type.empty());
-    assert(wave>=0 && wave<3);
-    assert(wave < _waves.size());
+    constexpr int tileSize = globalConst::spriteOriginalSizeX;
+    constexpr int tileCenter = tileSize / 2;
+    for (auto spawner : _spawners) {
+        GameObject *object = createSpawnerObject(spawner);
+        if (object == nullptr)
+            return -1;
+        object->setSize(tileSize, tileSize);
+        object->setPosition(spawner.col * tileSize + tileCenter, spawner.row * tileSize + tileCenter);
+        ObjectsPool::addObject(object);
+    }
 
-    return new SpawnController(parent, type, _waves[wave].delay, _waves[wave].timeout, _waves[wave].quantity);
+    return 0;
 }
 
-#include <string_view>
-static bool endsWith(std::string_view str, std::string_view suffix)
+GameObject *MapCreator::createSpawnerObject(const SpawnerData& data)
 {
-    return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
-}
+    Logger::instance() << "Creating an enemy spawner...\n";
 
-static int determineWaveIndex(std::string type)
-{
-    if (endsWith(type, "w1"))
-        return 0;
-    if (endsWith(type, "w2"))
-        return 1;
-    if (endsWith(type, "w3"))
-        return 2;
+    GameObject *object = new GameObject(std::string("spawner_") + data.type);
+    object->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
+    object->setRenderer(new LoopAnimationSpriteRenderer(object, "spark"));
 
-    assert(false);
+    SpawnController *controller = new SpawnController(object, data.type, data.delay, data.timeout, data.quantity);
+    object->setController(controller);
+
+    return object;
 }
 
 GameObject *MapCreator::buildObject(std::string type)
@@ -56,49 +59,6 @@ GameObject *MapCreator::buildObject(std::string type)
         eagle->setController(new EagleController(eagle));
 
         return eagle;
-    }
-
-    if (type.rfind("spawner_BaseTank", 16) == 0) {
-        Logger::instance() << "Creating an enemy spawner...\n";
-        GameObject *spawner = new GameObject("spawner_BaseTank");
-        spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        SpawnController *controller = createSpawnController(spawner, "npcBaseTank", determineWaveIndex(type));
-        spawner->setController(controller);
-
-        return spawner;
-    }
-
-    if (type.rfind("spawner_FastTank", 16) == 0) {
-        Logger::instance() << "Creating an enemy spawner...\n";
-        GameObject *spawner = new GameObject("spawner_FastTank");
-        spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        SpawnController *controller = createSpawnController(spawner, "npcFastTank", determineWaveIndex(type));
-        spawner->setController(controller);
-
-        return spawner;
-    }
-    if (type.rfind("spawner_PowerTank", 17) == 0) {
-        Logger::instance() << "Creating an enemy spawner...\n";
-        GameObject *spawner = new GameObject("spawner_PowerTank");
-        spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        SpawnController *controller = createSpawnController(spawner, "npcPowerTank", determineWaveIndex(type));
-        spawner->setController(controller);
-
-        return spawner;
-    }
-
-    if (type.rfind("spawner_ArmorTank", 17) == 0) {
-        Logger::instance() << "Creating an enemy spawner...\n";
-        GameObject *spawner = new GameObject("spawner_ArmorTank");
-        spawner->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
-        SpawnController *controller = createSpawnController(spawner, "npcArmorTank", determineWaveIndex(type));
-        spawner->setController(controller);
-
-        return spawner;
     }
 
     if (type == "brickWall") {
@@ -171,24 +131,13 @@ void MapCreator::setupScreenBordersBasedOnMapSize()
     globalVars::mapSize = sf::Vector2i(mapWidth() * globalConst::spriteOriginalSizeX, mapHeight() * globalConst::spriteOriginalSizeX);
 }
 
+
 // ############ Custom Matrix Text ###################
 
 MapCreatorFromCustomMatrixFile::MapCreatorFromCustomMatrixFile()
 {
     charMap = {
             {'@', "spawner_player"},
-            {'b', "spawner_BaseTank_w1"},
-            {'B', "spawner_BaseTank_w2"},
-            {'8', "spawner_BaseTank_w3"},
-            {'f', "spawner_FastTank_w1"},
-            {'F', "spawner_FastTank_w2"},
-            {'1', "spawner_FastTank_w3"},
-            {'p', "spawner_PowerTank_w1"},
-            {'P', "spawner_PowerTank_w2"},
-            {'9', "spawner_PowerTank_w3"},
-            {'a', "spawner_ArmorTank_w1"},
-            {'A', "spawner_ArmorTank_w2"},
-            {'4', "spawner_ArmorTank_w3"},
             {'#', "brickWall"},
             {'*', "concreteWall"},
             {'!', "eagle"},
@@ -205,7 +154,22 @@ int MapCreatorFromCustomMatrixFile::parseMapFile(std::string fileName)
 
     std::ifstream f(fileName);
     std::string line;
-    // line 1: map size
+    // line 0: map name
+    {
+        std::getline(f, line);
+        assert(line.length() > 0 && line.length() < 100);
+        std::istringstream iss(line);
+        iss >> _name;
+    }
+
+    // line 1: goal of the level
+    {
+        std::getline(f, line);
+        assert(line.length() > 0 && line.length() < 100);
+        std::istringstream iss(line);
+        iss >> _goal;
+    }
+    // line 2: map size
     {
         std::string dummy;
         std::getline(f, line);
@@ -214,35 +178,31 @@ int MapCreatorFromCustomMatrixFile::parseMapFile(std::string fileName)
         Logger::instance() << "Read map size: " << map_w << map_h << "\n";
     }
 
-    {
+    assert(map_w > 0 && map_w < globalConst::maxFieldWidth);
+    assert(map_h > 0 && map_h < globalConst::maxFieldHeight);
+
+    // read the map
+    for (int i = 0; i < map_h; i++) {
         std::getline(f, line);
-        std::istringstream iss(line);
-        std::string dummy;
-        iss >> dummy >> _wavesNum;
-        Logger::instance() << "Read waves: " << _wavesNum << "\n";
-
-        // so far only up to 3 waves are supported
-        assert(_wavesNum > 0 && _wavesNum < 4);
-
-        for (int i=0; i<_wavesNum; i++) {
-            EnemyWave w;
-            std::getline(f, line);
-            std::istringstream issl(line);
-            issl >> dummy >> w.delay >> dummy >> w.timeout >> dummy >> w.quantity;
-            Logger::instance() << "wave " << i << " delay " << w.delay << ", timeout " << w.timeout << " q " << w.quantity << "\n";
-            assert(w.delay>=0 && w.delay<600);
-            assert(w.timeout>0 && w.timeout<60);
-            assert(w.quantity>0 && w.quantity<60);
-            _waves.push_back(w);
-        }
+        mapString.append(line);
     }
 
+    // read data for placing tank spawners
+    while (std::getline(f, line)) {
+        if (line.empty() || line[0] == '#')
+            continue;
+        std::istringstream iss(line);
+        SpawnerData sd;
+        iss >> sd.type >> sd.col >> sd.row >> sd.delay >> sd.timeout >> sd.quantity;
 
+        assert(sd.type.empty() == false);
+        assert(sd.row >= 0 && sd.row < globalConst::maxFieldWidth);
+        assert(sd.col >= 0 && sd.col < globalConst::maxFieldHeight);
+        assert(sd.delay >= 0 && sd.delay < 600);
+        assert(sd.timeout >= 0 && sd.timeout < 60);
+        assert(sd.quantity > 0 && sd.quantity < 100);
 
-    // read the rest of the file
-    while (std::getline(f, line))
-    {
-        mapString.append(line);
+        _spawners.push_back(sd);
     }
 
     return 0;

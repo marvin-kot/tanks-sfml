@@ -16,6 +16,7 @@ class HUD
     void drawTankUpgrades(int baseY);
     void drawBaseLives(int baseY);
     void drawBaseUpgrades(int baseY);
+    void drawGlobalTimer();
 
     void drawMiniIcon(const sf::IntRect& iconRect, int x, int y);
     void drawIcon(const sf::IntRect& iconRect, int x, int y);

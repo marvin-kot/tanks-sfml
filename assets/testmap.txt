@@ -1,15 +1,39 @@
+Battle Garden
+Survive 5 minutes
 map 19 10
-waves 3
-delay 0 timeout 10 produce 5
-delay 60 timeout 9 produce 5
-delay 120 timeout 9 produce 5
-b...&....*A...&...b
-.B*..&#.***.#&..*B.
-.***..&.4*4.&..***.
-.1*....&.#.&....*1.
+....&....*....&....
+..*..&#.***.#&..*..
+.***..&..*..&..***.
+..*....&.#.&....*..
 .....###&*&###.....
-....###..&..###....
+**..###..&..###..**
 ~~~~##..###..##~~~~
 ....~#.......#~....
 ..#.##..###..##.#..
-8*#.*#.@#!#..#*.#*8
+.*#.*#.@#!#..#*.#*.
+#type X Y delay timeout quantity
+# wave 1
+npcBaseTank 0 0 0 10 5
+npcBaseTank 18 0 0 10 5
+npcArmorTank 8 0 30 0 1
+npcArmorTank 10 0 30 0 1
+# wave 2
+npcArmorTank 8 0 60 13 4
+npcArmorTank 10 0 60 13 4
+npcBaseTank 0 0 70 13 3
+npcBaseTank 18 0 70 13 3
+# wave 3
+npcFastTank 1 3 120 12 4
+npcFastTank 17 3 120 12 4
+npcBaseTank 0 4 130 20 2
+npcBaseTank 18 4 130 20 2
+# wave 4 (+5)
+npcBaseTank 0 9 180 13 8
+npcBaseTank 18 9 180 13 8
+npcArmorTank 3 3 180 13 4
+npcArmorTank 15 3 180 13 4
+# wave 5
+npcFastTank 1 3 240 12 4
+npcFastTank 17 3 240 12 4
+npcArmorTank 8 2 240 12 4
+npcArmorTank 10 2 240 12 4

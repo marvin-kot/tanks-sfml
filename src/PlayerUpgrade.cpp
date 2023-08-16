@@ -35,13 +35,25 @@ const std::unordered_set<PlayerUpgrade::UpgradeType> baseUpgradeTypes = {
 
 const std::unordered_set<PlayerUpgrade::UpgradeType> oneTimeBonusTypes = {
     PlayerUpgrade::FreezeEnemies,
-    PlayerUpgrade::InstantKillEnemies
+    PlayerUpgrade::InstantKillEnemies,
+    PlayerUpgrade::TempTankInvincibility,
+    PlayerUpgrade::AdditionalLife,
+    PlayerUpgrade::RandomWalls,
+    PlayerUpgrade::InstantKillBaseArea,
+    PlayerUpgrade::CollectAllFreeXP
 };
 
 PlayerUpgrade::PlayerUpgrade(int level) : _currentLevel(level)
 {
     _dependency.first = None;
     _dependency.second = 0;
+}
+
+std::string PlayerUpgrade::name() const
+{
+    using namespace std;
+    string levelStr = _category != OneTimeBonus ? string("\n{lvl." + to_string(_currentLevel+1) + "}") : string();
+    return _name + levelStr;
 }
 
 std::string PlayerUpgrade::currentEffectDescription() const
@@ -77,6 +89,8 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
         BonusEffectiveness,
         FreezeEnemies,
         InstantKillEnemies,
+        TempTankInvincibility,
+        AdditionalLife,
         BaseArmor
     };
 
@@ -104,7 +118,7 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
 
             if (baseUpgradeTypes.find(newType) != baseUpgradeTypes.end()
                     && eagleController->hasLevelOfUpgrade(t) == -1
-                    && eagleController->numberOfUpgrades() >= globalConst::EagleUpgradesLimit)
+                    && eagleController->numberOfUpgrades() > globalConst::EagleUpgradesLimit)
                 continue;
 
             newType = t;
@@ -155,10 +169,15 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
         case InstantKillEnemies:
             newUpgrade = new KillEnemiesBonus(level);
             break;
+        case TempTankInvincibility:
+            newUpgrade = new TankInvincibilityBonus(level);
+            break;
+        case AdditionalLife:
+            newUpgrade = new TankAdditionalLifeBonus(level);
+            break;
         case BaseArmor:
             newUpgrade = new BaseArmorUpgrade(level);
             break;
-
     }
 
     return newUpgrade;
@@ -216,21 +235,16 @@ KillEnemiesBonus::KillEnemiesBonus(int level)
     _type = InstantKillEnemies;
     _name = "Airstrike";
 
-    GameObject *player = ObjectsPool::playerObject;
-
-    if (player == nullptr) return;
-
-    PlayerController *controller = player->getComponent<PlayerController>();
-
-    _percentBasedOnLevel = { 33, 50, 66, 100 };
+    _percentBasedOnLevel = { 33, 50, 66, 90, 100 };
     for (auto percent : _percentBasedOnLevel)
-        _effects.push_back("Every enemy tank\nwill be destroyed\nwith " + std::to_string(percent) + "\% probability");
+        _effects.push_back("Every enemy tank\nwill be destroyed\nwith " + std::to_string(percent) + "\% chance");
 
     _iconRect = AssetManager::instance().getAnimationFrame("grenadeCollectable", "default", 0).rect;
 }
 
-void KillEnemiesBonus::onCollect(GameObject *collector)
+void KillEnemiesBonus::onCollect(GameObject *)
 {
+    assert(_currentLevel < _percentBasedOnLevel.size());
     // kill all enemy tanks (with probability)in a moment
 
     std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank"});
@@ -239,6 +253,65 @@ void KillEnemiesBonus::onCollect(GameObject *collector)
         if (rnd <= _percentBasedOnLevel[_currentLevel])
             obj->markForDeletion();
     });
+}
+///////////////
+
+TankInvincibilityBonus::TankInvincibilityBonus(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::OneTimeBonus;
+    _type = PlayerUpgrade::TempTankInvincibility;
+    _name = "Divine cloud";
+
+    _timeBasedOnLevel = { 10, 15, 20, 25, 30 };
+    for (auto time : _timeBasedOnLevel)
+        _effects.push_back("Player tank becomes\ninvincible for " + std::to_string(time) + " sec");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("cloudCollectable", "default", 0).rect;
+
+}
+
+void TankInvincibilityBonus::onCollect(GameObject *collector)
+{
+    assert(collector != nullptr);
+    PlayerController *controller = collector->getComponent<PlayerController>();
+    assert(controller != nullptr);
+    assert(_currentLevel < _timeBasedOnLevel.size());
+    controller->setTemporaryInvincibility(_timeBasedOnLevel[_currentLevel]);
+}
+
+///////////////
+
+TankAdditionalLifeBonus::TankAdditionalLifeBonus(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::OneTimeBonus;
+    _type = PlayerUpgrade::AdditionalLife;
+    _name = "Spare tank";
+
+    _numberBasedOnLevel = { 1, 1, 1, 2, 2 };
+    for (auto time : _numberBasedOnLevel) {
+        std::string ending = time>1 ? " life" : " lives";
+        _effects.push_back("+" + std::to_string(time) + ending);
+    }
+
+    _iconRect = AssetManager::instance().getAnimationFrame("plusCollectable", "default", 0).rect;
+
+}
+
+void TankAdditionalLifeBonus::onCollect(GameObject *collector)
+{
+    assert(collector != nullptr);
+    assert(collector->isFlagSet(GameObject::Player));
+
+    auto spawnerObject = collector->getParentObject();
+    assert(spawnerObject != nullptr);
+    assert(spawnerObject->isFlagSet(GameObject::PlayerSpawner));
+
+    auto spawnerController = spawnerObject->getComponent<PlayerSpawnController>();
+    assert(spawnerController != nullptr);
+
+    spawnerController->appendLife();
 }
 
 
@@ -260,9 +333,11 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
 
 void FasterBulletUpgrade::onCollect(GameObject *collector)
 {
+    assert(collector != nullptr);
     auto shootable = collector->getComponent<PlayerShootable>();
     assert(shootable != nullptr);
 
+    assert(_currentLevel < _percentBasedOnLevel.size());
     int percent = _percentBasedOnLevel[_currentLevel];
 
     const int newBulletSpeed = globalConst::DefaultBulletSpeed + (globalConst::DefaultBulletSpeed * percent / 100);
@@ -287,8 +362,10 @@ MoreBulletsUpgrade::MoreBulletsUpgrade(int level)
 
 void MoreBulletsUpgrade::onCollect(GameObject *collector)
 {
+    assert(collector != nullptr);
     auto shootable = collector->getComponent<PlayerShootable>();
     assert(shootable != nullptr);
+    assert(_currentLevel < _numberBasedOnLevel.size());
 
     shootable->resetLevel();
 
@@ -315,9 +392,11 @@ ArmorUpgrade::ArmorUpgrade(int level)
 
 void ArmorUpgrade::onCollect(GameObject *collector)
 {
+    assert(collector != nullptr);
     auto damageable = collector->getComponent<Damageable>();
     assert(damageable != nullptr);
 
+    assert(_currentLevel < _numberBasedOnLevel.size());
     int number = _numberBasedOnLevel[_currentLevel];
     damageable->setDefence(number);
 }
@@ -330,7 +409,7 @@ FasterTankUpgrade::FasterTankUpgrade(int level)
     _category = PlayerUpgrade::TankUpgrade;
     _type = TankSpeed;
     _name = "Caterpillar upgrade";
-    _percentBasedOnLevel = { 20, 30, 40, 50 };
+    _percentBasedOnLevel = { 30, 50, 70, 90 };
     for (auto percent : _percentBasedOnLevel)
         _effects.push_back("Tank speed +" + std::to_string(percent) + "\%");
 
@@ -339,8 +418,10 @@ FasterTankUpgrade::FasterTankUpgrade(int level)
 
 void FasterTankUpgrade::onCollect(GameObject *collector)
 {
+    assert(collector != nullptr);
     auto controller = collector->getComponent<PlayerController>();
     assert(controller != nullptr);
+    assert(_currentLevel < _percentBasedOnLevel.size());
     int percent = _percentBasedOnLevel[_currentLevel];
     const int newTankSpeed = globalConst::DefaultPlayerSpeed + globalConst::DefaultPlayerSpeed * percent / 100;
     controller->updateMoveSpeed(newTankSpeed);
@@ -355,7 +436,7 @@ PowerBulletUpgrade::PowerBulletUpgrade(int level)
     _type = PowerBullets;
     _name = "Ammunition upgrade";
 
-    _numberBasedOnLevel = { 2, 3, 4, 5 };
+    _numberBasedOnLevel = { 1, 2, 3, 4 };
     for (auto number : _numberBasedOnLevel)
         _effects.push_back("Bullet damage +" + std::to_string(number) + "");
 
@@ -364,10 +445,12 @@ PowerBulletUpgrade::PowerBulletUpgrade(int level)
 
 void PowerBulletUpgrade::onCollect(GameObject *collector)
 {
+    assert(collector != nullptr);
     auto shootable = collector->getComponent<Shootable>();
     assert(shootable != nullptr);
 
-    int newDamage = _numberBasedOnLevel[_currentLevel];
+    assert(_currentLevel < _numberBasedOnLevel.size());
+    int newDamage = globalConst::DefaultDamage + _numberBasedOnLevel[_currentLevel];
     shootable->setDamage(newDamage);
 }
 
@@ -388,13 +471,14 @@ BaseArmorUpgrade::BaseArmorUpgrade(int level)
     _iconRect = AssetManager::instance().getAnimationFrame("eagleCollectable", "default", 0).rect;
 }
 
-void BaseArmorUpgrade::onCollect(GameObject *)
+void BaseArmorUpgrade::onCollect(GameObject *target)
 {
-    assert(ObjectsPool::eagleObject != nullptr);
+    assert(target != nullptr);
+    assert(target->isFlagSet(GameObject::Eagle));
 
-    auto damageable = ObjectsPool::eagleObject->getComponent<Damageable>();
+    auto damageable = target->getComponent<Damageable>();
     assert(damageable != nullptr);
-
+    assert(_currentLevel < _numberBasedOnLevel.size());
     int newProtection = _numberBasedOnLevel[_currentLevel];
     damageable->setDefence(newProtection);
 }

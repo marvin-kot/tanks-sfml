@@ -1217,6 +1217,58 @@
         ]
     },
     {
+        "type" : "cloudCollectable",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 336,
+                        "y"  : 80,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "plusCollectable",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 352,
+                        "y"  : 80,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    }
+                ]
+            }
+        ]
+    },
+    {
         "type" : "100xp",
         "animations": [
             {

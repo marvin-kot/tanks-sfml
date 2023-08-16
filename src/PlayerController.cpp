@@ -310,11 +310,6 @@ void PlayerController::resetXP()
 
     globalVars::player1XP = 0;
     globalVars::player1Level = 1;
-
-    /*if (ObjectsPool::eagleObject) {
-        ObjectsPool::eagleObject->getComponent<Damageable>()->setDefence(0);
-        ObjectsPool::eagleObject->getComponent<EagleController>()->updateAppearance();
-    }*/
 }
 
 void PlayerController::levelUp()

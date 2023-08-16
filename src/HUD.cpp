@@ -72,6 +72,18 @@ void HUD::draw()
     drawTankUpgrades(112);
     drawBaseLives(112+64);
     drawBaseUpgrades(112+64+48);
+
+    drawGlobalTimer();
+}
+
+void HUD::drawGlobalTimer()
+{
+    sf::Time time = globalVars::globalChronometer.getElapsedTime();
+    int minutes = (int)time.asSeconds() / 60;
+    int seconds = (int)time.asSeconds() % 60;
+
+    std::string timeStr = std::to_string(minutes) + ":" + std::to_string(seconds);
+    drawText(timeStr, 30, globalConst::screen_w/2, 32);
 }
 
 void HUD::drawPlayerXP(int baseY)
@@ -93,8 +105,6 @@ void HUD::drawTankLives(int baseY)
         drawMiniIcon( rect, baseX + i * (iconWidth + 18), baseY );
     }
 }
-
-
 
 void HUD::drawTankUpgrades(int baseY)
 {
@@ -187,7 +197,7 @@ void HUD::drawUpgrade(int index, int x, int y)
 
     std::string caption = upgrade->name();
     const int captionFontSize = 18;
-    drawText(caption, captionFontSize, x, y + 100 + captionFontSize);
+    drawText(caption, captionFontSize, x, y + 60 + captionFontSize);
 
     std::string description = upgrade->currentEffectDescription();
     const int descriptionFontSize = 14;

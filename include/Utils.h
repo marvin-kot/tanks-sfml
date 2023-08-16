@@ -9,13 +9,10 @@
 
 #include <random>
 
-class Utils
+struct Utils
 {
-public:
-
     static std::default_random_engine generator;
     static sf::RenderWindow window;
-
 
     static int currentFrame;
     static sf::Time lastFrameTime;

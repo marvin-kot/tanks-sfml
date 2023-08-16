@@ -63,6 +63,7 @@ bool Game::update()
         globalVars::gameIsPaused = true;
         SoundPlayer::instance().stopAllSounds();
         SoundPlayer::instance().playBonusCollectSound();
+        globalVars::globalChronometer.pause();
         globalVars::globalFreezeChronometer.pause();
     }
 
@@ -136,8 +137,10 @@ void Game::processWindowEvents()
                     if (!globalVars::gameIsPaused) {
                         SoundPlayer::instance().stopAllSounds();
                         SoundPlayer::instance().playPauseSound();
+                        globalVars::globalChronometer.pause();
                         globalVars::globalFreezeChronometer.pause();
                     } else {
+                        globalVars::globalChronometer.resume();
                         globalVars::globalFreezeChronometer.resume();
                     }
                     globalVars::gameIsPaused = !globalVars::gameIsPaused;
@@ -147,6 +150,7 @@ void Game::processWindowEvents()
                         _levelUpMenu = false;
                         globalVars::gameIsPaused = false;
                         globalVars::openLevelUpMenu = false;
+                        globalVars::globalChronometer.resume();
                         globalVars::globalFreezeChronometer.resume();
                     } else if (event.key.scancode == sf::Keyboard::Scan::Left) {
                         SoundPlayer::instance().playTickSound();
@@ -195,7 +199,7 @@ int Game::processStateChange()
         }
         Logger::instance() << "Level map is built\n";
         SoundPlayer::instance().gameOver = false;
-
+        globalVars::globalChronometer.reset(true);
         gameState = PlayingLevel;
         return 0;
     } else if (gameState == GameOver) {
@@ -220,6 +224,8 @@ bool Game::buildLevelMap(std::string fileName)
         Logger::instance() << "[ERROR] the map size exceeds the limits of the screen. Aborting game..." << fileName;
         return false;
     }
+
+    mapBuilder.placeSpawnerObjects();
 
     return true;
 }
@@ -377,7 +383,7 @@ void Game::drawObjects()
 
     // 4. visual effects
     auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({
-        "spawner_player", "spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank",
+        "spawner_player", "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank",
         "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable",
         "100xp", "200xp", "300xp", "400xp", "500xp",
         "smallExplosion", "bigExplosion"
@@ -406,7 +412,7 @@ void Game::checkStatePostFrame()
     // as the game just cleared all objects marked for deletion, all the existing enemies must be alive at this point
     int countEnemiesAlive = ObjectsPool::countObjectsByTypes({
         "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank",
-        "spawner_BaseTank", "spawner_FastTank", "spawner_PowerTank", "spawner_ArmorTank"});
+        "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank"});
     if (countEnemiesAlive < 1 && framesToWin == -1) {
         framesToWin = globalConst::MaxFramesToWin;
         SoundPlayer::instance().stopAllSounds();

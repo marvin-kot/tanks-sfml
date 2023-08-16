@@ -38,6 +38,8 @@ namespace globalConst
     constexpr int HalvedTimeoutMs = 500;
     constexpr int PlayerShootTimeoutMs = 200;
 
+    constexpr int DefaultBulletLifetimeMs = 2000;
+
     constexpr int InitialLives = 3;
     constexpr int InitialPowerLevel = 0;
 
@@ -63,6 +65,7 @@ namespace globalVars
     extern bool gameIsPaused;
     extern bool globalTimeFreeze;
 
+    extern sftools::Chronometer globalChronometer;
     extern sftools::Chronometer globalFreezeChronometer;
     extern int globalFreezeTimeout;
 

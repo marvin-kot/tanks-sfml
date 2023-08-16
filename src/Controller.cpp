@@ -111,12 +111,17 @@ void TankRandomController::update()
 
 BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg)
 : Controller(obj, spd), _direction(dir), _damage(dmg)
-{}
+{
+    _clock.reset(true);
+}
 
 void BulletController::update()
 {
     checkForGamePause();
     if (_pause) return;
+
+    if (_clock.getElapsedTime() > sf::milliseconds(globalConst::DefaultBulletLifetimeMs))
+        _gameObject->markForDeletion();
 
     int speed = (int)((float)_moveSpeed * Utils::lastFrameTime.asSeconds());
     if (_direction == globalTypes::Left)
