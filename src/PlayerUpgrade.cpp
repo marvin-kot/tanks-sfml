@@ -291,7 +291,7 @@ TankAdditionalLifeBonus::TankAdditionalLifeBonus(int level)
 
     _numberBasedOnLevel = { 1, 1, 1, 2, 2 };
     for (auto time : _numberBasedOnLevel) {
-        std::string ending = time>1 ? " life" : " lives";
+        std::string ending = time>1 ? " lives" : " life";
         _effects.push_back("+" + std::to_string(time) + ending);
     }
 

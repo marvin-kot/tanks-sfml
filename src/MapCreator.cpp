@@ -156,18 +156,14 @@ int MapCreatorFromCustomMatrixFile::parseMapFile(std::string fileName)
     std::string line;
     // line 0: map name
     {
-        std::getline(f, line);
-        assert(line.length() > 0 && line.length() < 100);
-        std::istringstream iss(line);
-        iss >> _name;
+        std::getline(f, _name);
+        assert(_name.length() > 0 && _name.length() < 100);
     }
 
     // line 1: goal of the level
     {
-        std::getline(f, line);
-        assert(line.length() > 0 && line.length() < 100);
-        std::istringstream iss(line);
-        iss >> _goal;
+        std::getline(f, _goal);
+        assert(_goal.length() > 0 && _goal.length() < 100);
     }
     // line 2: map size
     {

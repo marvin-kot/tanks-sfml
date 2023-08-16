@@ -8,13 +8,18 @@ private:
     enum GameState
     {
         TitleScreen = 0,
-        LoadNextLevel = 1,
-        PlayingLevel = 2,
-        GameOver = 3
+        LoadNextLevel,
+        StartLevelScreen,
+        StartLevel,
+        PlayingLevel,
+        GameOver
     };
 
     GameState gameState = TitleScreen;
     int currentLevel;
+    std::string _currentLevelName;
+    std::string _currentLevelGoal;
+    int _surviveTimeoutSec;
 
     int framesToDie, framesToWin;
 
@@ -44,7 +49,9 @@ private:
     void drawObjects();
     void updateDisplay();
     void checkStatePostFrame();
-    void drawTitleScreen();
-    void drawLevelUpPopupMenu();
     void getSelectedUpgrade();
+
+    void drawTitleScreen();
+    void drawStartLevelScreen();
+    void drawGameOverScreen();
 };

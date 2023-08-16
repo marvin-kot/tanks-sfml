@@ -6,8 +6,8 @@ map 19 16
 ***..*&#.#.#&*..***
 **.~#&~......&...**
 *..&~...~@~~.~&&..*
-.##*..~~#*#~~..*...
-.&&*.~~~#!#~#~.###&
+.##*..~~#*#~~..#...
+.&&*.~~~#!#~#~.#*#&
 &&&~.##~###~....&&&
 &&&..*...~...*..&&&
 .&.#..~.....~..#.&.
@@ -26,20 +26,20 @@ npcArmorTank 17 11 20 20 2
 # wave 2
 npcArmorTank 8 0 60 13 4
 npcArmorTank 1 11 60 13 4
-npcFastTank 9 0 0 13 4
-npcFastTank 9 15 0 13 4
+npcFastTank 9 0 60 13 4
+npcFastTank 9 15 60 13 4
 # wave 3
-npcFastTank 1 3 120 12 4
-npcFastTank 17 3 120 12 4
-npcBaseTank 0 4 130 20 2
-npcBaseTank 18 4 130 20 2
+npcFastTank 1 4 120 12 4
+npcFastTank 17 4 120 12 4
+npcBaseTank 0 5 130 20 2
+npcBaseTank 18 5 130 20 2
 # wave 4 (+5)
 npcBaseTank 0 9 180 13 8
 npcBaseTank 18 9 180 13 8
 npcArmorTank 3 3 180 13 4
 npcArmorTank 15 3 180 13 4
 # wave 5
-npcFastTank 1 3 240 12 4
-npcFastTank 17 3 240 12 4
-npcArmorTank 8 2 240 12 4
-npcArmorTank 10 2 240 12 4
+npcFastTank 1 4 240 12 4
+npcFastTank 17 4 240 12 4
+npcArmorTank 8 5 240 12 4
+npcArmorTank 10 5 240 12 4

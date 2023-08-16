@@ -1,4 +1,3 @@
-#include "AssetManager.h"
 #include "EagleController.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
@@ -7,26 +6,9 @@
 #include "PlayerUpgrade.h"
 #include "PlayerController.h"
 #include "Utils.h"
+#include "UiUtils.h"
 
-void drawText(std::string str, int fontSize, int x, int y, bool leftOrientation = false)
-{
-    sf::Text text;
-    text.setFont(AssetManager::instance().defaultFont());
-    text.setString(str);
-    text.setCharacterSize(fontSize);
-    text.setFillColor(sf::Color::White);
 
-    if (leftOrientation)
-        text.setOrigin(0, fontSize/2);
-    else {
-        size_t length = str.find("\n");
-        if (length == std::string::npos)
-            length = str.length();
-        text.setOrigin(fontSize * length / 2.5, fontSize/2);
-    }
-    text.setPosition(x, y);
-    Utils::window.draw(text);
-}
 
 void drawCursor(sf::RectangleShape& parentRect, int pos)
 {
@@ -55,9 +37,7 @@ void drawCursor(sf::RectangleShape& parentRect, int pos)
 ////////////////////////////////////////
 
 HUD::HUD()
-{
-    _sprite.setTexture(AssetManager::instance().mainSpriteSheetTexture());
-}
+{}
 
 HUD& HUD::instance()
 {
@@ -83,14 +63,14 @@ void HUD::drawGlobalTimer()
     int seconds = (int)time.asSeconds() % 60;
 
     std::string timeStr = std::to_string(minutes) + ":" + std::to_string(seconds);
-    drawText(timeStr, 30, globalConst::screen_w/2, 32);
+    UiUtils::instance().drawText(timeStr, 30, globalConst::screen_w/2, 32);
 }
 
 void HUD::drawPlayerXP(int baseY)
 {
     const int fontSize = 28;
     std::string levelAndXp = std::to_string(globalVars::player1Level) + "/" + std::to_string(globalVars::player1XP);
-    drawText(levelAndXp, fontSize, 8, baseY, true);
+    UiUtils::instance().drawText(levelAndXp, fontSize, 8, baseY, true);
 }
 
 void HUD::drawTankLives(int baseY)
@@ -102,7 +82,7 @@ void HUD::drawTankLives(int baseY)
     int baseX = 17;
 
     for (int i=0; i < globalVars::player1Lives; i++) {
-        drawMiniIcon( rect, baseX + i * (iconWidth + 18), baseY );
+        UiUtils::instance().drawMiniIcon( rect, baseX + i * (iconWidth + 18), baseY );
     }
 }
 
@@ -118,13 +98,13 @@ void HUD::drawTankUpgrades(int baseY)
     int baseX = 32;
 
     for (int i=0; i<upgradesNumber; i++) {
-        drawMiniIcon(
+        UiUtils::instance().drawMiniIcon(
             pController->getUpgrade(i)->iconRect(),
             baseX + i * (32 + 16),
             baseY
         );
 
-        drawText(
+        UiUtils::instance().drawText(
             std::to_string(pController->getUpgrade(i)->currentLevel()+1),
             24,
             baseX + i * (32 + 16),
@@ -136,7 +116,7 @@ void HUD::drawTankUpgrades(int baseY)
 void HUD::drawBaseLives(int baseY)
 {
     sf::IntRect eagleRect = sf::IntRect(376, 125, 9, 8);
-    drawMiniIcon(eagleRect, 20, baseY);
+    UiUtils::instance().drawMiniIcon(eagleRect, 20, baseY);
 }
 
 void HUD::drawBaseUpgrades(int baseY)
@@ -152,13 +132,13 @@ void HUD::drawBaseUpgrades(int baseY)
     int baseX = 32;
 
     for (int i=0; i<upgradesNumber; i++) {
-        drawMiniIcon(
+        UiUtils::instance().drawMiniIcon(
             bController->getUpgrade(i)->iconRect(),
             baseX + i * (32 + 16),
             baseY
         );
 
-        drawText(
+        UiUtils::instance().drawText(
             std::to_string(bController->getUpgrade(i)->currentLevel()+1),
             24,
             baseX + i * (32 + 16),
@@ -167,25 +147,7 @@ void HUD::drawBaseUpgrades(int baseY)
     }
 }
 
-void HUD::drawMiniIcon(const sf::IntRect& iconRect, int x, int y)
-{
-    _sprite.setTextureRect(iconRect);
-    _sprite.setScale(globalConst::spriteScaleX / 2, globalConst::spriteScaleY / 2);
-    _sprite.setOrigin(iconRect.width/2, iconRect.height/2);
-    _sprite.setPosition(x, y);
 
-    Utils::window.draw(_sprite);
-}
-
-void HUD::drawIcon(const sf::IntRect& iconRect, int x, int y)
-{
-    _sprite.setTextureRect(iconRect);
-    _sprite.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
-    _sprite.setOrigin(iconRect.width/2, iconRect.height/2);
-    _sprite.setPosition(x, y);
-
-    Utils::window.draw(_sprite);
-}
 
 void HUD::drawUpgrade(int index, int x, int y)
 {
@@ -193,15 +155,15 @@ void HUD::drawUpgrade(int index, int x, int y)
     auto upgrade = PlayerUpgrade::currentThreeRandomUpgrades[index];
 
     assert(upgrade != nullptr);
-    drawIcon(upgrade->iconRect(), x, y);
+    UiUtils::instance().drawIcon(upgrade->iconRect(), x, y);
 
     std::string caption = upgrade->name();
     const int captionFontSize = 18;
-    drawText(caption, captionFontSize, x, y + 60 + captionFontSize);
+    UiUtils::instance().drawText(caption, captionFontSize, x, y + 60 + captionFontSize);
 
     std::string description = upgrade->currentEffectDescription();
     const int descriptionFontSize = 14;
-    drawText(description, descriptionFontSize, x, y + 100 + captionFontSize + 20 + descriptionFontSize);
+    UiUtils::instance().drawText(description, descriptionFontSize, x, y + 100 + captionFontSize + 20 + descriptionFontSize);
 
 }
 
@@ -221,12 +183,12 @@ void HUD::drawLevelUpPopupMenu(int cursorPos)
     {
         std::string lvl = "You reached level " + std::to_string(globalVars::player1Level) + "!";
         const int titleFontSize = 28;
-        drawText( lvl, titleFontSize,
+        UiUtils::instance().drawText( lvl, titleFontSize,
             greyRect.getPosition().x,
             greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize);
 
         const int subtitleSize = 20;
-        drawText( "Select 1 of 3 bonuses and press [ENTER]", subtitleSize,
+        UiUtils::instance().drawText( "Select 1 of 3 bonuses and press [ENTER]", subtitleSize,
             greyRect.getPosition().x,
             greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize + subtitleSize*2);
     }

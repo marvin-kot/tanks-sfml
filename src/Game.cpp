@@ -10,13 +10,14 @@
 #include "MapCreator.h"
 #include "SoundPlayer.h"
 #include "Utils.h"
+#include "UiUtils.h"
 
 #include <SFML/Graphics.hpp>
 
 
 std::vector<std::string> levelMaps = {
-    "assets/testmap.txt",
     "assets/testmap2.txt",
+    "assets/testmap.txt",
     "assets/testmap3.txt"};
 
 
@@ -130,6 +131,11 @@ void Game::processWindowEvents()
                         globalVars::player1PowerLevel = globalConst::InitialPowerLevel;
                         gameState = LoadNextLevel;
                     }
+                } else if (gameState == StartLevelScreen) {
+                    if (event.key.scancode == sf::Keyboard::Scan::Space)
+                        gameState = StartLevel;
+                    else if (event.key.scancode == sf::Keyboard::Scan::Escape)
+                        gameState = GameOver;
                 } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Escape) {
                     // TODO: ask player confirmation
                     gameState = GameOver;
@@ -198,11 +204,18 @@ int Game::processStateChange()
             return -1;
         }
         Logger::instance() << "Level map is built\n";
+        gameState = StartLevelScreen;
+        return 0;
+    } else if (gameState == StartLevelScreen) {
+        drawStartLevelScreen();
+        return 0;
+    }
+    else if (gameState == StartLevel) {
         SoundPlayer::instance().gameOver = false;
         globalVars::globalChronometer.reset(true);
         gameState = PlayingLevel;
-        return 0;
-    } else if (gameState == GameOver) {
+    }
+    else if (gameState == GameOver) {
         SoundPlayer::instance().stopAllSounds();
         ObjectsPool::clearEverything();
         gameState = TitleScreen;
@@ -226,6 +239,10 @@ bool Game::buildLevelMap(std::string fileName)
     }
 
     mapBuilder.placeSpawnerObjects();
+
+    _currentLevelName = mapBuilder.mapName();
+    _currentLevelGoal = mapBuilder.mapGoal();
+    _surviveTimeoutSec = 60 * 5;
 
     return true;
 }
@@ -466,6 +483,39 @@ void Game::drawTitleScreen()
     Utils::window.draw(text);
     Utils::window.draw(textSub);
     Utils::window.draw(textInstruction);
+    Utils::window.display();
+}
+
+void Game::drawStartLevelScreen()
+{
+    using namespace globalConst;
+
+    // grey background
+    UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(102, 102, 102));
+
+    // level name
+    UiUtils::instance().drawText(
+        _currentLevelName, 48,
+        screen_w/2, screen_h/2 - 64, false,
+        sf::Color::White);
+
+    // level goal
+    UiUtils::instance().drawText(
+        _currentLevelGoal, 32,
+        screen_w/2, screen_h/2 + 32, false,
+        sf::Color::White);
+
+    // prompt
+    UiUtils::instance().drawText(
+        "Press [space] to start", 24,
+        screen_w/2, screen_h/2 + 32 + 64, false,
+        sf::Color::Yellow);
+
+    Utils::window.display();
+}
+
+void Game::drawGameOverScreen()
+{
     Utils::window.display();
 }
 
