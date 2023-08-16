@@ -127,7 +127,7 @@ GameObject *SpawnController::createObject(std::string type)
     }
 
     if (type == "npcPowerTank") {
-        GameObject *enemy = new GameObject("npcArmorTank");
+        GameObject *enemy = new GameObject("npcPowerTank");
         //enemy->setShootable(new Shootable(enemy, globalConst::DefaultTimeoutMs));
         Shootable *shootable = new PlayerShootable(enemy, 1);
         shootable->setDamage(2);

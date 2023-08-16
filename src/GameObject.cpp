@@ -2,6 +2,7 @@
 #include "Controller.h"
 #include "Damageable.h"
 #include "DropGenerator.h"
+#include "EagleController.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
 #include "Logger.h"
@@ -138,7 +139,7 @@ int GameObject::move(int x, int y)
 
         GameObject *collider = nullptr;
         bool cancelMovement = false;
-        sf::IntRect bb = boundingBox();// sf::IntRect(spriteRenderer->_sprite.getGlobalBounds());
+        sf::IntRect bb = boundingBox();
 
         bool outOfBounds = bb.left < 0 || (bb.left+bb.width) > globalVars::mapSize.x || bb.top < 0 || (bb.top+bb.height) > globalVars::mapSize.y;
 

@@ -44,7 +44,9 @@ namespace globalConst
     constexpr int MaxFramesToDie = 180;
     constexpr int MaxFramesToWin = 200;
 
-    constexpr int UpgradesLimit = 4;
+    constexpr int MaxUpgradeLevel = 3;
+    constexpr int PlayerUpgradesLimit = 4;
+    constexpr int EagleUpgradesLimit = 2;
 
 };
 

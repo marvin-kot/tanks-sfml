@@ -1,5 +1,5 @@
 #include "MapCreator.h"
-
+#include "EagleController.h"
 #include "GameObject.h"
 #include "Controller.h"
 #include "Shootable.h"

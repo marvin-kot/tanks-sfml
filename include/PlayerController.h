@@ -46,6 +46,7 @@ public:
     int powerLevel() const { return _powerLevel; }
     void increasePowerLevel(bool);
     void updatePowerLevel();
+    void applyUpgrades();
     void updateAppearance();
     void updateMoveSpeed(int speed) { _moveSpeed = speed; }
     int numberOfUpgrades() const;

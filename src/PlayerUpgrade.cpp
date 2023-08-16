@@ -1,5 +1,6 @@
 #include "AssetManager.h"
 #include "Damageable.h"
+#include <EagleController.h>
 #include "GameObject.h"
 #include "ObjectsPool.h"
 #include "PlayerUpgrade.h"
@@ -12,6 +13,25 @@
 #include <random>
 
 std::vector<PlayerUpgrade *> PlayerUpgrade::currentThreeRandomUpgrades = {};
+
+const std::unordered_set<PlayerUpgrade::UpgradeType> playerPlayerUpgradeTypes = {
+    PlayerUpgrade::FastBullets,
+    PlayerUpgrade::MoreBullets,
+    PlayerUpgrade::TankSpeed,
+    PlayerUpgrade::PowerBullets,
+    PlayerUpgrade::TankArmor,
+    PlayerUpgrade::XpAttractor,
+    PlayerUpgrade::BonusEffectiveness,
+    PlayerUpgrade::Rocket
+};
+
+const std::unordered_set<PlayerUpgrade::UpgradeType> baseUpgradeTypes = {
+    PlayerUpgrade::BaseArmor,
+    PlayerUpgrade::RepairWalls,
+    PlayerUpgrade::BaseRestoreHP,
+    PlayerUpgrade::ReflectBullets,
+    PlayerUpgrade::PhoenixBase,
+};
 
 const std::unordered_set<PlayerUpgrade::UpgradeType> oneTimeBonusTypes = {
     PlayerUpgrade::FreezeEnemies,
@@ -41,6 +61,10 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
 
     auto controller = playerObj->getComponent<PlayerController>();
     assert(controller != nullptr);
+
+    assert(ObjectsPool::eagleObject != nullptr);
+    auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
+    assert(eagleController != nullptr);
 
     currentThreeRandomUpgrades.clear();
 
@@ -73,7 +97,14 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
             if (controller->hasLevelOfUpgrade(t) > 2)
                 continue;
 
-            if (controller->hasLevelOfUpgrade(t) == -1 && controller->numberOfUpgrades() >= globalConst::UpgradesLimit)
+            if (playerPlayerUpgradeTypes.find(newType) != playerPlayerUpgradeTypes.end()
+                    && controller->hasLevelOfUpgrade(t) == -1
+                    && controller->numberOfUpgrades() >= globalConst::PlayerUpgradesLimit)
+                continue;
+
+            if (baseUpgradeTypes.find(newType) != baseUpgradeTypes.end()
+                    && eagleController->hasLevelOfUpgrade(t) == -1
+                    && eagleController->numberOfUpgrades() >= globalConst::EagleUpgradesLimit)
                 continue;
 
             newType = t;
@@ -88,6 +119,10 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
             // and player has effectiveness modifier
             oldLevel = controller->hasLevelOfUpgrade(BonusEffectiveness);
         }
+
+        if (baseUpgradeTypes.find(newType) != baseUpgradeTypes.end())
+            oldLevel = eagleController->hasLevelOfUpgrade(newType);
+
         currentThreeRandomUpgrades.push_back(createUpgrade(newType, oldLevel+1));
     }
 }
@@ -138,7 +173,7 @@ BonusEffectivenessIncreaser::BonusEffectivenessIncreaser(int level)
 
     _effects.push_back("Improves an effect of\nevery one-time bonus");
     _effects.push_back("Severally improves an\neffect of every one-time bonus");
-    _effects.push_back("Greatly an improves effect\nof every one-time bonus");
+    _effects.push_back("Greatly improves an effect\nof every one-time bonus");
     _effects.push_back("Maxize an effect of\nevery one-time bonus");
 
     _iconRect = AssetManager::instance().getAnimationFrame("starCollectable", "default", 0).rect;
@@ -189,7 +224,7 @@ KillEnemiesBonus::KillEnemiesBonus(int level)
 
     _percentBasedOnLevel = { 33, 50, 66, 100 };
     for (auto percent : _percentBasedOnLevel)
-        _effects.push_back("Every enemy tank will be destroyed\nwith " + std::to_string(percent) + "\% probability");
+        _effects.push_back("Every enemy tank\nwill be destroyed\nwith " + std::to_string(percent) + "\% probability");
 
     _iconRect = AssetManager::instance().getAnimationFrame("grenadeCollectable", "default", 0).rect;
 }
@@ -241,7 +276,7 @@ MoreBulletsUpgrade::MoreBulletsUpgrade(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = MoreBullets;
-    _name = "Fast shooter";
+    _name = "Turret upgrade";
 
     _numberBasedOnLevel = { 1, 2, 3, 4 };
     for (auto number : _numberBasedOnLevel)
@@ -294,8 +329,8 @@ FasterTankUpgrade::FasterTankUpgrade(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = TankSpeed;
-    _name = "Motor upgrade";
-    _percentBasedOnLevel = { 10, 20, 30, 40 };
+    _name = "Caterpillar upgrade";
+    _percentBasedOnLevel = { 20, 30, 40, 50 };
     for (auto percent : _percentBasedOnLevel)
         _effects.push_back("Tank speed +" + std::to_string(percent) + "\%");
 
@@ -362,8 +397,4 @@ void BaseArmorUpgrade::onCollect(GameObject *)
 
     int newProtection = _numberBasedOnLevel[_currentLevel];
     damageable->setDefence(newProtection);
-
-    auto controller = ObjectsPool::eagleObject->getComponent<EagleController>();
-    assert(controller != nullptr);
-    controller->updateAppearance();
 }

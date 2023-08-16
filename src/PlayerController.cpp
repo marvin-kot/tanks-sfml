@@ -1,12 +1,15 @@
 #include "PlayerController.h"
 
 #include "Damageable.h"
+#include "EagleController.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
 #include "ObjectsPool.h"
 #include "Shootable.h"
 #include "SoundPlayer.h"
 #include "Utils.h"
+
+#include <cmath>
 
 PlayerController::PlayerController(GameObject *obj)
 : Controller(obj, globalConst::DefaultPlayerSpeed)
@@ -111,7 +114,19 @@ void PlayerController::update()
     }
 
 
-    int speed = ((int)(_moveSpeed * Utils::lastFrameTime.asSeconds()) >> 1) << 1;
+    float fSpeed = _moveSpeed * Utils::lastFrameTime.asSeconds();
+    int speed = std::floor(fSpeed);
+    float fraction = fSpeed - speed;
+
+    static bool addSpeed = false;
+    if (fraction > 0.3 && fraction < 0.7) {
+        addSpeed = !addSpeed;
+        if (addSpeed)
+            speed++;
+    } else if (fraction >= 0.7) {
+        speed++;
+    }
+    //Logger::instance() << "speed: " << fSpeed << "/" << speed << "\n";
     globalTypes::Direction direction = _gameObject->direction();
     switch (recentKey) {
         case sf::Keyboard::Left:
@@ -274,7 +289,8 @@ std::vector<int> xpNeededForLevelUp = {
     8000, // 2500
     11000, // 3000
     16000, // 5000
-    24000 // 8000
+    24000, // 8000
+    36000, // 12000
  };
 
 void PlayerController::addXP(int val)
@@ -295,10 +311,10 @@ void PlayerController::resetXP()
     globalVars::player1XP = 0;
     globalVars::player1Level = 1;
 
-    if (ObjectsPool::eagleObject) {
+    /*if (ObjectsPool::eagleObject) {
         ObjectsPool::eagleObject->getComponent<Damageable>()->setDefence(0);
         ObjectsPool::eagleObject->getComponent<EagleController>()->updateAppearance();
-    }
+    }*/
 }
 
 void PlayerController::levelUp()
@@ -321,21 +337,40 @@ void PlayerController::chooseUpgrade(int index)
     auto upgrade = PlayerUpgrade::currentThreeRandomUpgrades[index];
     assert(upgrade != nullptr);
 
-    if (upgrade->category() == PlayerUpgrade::OneTimeBonus) {
-        upgrade->onCollect(_gameObject);
-        delete upgrade;
-    } else {
-        auto tp = upgrade->type();
-        int lvl = hasLevelOfUpgrade(tp);
-        // TODO magic names
-        if (lvl > -1 && lvl < 3) {
-            _collectedUpgrades[tp]->increaseLevel();
-        } else {
-            _collectedUpgrades[tp] = upgrade;
+    assert(ObjectsPool::eagleObject != nullptr);
+    auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
+    assert(eagleController != nullptr);
+
+    switch (upgrade->category())
+    {
+        case PlayerUpgrade::OneTimeBonus:
+            upgrade->onCollect(_gameObject);
+            delete upgrade;
+            break;
+        case PlayerUpgrade::TankUpgrade:
+        {
+            auto tp = upgrade->type();
+            int lvl = hasLevelOfUpgrade(tp);
+            // TODO magic names
+            if (lvl > -1 && lvl < globalConst::MaxUpgradeLevel) {
+                _collectedUpgrades[tp]->increaseLevel();
+            } else {
+                _collectedUpgrades[tp] = upgrade;
+            }
+            break;
         }
+        case PlayerUpgrade::BaseUpgrade:
+            eagleController->upgrade(upgrade);
+            break;
     }
 
-    // re-new all bonuses (like, armor protection etc) on every level-up
+    // re-apply all bonuses (like, armor protection etc) on every level-up
+    applyUpgrades();
+    eagleController->applyUpgrades();
+}
+
+void PlayerController::applyUpgrades()
+{
     for (auto it : _collectedUpgrades) {
         it.second->onCollect(_gameObject);
     }

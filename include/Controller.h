@@ -114,23 +114,3 @@ public:
     void update() override;
     void appendLife();
 };
-
-
-class EagleController : public Controller
-{
-    enum EagleStates {
-        Starting,
-        BuildingWalls,
-        Waiting,
-        Reswawning
-    };
-
-    EagleStates _state;
-    std::vector<GameObject *> _surroundingWalls;
-public:
-    EagleController(GameObject *parent);
-    ~EagleController();
-
-    void update() override;
-    void updateAppearance();
-};
