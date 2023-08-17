@@ -23,10 +23,6 @@ private:
 
     int framesToDie, framesToWin;
 
-    bool _levelUpMenu = false;
-    int _currentUpgradeCursor = 0;
-
-
 public:
     Game();
 
@@ -49,7 +45,7 @@ private:
     void drawObjects();
     void updateDisplay();
     void checkStatePostFrame();
-    void getSelectedUpgrade();
+    void pause(bool);
 
     void drawTitleScreen();
     void drawStartLevelScreen();

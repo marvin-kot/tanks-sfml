@@ -4,6 +4,7 @@
 #include "EagleController.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
+#include "LevelUpPopupMenu.h"
 #include "ObjectsPool.h"
 #include "Shootable.h"
 #include "SoundPlayer.h"
@@ -322,7 +323,7 @@ void PlayerController::levelUp()
     globalVars::player1Level++;
 
     PlayerUpgrade::generateThreeRandomUpgradesForPlayer(_gameObject);
-    globalVars::openLevelUpMenu = true;
+    LevelUpPopupMenu::instance().open();
 }
 
 void PlayerController::chooseUpgrade(int index)

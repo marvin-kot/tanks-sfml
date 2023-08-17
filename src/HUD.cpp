@@ -164,7 +164,6 @@ void HUD::drawUpgrade(int index, int x, int y)
     std::string description = upgrade->currentEffectDescription();
     const int descriptionFontSize = 14;
     UiUtils::instance().drawText(description, descriptionFontSize, x, y + 100 + captionFontSize + 20 + descriptionFontSize);
-
 }
 
 void HUD::drawLevelUpPopupMenu(int cursorPos)

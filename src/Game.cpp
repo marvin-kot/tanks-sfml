@@ -4,6 +4,7 @@
 #include "GameObject.h"
 #include "GlobalConst.h"
 #include "HUD.h"
+#include "LevelUpPopupMenu.h"
 #include "ObjectsPool.h"
 #include "PlayerController.h"
 #include "Logger.h"
@@ -58,16 +59,6 @@ void Game::initializeVariables()
 
 bool Game::update()
 {
-    if (!_levelUpMenu && globalVars::openLevelUpMenu) {
-        assert(ObjectsPool::playerObject != nullptr);
-        _levelUpMenu = true;
-        globalVars::gameIsPaused = true;
-        SoundPlayer::instance().stopAllSounds();
-        SoundPlayer::instance().playBonusCollectSound();
-        globalVars::globalChronometer.pause();
-        globalVars::globalFreezeChronometer.pause();
-    }
-
     updateFrameClock();
     processWindowEvents();
     int stateResult = processStateChange();
@@ -80,22 +71,22 @@ bool Game::update()
 
     updateAllObjectControllers();
 
-    if (!globalVars::gameIsPaused && !_levelUpMenu) {
+    if (!globalVars::gameIsPaused) {
         processDeletedObjects();
     }
 
     drawGameScreen();
-    if (!globalVars::gameIsPaused && !_levelUpMenu)
+    if (!globalVars::gameIsPaused)
         recalculateViewPort();
     drawObjects();
     HUD::instance().draw();
 
-    if (_levelUpMenu)
-        HUD::instance().drawLevelUpPopupMenu(_currentUpgradeCursor);
+    if (LevelUpPopupMenu::instance().isOpen())
+        LevelUpPopupMenu::instance().draw();
 
     updateDisplay();
 
-    if (!globalVars::gameIsPaused && !_levelUpMenu)
+    if (!globalVars::gameIsPaused)
         checkStatePostFrame();
 
     return true;
@@ -136,36 +127,23 @@ void Game::processWindowEvents()
                         gameState = StartLevel;
                     else if (event.key.scancode == sf::Keyboard::Scan::Escape)
                         gameState = GameOver;
-                } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Escape) {
-                    // TODO: ask player confirmation
-                    gameState = GameOver;
-                } else if (gameState == PlayingLevel && event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::P) {
-                    if (!globalVars::gameIsPaused) {
-                        SoundPlayer::instance().stopAllSounds();
-                        SoundPlayer::instance().playPauseSound();
-                        globalVars::globalChronometer.pause();
-                        globalVars::globalFreezeChronometer.pause();
-                    } else {
-                        globalVars::globalChronometer.resume();
-                        globalVars::globalFreezeChronometer.resume();
+                } else if (gameState == PlayingLevel) {
+                    if (LevelUpPopupMenu::instance().isOpen()) {
+                        if (event.key.scancode == sf::Keyboard::Scan::Enter) {
+                            LevelUpPopupMenu::instance().getSelectedUpgrade();
+                            LevelUpPopupMenu::instance().close();
+                        } else if (event.key.scancode == sf::Keyboard::Scan::Left)
+                            LevelUpPopupMenu::instance().moveCursorLeft();
+                        if (event.key.scancode == sf::Keyboard::Scan::Right)
+                            LevelUpPopupMenu::instance().moveCursorRight();
+                        break; // do not process further!
                     }
-                    globalVars::gameIsPaused = !globalVars::gameIsPaused;
-                } else if (gameState == PlayingLevel && _levelUpMenu) {
-                    if (event.key.scancode == sf::Keyboard::Scan::Enter) {
-                        getSelectedUpgrade();
-                        _levelUpMenu = false;
-                        globalVars::gameIsPaused = false;
-                        globalVars::openLevelUpMenu = false;
-                        globalVars::globalChronometer.resume();
-                        globalVars::globalFreezeChronometer.resume();
-                    } else if (event.key.scancode == sf::Keyboard::Scan::Left) {
-                        SoundPlayer::instance().playTickSound();
-                        if (--_currentUpgradeCursor < 0)
-                            _currentUpgradeCursor = 2;
-                    } if (event.key.scancode == sf::Keyboard::Scan::Right) {
-                        SoundPlayer::instance().playTickSound();
-                        if (++_currentUpgradeCursor > 2)
-                            _currentUpgradeCursor = 0;
+
+                    if (event.key.scancode == sf::Keyboard::Scan::Escape) {
+                        // TODO: ask player confirmation
+                        gameState = GameOver;
+                    } else if (event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::P) {
+                        pause(!globalVars::gameIsPaused);
                     }
                 }
                 break;
@@ -176,6 +154,21 @@ void Game::processWindowEvents()
             default:
                 break;
         }
+    }
+}
+
+void Game::pause(bool p)
+{
+    using namespace globalVars;
+    gameIsPaused = p;
+    if (p) {
+        SoundPlayer::instance().stopAllSounds();
+        SoundPlayer::instance().playPauseSound();
+        globalChronometer.pause();
+        globalFreezeChronometer.pause();
+    } else {
+        globalChronometer.resume();
+        globalFreezeChronometer.resume();
     }
 }
 
@@ -229,9 +222,8 @@ bool Game::buildLevelMap(std::string fileName)
 {
     MapCreatorFromCustomMatrixFile mapBuilder;
     mapBuilder.parseMapFile(fileName);
-    if (mapBuilder.buildMapFromData() == -1) {
+    if (mapBuilder.buildMapFromData() == -1)
         return false;
-    }
 
     if (mapBuilder.mapWidth() > globalConst::maxFieldWidth || mapBuilder.mapHeight() > globalConst::maxFieldHeight) {
         Logger::instance() << "[ERROR] the map size exceeds the limits of the screen. Aborting game..." << fileName;
@@ -279,9 +271,8 @@ void Game::processDeletedObjects()
                     // do not break here - we still need to create explosion few lines later!
                 }
 
-                if (obj->isFlagSet(GameObject::PlayerSpawner)) {
+                if (obj->isFlagSet(GameObject::PlayerSpawner))
                     ObjectsPool::playerSpawnerObject = nullptr;
-                }
 
                 if (obj->isFlagSet(GameObject::Bullet)) {
                     GameObject *explosion = new GameObject("smallExplosion");
@@ -312,9 +303,8 @@ void Game::processDeletedObjects()
                 if (obj->isFlagSet(GameObject::BonusOnHit)) {
                     obj->generateDrop();
                     SoundPlayer::instance().playBonusAppearSound();
-                } else {
+                } else
                     obj->dropXp();
-                }
 
                 it = ObjectsPool::kill(it);
                 delete obj;
@@ -478,39 +468,34 @@ void Game::drawStartLevelScreen()
 
     // grey background
     UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(102, 102, 102));
-
     // level name
     UiUtils::instance().drawText(
         _currentLevelName, 48,
         screen_w/2, screen_h/2 - 64, false,
         sf::Color::White);
-
     // level goal
     UiUtils::instance().drawText(
         _currentLevelGoal, 32,
         screen_w/2, screen_h/2 + 32, false,
         sf::Color::White);
-
     // prompt
     UiUtils::instance().drawText(
         "Press [space] to start", 24,
         screen_w/2, screen_h/2 + 32 + 64, false,
         sf::Color::Yellow);
-
     Utils::window.display();
 }
 
 void Game::drawGameOverScreen()
 {
+    using namespace globalConst;
+    // grey background
+    UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(102, 102, 102));
+
+    UiUtils::instance().drawText(
+        "GAME OVER" , 48,
+        screen_w/2, screen_h/2 - 64, false,
+        sf::Color::White);
+
     Utils::window.display();
-}
-
-
-void Game::getSelectedUpgrade()
-{
-    assert(ObjectsPool::playerObject != nullptr);
-    PlayerController *controller = ObjectsPool::playerObject->getComponent<PlayerController>();
-
-    assert(controller != nullptr);
-    controller->chooseUpgrade(_currentUpgradeCursor);
 }

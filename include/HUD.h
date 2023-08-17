@@ -16,8 +16,6 @@ class HUD
     void drawBaseUpgrades(int baseY);
     void drawGlobalTimer();
 
-    void drawMiniIcon(const sf::IntRect& iconRect, int x, int y);
-    void drawIcon(const sf::IntRect& iconRect, int x, int y);
     void drawUpgrade(int index, int x, int y);
 public:
     static HUD& instance();
