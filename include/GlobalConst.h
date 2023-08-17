@@ -48,7 +48,7 @@ namespace globalConst
 
     constexpr int MaxUpgradeLevel = 3;
     constexpr int PlayerUpgradesLimit = 4;
-    constexpr int EagleUpgradesLimit = 2;
+    //constexpr int EagleUpgradesLimit = 2;
 
 };
 

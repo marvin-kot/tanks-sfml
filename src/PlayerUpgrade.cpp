@@ -111,14 +111,9 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
             if (controller->hasLevelOfUpgrade(t) > 2)
                 continue;
 
-            if (playerPlayerUpgradeTypes.find(newType) != playerPlayerUpgradeTypes.end()
-                    && controller->hasLevelOfUpgrade(t) == -1
-                    && controller->numberOfUpgrades() >= globalConst::PlayerUpgradesLimit)
-                continue;
-
-            if (baseUpgradeTypes.find(newType) != baseUpgradeTypes.end()
-                    && eagleController->hasLevelOfUpgrade(t) == -1
-                    && eagleController->numberOfUpgrades() > globalConst::EagleUpgradesLimit)
+            // if this is not an instant bonus + player already have max number of upgrades -> generare another one
+            if (!oneTimeBonusTypes.contains(newType) && controller->hasLevelOfUpgrade(t) == -1
+                    && controller->numberOfUpgrades() + eagleController->numberOfUpgrades() >= globalConst::PlayerUpgradesLimit)
                 continue;
 
             newType = t;
@@ -129,12 +124,12 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
         int oldLevel = controller->hasLevelOfUpgrade(newType);
 
         // if is one time bonus
-        if (oneTimeBonusTypes.find(newType) != oneTimeBonusTypes.end()) {
+        if (oneTimeBonusTypes.contains(newType)) {
             // and player has effectiveness modifier
             oldLevel = controller->hasLevelOfUpgrade(BonusEffectiveness);
         }
 
-        if (baseUpgradeTypes.find(newType) != baseUpgradeTypes.end())
+        if (baseUpgradeTypes.contains(newType))
             oldLevel = eagleController->hasLevelOfUpgrade(newType);
 
         currentThreeRandomUpgrades.push_back(createUpgrade(newType, oldLevel+1));
