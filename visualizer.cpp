@@ -33,7 +33,8 @@ bool buildLevelMap(std::string fileName)
 {
     MapCreatorFromCustomMatrixFile mapBuilder;
     mapBuilder.parseMapFile(fileName);
-    if (mapBuilder.buildMapFromData() == -1)
+    auto props = mapBuilder.buildMapFromData();
+    if (props.failedToLoad == true)
     {
         return false;
     }

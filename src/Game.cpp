@@ -8,18 +8,20 @@
 #include "ObjectsPool.h"
 #include "PlayerController.h"
 #include "Logger.h"
-#include "MapCreator.h"
 #include "SoundPlayer.h"
 #include "Utils.h"
 #include "UiUtils.h"
 
 #include <SFML/Graphics.hpp>
 
+#include <format>
+
 
 std::vector<std::string> levelMaps = {
-    "assets/testmap2.txt",
-    "assets/testmap.txt",
-    "assets/testmap3.txt"};
+    "assets/testmap4.txt",
+    //"assets/testmap.txt",
+    //"assets/testmap2.txt"
+};
 
 
 Game::Game() {}
@@ -81,8 +83,10 @@ bool Game::update()
     drawObjects();
     HUD::instance().draw();
 
-    if (LevelUpPopupMenu::instance().isOpen())
+    if (LevelUpPopupMenu::instance().isOpen()) {
+        SoundPlayer::instance().stopAllSounds();
         LevelUpPopupMenu::instance().draw();
+    }
 
     updateDisplay();
 
@@ -205,6 +209,8 @@ int Game::processStateChange()
     }
     else if (gameState == StartLevel) {
         SoundPlayer::instance().gameOver = false;
+        HUD::instance().showFail(false);
+        HUD::instance().showWin(false);
         globalVars::globalChronometer.reset(true);
         gameState = PlayingLevel;
     }
@@ -220,9 +226,10 @@ int Game::processStateChange()
 
 bool Game::buildLevelMap(std::string fileName)
 {
-    MapCreatorFromCustomMatrixFile mapBuilder;
+    MapCreator mapBuilder;
     mapBuilder.parseMapFile(fileName);
-    if (mapBuilder.buildMapFromData() == -1)
+    _currentLevelProperties = mapBuilder.buildMapFromData();
+    if (_currentLevelProperties.failedToLoad)
         return false;
 
     if (mapBuilder.mapWidth() > globalConst::maxFieldWidth || mapBuilder.mapHeight() > globalConst::maxFieldHeight) {
@@ -232,8 +239,6 @@ bool Game::buildLevelMap(std::string fileName)
 
     mapBuilder.placeSpawnerObjects();
 
-    _currentLevelName = mapBuilder.mapName();
-    _currentLevelGoal = mapBuilder.mapGoal();
     _surviveTimeoutSec = 60 * 5;
 
     return true;
@@ -264,9 +269,6 @@ void Game::processDeletedObjects()
                 }
 
                 if (obj->isFlagSet(GameObject::Eagle)) {
-                    framesToDie = globalConst::MaxFramesToDie;
-                    SoundPlayer::instance().stopAllSounds();
-                    SoundPlayer::instance().gameOver = true;
                     ObjectsPool::eagleObject = nullptr;
                     // do not break here - we still need to create explosion few lines later!
                 }
@@ -417,21 +419,59 @@ void Game::checkStatePostFrame()
     }
 
     // as the game just cleared all objects marked for deletion, all the existing enemies must be alive at this point
-    int countEnemiesAlive = ObjectsPool::countObjectsByTypes({
-        "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank",
-        "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank"});
-    if (countEnemiesAlive < 1 && framesToWin == -1) {
+    if (framesToWin == -1 && winConditionsMet()) {
+        // instant kill all enemies
+        auto enemiesAlive = ObjectsPool::getObjectsByTypes({
+            "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank",
+            "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank"});
+        for (auto enemy : enemiesAlive) enemy->markForDeletion();
+
         framesToWin = globalConst::MaxFramesToWin;
         SoundPlayer::instance().stopAllSounds();
         SoundPlayer::instance().gameOver = true;
+        SoundPlayer::instance().playWinJingle();
+        HUD::instance().showWin(true);
     }
 
-    int countPlayerObjects = ObjectsPool::countObjectsByTypes({"player", "spawner_player"});
-    if (countPlayerObjects < 1 && framesToDie == -1) {
+    if (framesToDie == -1 && failConditionsMet()) {
         framesToDie = globalConst::MaxFramesToDie;
         SoundPlayer::instance().stopAllSounds();
         SoundPlayer::instance().gameOver = true;
+        SoundPlayer::instance().playFailJingle();
+        HUD::instance().showFail(true);
     }
+}
+
+bool Game::winConditionsMet() const
+{
+    if (_currentLevelProperties.win == Level::KillEmAll) {
+        int countEnemiesAlive = ObjectsPool::countObjectsByTypes({
+            "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank",
+            "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank"});
+        if (countEnemiesAlive < 1)
+            return true;
+
+    } else if (_currentLevelProperties.win == Level::SurviveTime) {
+        const int secondsToWin = _currentLevelProperties.winParam * 60;
+        if (globalVars::globalChronometer.getElapsedTime() >= sf::seconds(secondsToWin))
+            return true;
+    }
+
+    return false;
+}
+
+bool Game::failConditionsMet() const
+{
+    int countPlayerObjects = ObjectsPool::countObjectsByTypes({"player", "spawner_player"});
+    if (countPlayerObjects < 1 )
+        return true;
+
+    if (_currentLevelProperties.fail == Level::LoseBase) {
+        if (ObjectsPool::eagleObject == nullptr)
+            return true;
+    }
+
+    return false;
 }
 
 void Game::drawTitleScreen()
@@ -465,23 +505,71 @@ void Game::drawTitleScreen()
 void Game::drawStartLevelScreen()
 {
     using namespace globalConst;
+    constexpr int screenCenterX = screen_w / 2;
+    constexpr int screenCenterY = screen_h / 2;
+
+    constexpr int screenQuarterY = screen_h / 4;
 
     // grey background
     UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(102, 102, 102));
+
+    int currentStringY = screenQuarterY - 64;
     // level name
     UiUtils::instance().drawText(
-        _currentLevelName, 48,
-        screen_w/2, screen_h/2 - 64, false,
+        _currentLevelProperties.name, 48,
+        screenCenterX, currentStringY, false,
         sf::Color::White);
+
+    currentStringY += 80;
+
+    for (auto& brief : _currentLevelProperties.briefing) {
+        UiUtils::instance().drawText( brief, 23, screenCenterX, currentStringY, false, sf::Color::White);
+        currentStringY += 25;
+    }
+
     // level goal
+    currentStringY += 75;
     UiUtils::instance().drawText(
-        _currentLevelGoal, 32,
-        screen_w/2, screen_h/2 + 32, false,
-        sf::Color::White);
+        "Win", 32,
+        screenCenterX, currentStringY, false,
+        sf::Color::Green);
+
+    currentStringY += 32;
+    const Level::WinCondition win = _currentLevelProperties.win;
+    const int winParam = _currentLevelProperties.winParam;
+    char formattedStr[100];
+    {
+        const char *placeholder = Level::winDescriptionsMap.at(win);
+        sprintf(formattedStr, placeholder, winParam);
+    }
+    //std::string_view str = std::string_view(Level::winDescriptionsMap.at(win));
+    UiUtils::instance().drawText(
+        formattedStr, 24,
+        screenCenterX, currentStringY, false, sf::Color::White);
+
+    // fail condition
+    currentStringY += 60;
+    UiUtils::instance().drawText(
+        "Fail", 32,
+        screenCenterX, currentStringY, false,
+        sf::Color::Red);
+
+    const Level::FailCondition fail = _currentLevelProperties.fail;
+    const int failParam = _currentLevelProperties.failParam;
+    {
+        const char *placeholder = Level::failDescriptionsMap.at(fail);
+        sprintf(formattedStr, placeholder, winParam);
+    }
+    currentStringY += 32;
+    UiUtils::instance().drawText(
+        formattedStr,
+        24, screenCenterX, currentStringY, false, sf::Color::White);
+
     // prompt
+    currentStringY += 150;
     UiUtils::instance().drawText(
         "Press [space] to start", 24,
-        screen_w/2, screen_h/2 + 32 + 64, false,
+        screenCenterX, currentStringY, false,
         sf::Color::Yellow);
     Utils::window.display();
 }
@@ -499,3 +587,4 @@ void Game::drawGameOverScreen()
 
     Utils::window.display();
 }
+

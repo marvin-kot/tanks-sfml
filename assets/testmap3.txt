@@ -1,3 +1,4 @@
+Ruined hamlet
 map 23 16
 waves 3
 delay 0 timeout 10 produce 5

@@ -31,7 +31,7 @@ void SpawnController::update()
 
     switch (_state) {
         case StartDelay:
-            if (_clock.getElapsedTime() > _startSpawnDelay)
+            if (globalVars::globalChronometer.getElapsedTime() > _startSpawnDelay)
                 _state = Starting;
             break;
         case Waiting:

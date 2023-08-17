@@ -114,19 +114,6 @@ void PlayerController::update()
         }
     }
 
-
-    float fSpeed = _moveSpeed * Utils::lastFrameTime.asSeconds();
-    int speed = std::floor(fSpeed);
-    float fraction = fSpeed - speed;
-
-    static bool addSpeed = false;
-    if (fraction > 0.3 && fraction < 0.7) {
-        addSpeed = !addSpeed;
-        if (addSpeed)
-            speed++;
-    } else if (fraction >= 0.7) {
-        speed++;
-    }
     //Logger::instance() << "speed: " << fSpeed << "/" << speed << "\n";
     globalTypes::Direction direction = _gameObject->direction();
     switch (recentKey) {
@@ -153,7 +140,8 @@ void PlayerController::update()
     }
 
     if (_isMoving) {
-        prepareMoveInDirection(direction);
+        int speed = moveSpeedForCurrentFrame();
+        prepareMoveInDirection(direction, speed);
         if (_gameObject->move(_currMoveX, _currMoveY) == 0) {
             // try same direction but +1/-1 pixes aside
             trySqueeze();

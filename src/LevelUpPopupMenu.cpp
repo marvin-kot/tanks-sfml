@@ -52,16 +52,17 @@ void LevelUpPopupMenu::draw()
 
     // draw title
     {
-        std::string lvl = "You reached level " + std::to_string(globalVars::player1Level) + "!";
+        std::string lvl = "You've reached level " + std::to_string(globalVars::player1Level) + "!";
         const int titleFontSize = 28;
         UiUtils::instance().drawText( lvl, titleFontSize,
             greyRect.getPosition().x,
             greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize);
 
         const int subtitleSize = 20;
-        UiUtils::instance().drawText( "Select 1 of 3 bonuses and press [ENTER]", subtitleSize,
+        UiUtils::instance().drawText( "Select 1 of 3 rewards and press [ENTER]", subtitleSize,
             greyRect.getPosition().x,
-            greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize + subtitleSize*2);
+            greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize + subtitleSize*2,
+            false, sf::Color::Yellow);
     }
 
     // draw cursor

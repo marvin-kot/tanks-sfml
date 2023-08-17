@@ -65,6 +65,18 @@ int SoundPlayer::loadSounds()
         return -1;
     tickSound.setBuffer(tickBuffer);
 
+    if (!winBuffer.loadFromFile("assets/audio/8_Bit_Dendy_Battle_City.wav"))
+        return -1;
+    winSound.setBuffer(winBuffer);
+
+    if (!failBuffer.loadFromFile("assets/audio/game_over.wav"))
+        return -1;
+    failSound.setBuffer(failBuffer);
+
+    if (!debuffBuffer.loadFromFile("assets/audio/debuff.wav"))
+        return -1;
+    debuffSound.setBuffer(debuffBuffer);
+
     return 0;
 }
 
@@ -160,4 +172,19 @@ void SoundPlayer::playXpCollectSound()
 void SoundPlayer::playTickSound()
 {
     tickSound.play();
+}
+
+void SoundPlayer::playWinJingle()
+{
+    winSound.play();
+}
+
+void SoundPlayer::playFailJingle()
+{
+    failSound.play();
+}
+
+void SoundPlayer::playDebuffSound()
+{
+    debuffSound.play();
 }

@@ -15,12 +15,17 @@ class HUD
     void drawBaseLives(int baseY);
     void drawBaseUpgrades(int baseY);
     void drawGlobalTimer();
+    void drawWinScreen();
+    void drawFailScreen();
 
-    void drawUpgrade(int index, int x, int y);
+    bool _showWin = false;
+    bool _showFail = false;
+
+    std::string _surviveTimeStr;
 public:
     static HUD& instance();
 
     void draw();
-    void drawLevelUpPopupMenu(int pos);
-
+    void showWin(bool val);
+    void showFail(bool val);
 };

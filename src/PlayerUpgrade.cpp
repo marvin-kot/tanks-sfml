@@ -324,7 +324,7 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
     _type = FastBullets;
     _name = "Muzzle upgrade";
 
-    _percentBasedOnLevel = { 50, 100, 150, 200 };
+    _percentBasedOnLevel = { 30, 60, 80, 100 };
     for (auto percent : _percentBasedOnLevel)
         _effects.push_back("Bullet speed +" + std::to_string(percent) + "\%");
 
@@ -409,7 +409,7 @@ FasterTankUpgrade::FasterTankUpgrade(int level)
     _category = PlayerUpgrade::TankUpgrade;
     _type = TankSpeed;
     _name = "Caterpillar upgrade";
-    _percentBasedOnLevel = { 30, 50, 70, 90 };
+    _percentBasedOnLevel = { 20, 30, 40, 50 };
     for (auto percent : _percentBasedOnLevel)
         _effects.push_back("Tank speed +" + std::to_string(percent) + "\%");
 

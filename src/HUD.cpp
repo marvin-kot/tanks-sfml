@@ -54,6 +54,12 @@ void HUD::draw()
     drawBaseUpgrades(112+64+48);
 
     drawGlobalTimer();
+
+    if (_showWin)
+        drawWinScreen();
+
+    if (_showFail)
+        drawFailScreen();
 }
 
 void HUD::drawGlobalTimer()
@@ -147,61 +153,47 @@ void HUD::drawBaseUpgrades(int baseY)
     }
 }
 
-
-
-void HUD::drawUpgrade(int index, int x, int y)
-{
-    assert(index >=0 && index < PlayerUpgrade::currentThreeRandomUpgrades.size());
-    auto upgrade = PlayerUpgrade::currentThreeRandomUpgrades[index];
-
-    assert(upgrade != nullptr);
-    UiUtils::instance().drawIcon(upgrade->iconRect(), x, y);
-
-    std::string caption = upgrade->name();
-    const int captionFontSize = 18;
-    UiUtils::instance().drawText(caption, captionFontSize, x, y + 60 + captionFontSize);
-
-    std::string description = upgrade->currentEffectDescription();
-    const int descriptionFontSize = 14;
-    UiUtils::instance().drawText(description, descriptionFontSize, x, y + 100 + captionFontSize + 20 + descriptionFontSize);
-}
-
-void HUD::drawLevelUpPopupMenu(int cursorPos)
+void HUD::drawWinScreen()
 {
     using namespace globalConst;
-    using namespace globalVars;
+    UiUtils::instance().drawText(
+        "CONGRATULATIONS!" , 90,
+        screen_w/2, screen_h/2 - 90, false,
+        sf::Color::Green);
 
-    // draw frame
-    sf::RectangleShape greyRect(sf::Vector2f(screen_w * 2 / 3, screen_h / 2));
-    greyRect.setOrigin(greyRect.getSize().x/2, greyRect.getSize().y/2);
-    greyRect.setPosition(sf::Vector2f(screen_w/2, screen_h/2));
-    greyRect.setFillColor(sf::Color(102, 102, 102));
-    Utils::window.draw(greyRect);
+    UiUtils::instance().drawText(
+        "Good job, commander!" , 50,
+        screen_w/2, screen_h/2 + 50, false,
+        sf::Color::White);
+}
 
-    // draw title
-    {
-        std::string lvl = "You reached level " + std::to_string(globalVars::player1Level) + "!";
-        const int titleFontSize = 28;
-        UiUtils::instance().drawText( lvl, titleFontSize,
-            greyRect.getPosition().x,
-            greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize);
+void HUD::drawFailScreen()
+{
+    using namespace globalConst;
+    UiUtils::instance().drawText(
+        "GAME OVER" , 90,
+        screen_w/2, screen_h/2 - 90, false,
+        sf::Color::Red);
 
-        const int subtitleSize = 20;
-        UiUtils::instance().drawText( "Select 1 of 3 bonuses and press [ENTER]", subtitleSize,
-            greyRect.getPosition().x,
-            greyRect.getPosition().y - greyRect.getSize().y/2 + titleFontSize + subtitleSize*2);
+    UiUtils::instance().drawText(
+        "You survived for " + _surviveTimeStr , 50,
+        screen_w/2, screen_h/2 + 50, false,
+        sf::Color::White);
+}
+
+void HUD::showWin(bool val)
+{
+    _showWin = val;
+}
+void HUD::showFail(bool val)
+{
+    _showFail = val;
+
+    if (_showFail) {
+        sf::Time time = globalVars::globalChronometer.getElapsedTime();
+        int minutes = (int)time.asSeconds() / 60;
+        int seconds = (int)time.asSeconds() % 60;
+
+        _surviveTimeStr = std::to_string(minutes) + " minutes " + std::to_string(seconds) + " seconds";
     }
-
-
-    // draw cursor
-    drawCursor(greyRect, cursorPos);
-
-    const int iconY = greyRect.getPosition().y - greyRect.getSize().y/8;
-    const int centerX = greyRect.getPosition().x;
-    const int offsetX = greyRect.getSize().x/4 + 32;
-
-    // draw icons
-    drawUpgrade(0, centerX - offsetX, iconY);
-    drawUpgrade(1, centerX, iconY);
-    drawUpgrade(2, centerX + offsetX, iconY);
 }

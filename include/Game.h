@@ -1,5 +1,8 @@
 #pragma once
 
+#include "MapCreator.h"
+
+
 #include <string>
 
 class Game
@@ -17,11 +20,11 @@ private:
 
     GameState gameState = TitleScreen;
     int currentLevel;
-    std::string _currentLevelName;
-    std::string _currentLevelGoal;
+    Level::Properties _currentLevelProperties;
     int _surviveTimeoutSec;
 
     int framesToDie, framesToWin;
+
 
 public:
     Game();
@@ -50,4 +53,7 @@ private:
     void drawTitleScreen();
     void drawStartLevelScreen();
     void drawGameOverScreen();
+
+    bool winConditionsMet() const;
+    bool failConditionsMet() const;
 };

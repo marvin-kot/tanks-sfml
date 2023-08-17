@@ -9,6 +9,7 @@
 #include "ObjectsPool.h"
 #include "PlayerController.h"
 #include "Shootable.h"
+#include "SoundPlayer.h"
 #include "Utils.h"
 
 #include <iostream>
@@ -229,10 +230,12 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                 if (isFlagSet(Player)) {
                     auto ctr = dynamic_cast<PlayerController *>(_controller);
                     ctr->updateAppearance();
+                    SoundPlayer::instance().playDebuffSound();
                 }
                 if (isFlagSet(Eagle)) {
                     auto ctr = dynamic_cast<EagleController *>(_controller);
                     ctr->updateAppearance();
+                    SoundPlayer::instance().playDebuffSound();
                 }
                 if (_damageable->isDestroyed()) {
                     _deleteme = true;

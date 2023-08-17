@@ -27,10 +27,10 @@ namespace globalConst
     constexpr int viewPortWidthPx = viewPortWidthTiles * spriteDisplaySizeX;
     constexpr int viewPortHeightPx = viewPortHeightTiles * spriteDisplaySizeY;
 
-    constexpr int DefaultPlayerSpeed = 64;
+    constexpr int DefaultPlayerSpeed = 50;
     constexpr int DefaultEnemySpeed = DefaultPlayerSpeed * 3 / 4;
 
-    constexpr int DefaultBulletSpeed = DefaultPlayerSpeed * 2;
+    constexpr int DefaultBulletSpeed = DefaultPlayerSpeed * 7 / 3;
     constexpr int DoubleBulletSpeed = DefaultBulletSpeed * 3 / 2;
     constexpr int DefaultDamage = 1;
     constexpr int DoubleDamage = 2;

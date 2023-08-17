@@ -26,7 +26,9 @@ protected:
     int _currMoveY = 0;
     int _moveSpeed;
 
-    void prepareMoveInDirection(globalTypes::Direction);
+    bool _addSpeed = false;
+    int moveSpeedForCurrentFrame();
+    void prepareMoveInDirection(globalTypes::Direction, int spd);
     void checkForGamePause();
 public:
     Controller(GameObject *obj, int spd);
@@ -39,6 +41,7 @@ class TankRandomController : public Controller
     const sf::Time _actionTimeout;
 
     std::uniform_int_distribution<int> distribution;
+    int trySqueeze();
 public:
     TankRandomController(GameObject *parent, int spd, float timeoutSec);
     void update() override;

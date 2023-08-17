@@ -12,11 +12,55 @@ using json = nlohmann::json;
 class GameObject;
 class SpawnController;
 
+namespace Level
+{
+    enum WinCondition
+    {
+        SurviveTime,
+        KillEmAll,
+        ObtainFlag
+    };
+
+    enum FailCondition
+    {
+        LoseBase,
+        ExpireTime
+    };
+
+    struct Properties
+    {
+        std::string name;
+        std::vector<std::string> briefing;
+
+        WinCondition win;
+        int winParam; // meaning depends on goal
+        FailCondition fail;
+        int failParam; // meaning depends on goal
+        bool failedToLoad = false;
+    };
+
+    const std::map<std::string, WinCondition> winMeaningsMap = {
+        { "SURVIVE", SurviveTime },
+        { "KILLEMALL", KillEmAll },
+        { "OBTAIN", ObtainFlag }
+    };
+
+    const std::map<std::string, FailCondition> failMeaningsMap = {
+        { "LOSE_BASE", LoseBase },
+        { "EXPIRE", ExpireTime }
+    };
+
+    // TODO: why it doesn't work with const map???
+    extern std::map<WinCondition, const char *> winDescriptionsMap;
+
+    extern std::map<FailCondition, const char *> failDescriptionsMap;
+}
+
+
+
 class MapCreator
 {
 protected:
-    std::string _name;
-    std::string _goal;
     int map_w, map_h;
 
     struct SpawnerData
@@ -28,15 +72,17 @@ protected:
         int quantity;
     };
 
+    Level::Properties _currLevelProperies;
     std::vector<SpawnerData> _spawners;
+    std::string mapString;
+    std::map<char, std::string> charMap;
 public:
-    virtual int parseMapFile(std::string fileName) = 0;
-    virtual int buildMapFromData() = 0;
+    MapCreator();
+    int parseMapFile(std::string fileName);
+    Level::Properties buildMapFromData();
     int placeSpawnerObjects();
     int mapWidth() const { return map_w; }
     int mapHeight() const { return map_h; }
-    std::string mapName() { return _name; }
-    std::string mapGoal() { return _goal; }
 
 protected:
     GameObject *buildObject(std::string type);
@@ -44,16 +90,4 @@ protected:
 
     void setupScreenBordersBasedOnMapSize();
 
-};
-
-class MapCreatorFromCustomMatrixFile : public MapCreator
-{
-
-    std::string mapString;
-    std::map<char, std::string> charMap;
-public:
-    MapCreatorFromCustomMatrixFile();
-
-    int parseMapFile(std::string fileName) override;
-    int buildMapFromData() override;
 };

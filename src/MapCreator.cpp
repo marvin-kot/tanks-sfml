@@ -10,6 +10,22 @@
 
 #include <string>
 
+namespace Level {
+    std::map<WinCondition, const char *> winDescriptionsMap = {
+        { SurviveTime, "Survive %d minutes" },
+        { KillEmAll, "Kill all enemies" },
+        { ObtainFlag, "Obtain the flag" }
+    };
+
+    std::map<FailCondition, const char *> failDescriptionsMap = {
+        { LoseBase, "Lose the base or all your tanks" },
+        { ExpireTime, "Fail to complete your task in %d minutes" }
+    };
+
+}
+
+
+
 int MapCreator::placeSpawnerObjects()
 {
     constexpr int tileSize = globalConst::spriteOriginalSizeX;
@@ -134,7 +150,7 @@ void MapCreator::setupScreenBordersBasedOnMapSize()
 
 // ############ Custom Matrix Text ###################
 
-MapCreatorFromCustomMatrixFile::MapCreatorFromCustomMatrixFile()
+MapCreator::MapCreator()
 {
     charMap = {
             {'@', "spawner_player"},
@@ -146,7 +162,7 @@ MapCreatorFromCustomMatrixFile::MapCreatorFromCustomMatrixFile()
             {'_', "ice"}};
 }
 
-int MapCreatorFromCustomMatrixFile::parseMapFile(std::string fileName)
+int MapCreator::parseMapFile(std::string fileName)
 {
     // file format:
     // line 1: width, height
@@ -156,21 +172,56 @@ int MapCreatorFromCustomMatrixFile::parseMapFile(std::string fileName)
     std::string line;
     // line 0: map name
     {
-        std::getline(f, _name);
-        assert(_name.length() > 0 && _name.length() < 100);
+        std::getline(f, _currLevelProperies.name);
+        assert(_currLevelProperies.name.length() > 0 && _currLevelProperies.name.length() < 100);
     }
 
-    // line 1: goal of the level
+    // line 1: win conditions
     {
-        std::getline(f, _goal);
-        assert(_goal.length() > 0 && _goal.length() < 100);
+        std::getline(f, line);
+        std::istringstream iss(line);
+        std::string cond;
+        int  par;
+
+        iss >> cond >> par;
+        assert(Level::winMeaningsMap.find(cond) != Level::winMeaningsMap.end());
+        _currLevelProperies.win = Level::winMeaningsMap.at(cond);
+        _currLevelProperies.winParam = par;
     }
-    // line 2: map size
+    // line 2: fail conditions
+    {
+        std::getline(f, line);
+        std::istringstream iss(line);
+        std::string cond;
+        int  par;
+
+        iss >> cond >> par;
+        assert(Level::failMeaningsMap.find(cond) != Level::failMeaningsMap.end());
+        _currLevelProperies.fail = Level::failMeaningsMap.at(cond);
+        _currLevelProperies.failParam = par;
+    }
+
+    // line 3 num of briefing lines
+    {
+        std::getline(f, line);
+        int num;
+        std::istringstream iss(line);
+        iss >> num;
+        assert(num>=0 && num < 10);
+        // read briefing line by line
+        for (int i = 0; i < num; i++) {
+            std::getline(f, line);
+            _currLevelProperies.briefing.push_back(line);
+        }
+    }
+
+    // map size
     {
         std::string dummy;
         std::getline(f, line);
         std::istringstream iss(line);
         iss >> dummy >> map_w >> map_h;
+        assert(dummy == "map");
         Logger::instance() << "Read map size: " << map_w << map_h << "\n";
     }
 
@@ -204,7 +255,7 @@ int MapCreatorFromCustomMatrixFile::parseMapFile(std::string fileName)
     return 0;
 }
 
-int MapCreatorFromCustomMatrixFile::buildMapFromData()
+Level::Properties MapCreator::buildMapFromData()
 {
     constexpr int basicTileSize = globalConst::spriteOriginalSizeX;
     constexpr int tileCenter = basicTileSize / 2;
@@ -255,9 +306,10 @@ int MapCreatorFromCustomMatrixFile::buildMapFromData()
 
     if (!playerCreated) {
         Logger::instance() << "[Error] No player created";
-        return -1;
+        _currLevelProperies.failedToLoad = true;
     }
-    return 0;
+
+    return _currLevelProperies;
 }
 
 

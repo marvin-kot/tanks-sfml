@@ -44,6 +44,15 @@ class SoundPlayer
     sf::SoundBuffer tickBuffer;
     sf::Sound       tickSound;
 
+    sf::SoundBuffer winBuffer;
+    sf::Sound       winSound;
+
+    sf::SoundBuffer failBuffer;
+    sf::Sound       failSound;
+
+    sf::SoundBuffer debuffBuffer;
+    sf::Sound       debuffSound;
+
 public:
     bool gameOver = false;
 private:
@@ -71,4 +80,7 @@ public:
     void playPauseSound();
     void playXpCollectSound();
     void playTickSound();
+    void playWinJingle();
+    void playFailJingle();
+    void playDebuffSound();
 };
