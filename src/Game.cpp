@@ -446,43 +446,29 @@ void Game::checkStatePostFrame()
 
 void Game::drawTitleScreen()
 {
-    sf::Text text;
-    text.setFont(AssetManager::instance().defaultFont());
-    std::string title = "RETRO TANK MASSACRE";
-    text.setString(title);
-    const int titleSize = 96;
-    text.setCharacterSize(titleSize);
-    text.setFillColor(sf::Color::White);
-    text.setOrigin(titleSize * title.length() / 2.5, titleSize/2);
-    text.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 - titleSize);
+    using namespace globalConst;
 
-    sf::Text textSub;
-    std::string subtitle = "version  0.2";
-    textSub.setFont(AssetManager::instance().defaultFont());
-    textSub.setString(subtitle);
-    textSub.setCharacterSize(titleSize/6);
-    textSub.setFillColor(sf::Color::White);
-    textSub.setOrigin(titleSize/6 * subtitle.length() / 4, titleSize/4/2);
-    textSub.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 + 12);
+    constexpr int screenCenterX = screen_w / 2;
+    constexpr int screenCenterY = screen_h / 2;
 
-    sf::Text textInstruction;
-    std::string instruction = "Press [space] to start the game";
-    textInstruction.setFont(AssetManager::instance().defaultFont());
-    textInstruction.setString(instruction);
-    textInstruction.setCharacterSize(titleSize/4);
-    textInstruction.setFillColor(sf::Color::Yellow);
-    textInstruction.setOrigin(titleSize/4 * instruction.length() / 2.5, titleSize/2/2);
-    textInstruction.setPosition(globalConst::screen_w/2, globalConst::screen_h/2 + 12 + titleSize + 12);
+    // draw black rect
+    UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(0, 0, 0));
 
-    Utils::window.clear();
+    // game title
+    constexpr int titleFontSize = 96;
+    UiUtils::instance().drawText( "RETRO TANK MASSACRE", titleFontSize, screenCenterX, screenCenterY - titleFontSize);
 
-    sf::RectangleShape blackRect(sf::Vector2f(globalConst::screen_w, globalConst::screen_h));
-    blackRect.setFillColor(sf::Color(0, 0, 0));
+    // game version
+    constexpr int versionFontSize = titleFontSize / 6;
+    UiUtils::instance().drawText( "version  0.2", versionFontSize, screenCenterX, screenCenterY + versionFontSize);
 
-    Utils::window.draw(blackRect);
-    Utils::window.draw(text);
-    Utils::window.draw(textSub);
-    Utils::window.draw(textInstruction);
+    // prompt
+    constexpr int promptFontSize = titleFontSize / 4;
+    UiUtils::instance().drawText( "Press [space] to start the game", promptFontSize,
+        screenCenterX, screenCenterY + versionFontSize + titleFontSize + promptFontSize,
+        false, sf::Color::Yellow );
+
+
     Utils::window.display();
 }
 
