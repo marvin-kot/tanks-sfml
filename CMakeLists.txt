@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
 
-set(CMAKE_C_COMPILER "C:/Program Files/w64devkit/bin/gcc.exe")
-set(CMAKE_CXX_COMPILER "C:/Program Files/w64devkit/bin/g++.exe")
-
 project(tankcpp)
 set(CMAKE_CXX_STANDARD 20)
 
