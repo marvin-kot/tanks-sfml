@@ -28,6 +28,7 @@ public:
         BaseRestoreHP,
         ReflectBullets,
         PhoenixBase,
+        BaseInvincibility,
         // one time bonuses
         FreezeEnemies,
         InstantKillEnemies,
@@ -36,7 +37,8 @@ public:
         AdditionalLife,
         RandomWalls,
         InstantKillBaseArea,
-        CollectAllFreeXP
+        CollectAllFreeXP,
+        RebuildEagleWalls
     };
 
     enum UpgradeCategory
@@ -51,7 +53,7 @@ protected:
     UpgradeType _type;
     UpgradeCategory _category;
     int _currentLevel;
-    std::pair<UpgradeType, int> _dependency;
+    std::map<UpgradeType, int> _dependencies;
 
     std::string _name;
     std::vector<std::string> _effects;
@@ -121,6 +123,33 @@ class TankAdditionalLifeBonus : public PlayerUpgrade
     std::vector<int> _numberBasedOnLevel;
 public:
     TankAdditionalLifeBonus(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class RebuildEagleWallsBonus : public PlayerUpgrade
+{
+    std::vector<int> _numberBasedOnLevel;
+public:
+    RebuildEagleWallsBonus(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class EagleInvincibilityAfterDamage : public PlayerUpgrade
+{
+    std::vector<int> _timeBasedOnLevel;
+public:
+    EagleInvincibilityAfterDamage(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+
+class RebuildEagleWallsOnLevelup : public PlayerUpgrade
+{
+    std::vector<int> _numberBasedOnLevel;
+    int levelupCounter = 0;
+
+public:
+    RebuildEagleWallsOnLevelup(int level);
     void onCollect(GameObject *collector) override;
 };
 

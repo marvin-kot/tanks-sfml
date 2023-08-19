@@ -9,6 +9,7 @@ GameObject *ObjectsPool::eagleObject = nullptr;
 GameObject *ObjectsPool::playerSpawnerObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
 std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
+std::map<globalTypes::EagleWallDirection, GameObject *> ObjectsPool::eagleWalls = {};
 
 ObjectsPool::~ObjectsPool()
 {
@@ -32,6 +33,9 @@ void ObjectsPool::clearEverything()
         assert(it2 != objByType.end());
 
         objByType.erase(it2);
+        auto dir = determineEagleWall(obj);
+        if (dir != globalTypes::NotAnEagleWall)
+            eagleWalls.erase(dir);
 
         delete obj;
     }
@@ -49,6 +53,10 @@ void ObjectsPool::kill(GameObject * obj)
         assert(it2 != objByType.end());
 
         objByType.erase(it2);
+
+        auto dir = determineEagleWall(obj);
+        if (dir != globalTypes::NotAnEagleWall)
+            eagleWalls.erase(dir);
 
         delete obj;
         return;
@@ -69,8 +77,14 @@ decltype(ObjectsPool::allGameObjects)::iterator ObjectsPool::kill(decltype(allGa
 
     objByType.erase(it2);
 
+    auto dir = determineEagleWall(obj);
+    if (dir != globalTypes::NotAnEagleWall)
+        eagleWalls.erase(dir);
+
     return result;
 }
+
+
 
 void ObjectsPool::addObject(GameObject *obj)
 {
@@ -83,6 +97,22 @@ void ObjectsPool::addObject(GameObject *obj)
 
     allGameObjects.insert(obj);
     objectsByType[obj->type()].insert(obj);
+}
+
+void ObjectsPool::addEagleWall(globalTypes::EagleWallDirection dir, GameObject *obj)
+{
+    addObject(obj);
+    eagleWalls[dir] = obj;
+}
+
+globalTypes::EagleWallDirection ObjectsPool::determineEagleWall(const GameObject * const obj)
+{
+    for (const auto w : eagleWalls) {
+        if (w.second == obj)
+            return w.first;
+    }
+
+    return globalTypes::NotAnEagleWall;
 }
 
 void ObjectsPool::iterateObjectAndCleanDeleted(std::function<void(GameObject *)> func)
@@ -109,7 +139,7 @@ std::unordered_set<GameObject *>& ObjectsPool::getObjectsByType(std::string type
     return objectsByType[type];
 }
 
-/*    static std::unordered_set<GameObject *> getObjectsByTypes(std::vector<std::string> types)
+std::unordered_set<GameObject *> ObjectsPool::getObjectsByTypes(std::vector<std::string> types)
 {
     std::unordered_set<GameObject *> result;
 
@@ -118,13 +148,13 @@ std::unordered_set<GameObject *>& ObjectsPool::getObjectsByType(std::string type
         result.insert(objects.begin(), objects.end());
     }
 
-    Logger::instance() << "return " << result.size() << "objects";
+    //Logger::instance() << "return " << result.size() << "objects";
     return result;
 }
-*/
 
 
-std::unordered_set<GameObject *> ObjectsPool::getObjectsByTypes(std::vector<std::string> types)
+
+/*std::unordered_set<GameObject *> ObjectsPool::getObjectsByTypes(std::vector<std::string> types)
 {
     std::unordered_set<GameObject *> result;
 
@@ -144,7 +174,7 @@ std::unordered_set<GameObject *> ObjectsPool::getObjectsByTypes(std::vector<std:
     }
 
     return result;
-}
+}*/
 
 int ObjectsPool::countObjectsByTypes(std::vector<std::string> types)
 {
@@ -168,4 +198,9 @@ GameObject *ObjectsPool::findNpcById(int id)
 {
     auto it = std::find_if(allGameObjects.cbegin(), allGameObjects.cend(), [id](GameObject *obj) { return obj->id() == id; });
     return it != allGameObjects.cend() ? *it : nullptr;
+}
+
+std::map<globalTypes::EagleWallDirection, GameObject *>& ObjectsPool::getEagleWalls()
+{
+    return eagleWalls;
 }

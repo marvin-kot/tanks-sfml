@@ -34,14 +34,16 @@ public:
     Controller(GameObject *obj, int spd);
     virtual ~Controller() {}
     virtual void update() {}
+
+    virtual void onDamaged() {};
 };
 
 class TankRandomController : public Controller
 {
     const sf::Time _actionTimeout;
 
-    std::uniform_int_distribution<int> distribution;
     int trySqueeze();
+    bool decideIfToShoot(globalTypes::Direction oldDir) const;
 public:
     TankRandomController(GameObject *parent, int spd, float timeoutSec);
     void update() override;

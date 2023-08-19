@@ -255,6 +255,26 @@ int MapCreator::parseMapFile(std::string fileName)
     return 0;
 }
 
+void MapCreator::placeBrickWall(int x, int y)
+{
+    constexpr int basicTileSize = globalConst::spriteOriginalSizeX;
+    constexpr int subtileSize = basicTileSize / 2;
+    constexpr int subtileCenter = subtileSize / 2;
+    using namespace std;
+    vector<string> parts = {"brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2"};
+    int i=0;
+    for (auto part : parts) {
+        GameObject *object = MapCreator::buildObject(part);
+        assert(object != nullptr);
+        object->setSize(subtileSize, subtileSize);
+        object->setPosition(
+            x + subtileCenter + (i%2)*subtileSize,
+            y + subtileCenter + (i/2)*subtileSize);
+        ObjectsPool::addObject(object);
+        i++;
+    }
+}
+
 Level::Properties MapCreator::buildMapFromData()
 {
     constexpr int basicTileSize = globalConst::spriteOriginalSizeX;
@@ -272,18 +292,7 @@ Level::Properties MapCreator::buildMapFromData()
                 using namespace std;
                 string objType = it->second;
                 if (objType == "brickWall") {
-                    vector<string> parts = {"brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2"};
-                    int i=0;
-                    for (auto part : parts) {
-                        GameObject *object = MapCreator::buildObject(part);
-                        assert(object != nullptr);
-                        object->setSize(subtileSize, subtileSize);
-                        object->setPosition(
-                            x*basicTileSize + subtileCenter + (i%2)*subtileSize,
-                            y*basicTileSize + subtileCenter + (i/2)*subtileSize);
-                        ObjectsPool::addObject(object);
-                        i++;
-                    }
+                    placeBrickWall(x*basicTileSize, y*basicTileSize);
                     continue;
                 }
                 GameObject *object = MapCreator::buildObject(objType);

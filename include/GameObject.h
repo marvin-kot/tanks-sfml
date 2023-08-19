@@ -90,6 +90,8 @@ public:
     sf::IntRect boundingBox() const;
     bool collides(const GameObject& go) const;
     bool collidesWithAnyObject() const;
+    GameObject *objectContainingPoint(int id, int x, int y) const;
+    GameObject *linecastInCurrentDirection() const;
     std::vector<GameObject *> allCollisions() const;
     void updateOnCollision(GameObject *, bool& cancelMovement);
     void updateOnCollision(GameObject *);

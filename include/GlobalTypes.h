@@ -10,4 +10,23 @@ namespace globalTypes
         Down,
         Right
     };
+
+    enum EagleWallDirection
+    {
+        NotAnEagleWall,
+        DownLeft,
+        LeftLeftDown,
+        LeftLeftUp,
+        UpLeft,
+        UpUpLeft,
+        UpUpRight,
+        UpRight,
+        RightRightUp,
+        RightRightDown,
+        DownRight,
+        DownDownRight,
+        DownDownLeft,
+        MaxDirection
+    };
+
 }

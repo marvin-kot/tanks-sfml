@@ -17,12 +17,13 @@
 
 GameObject::GameObject(std::string type)
 : _type(type)
+, _direction(globalTypes::Direction::Up)
 {
     assignUniqueId();
 }
 
 GameObject::GameObject(GameObject *parent, std::string type)
-: _parentObject(parent), _type(type)
+: _parentObject(parent), _type(type), _direction(globalTypes::Direction::Up)
 {
     assignUniqueId();
 }
@@ -227,7 +228,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                 auto bullet = dynamic_cast<BulletController *>(other->_controller);
                 assert(bullet != nullptr);
                 _damageable->takeDamage(bullet->damage());
-                if (isFlagSet(Player)) {
+                if (isFlagSet(Player) && visualEffect == nullptr) {
                     auto ctr = dynamic_cast<PlayerController *>(_controller);
                     ctr->updateAppearance();
                     SoundPlayer::instance().playDebuffSound();
@@ -319,6 +320,65 @@ std::vector<GameObject *> GameObject::allCollisions() const
             result.push_back(o);
     }
     return result;
+}
+
+GameObject * GameObject::objectContainingPoint(int id, int x, int y) const
+{
+    if (ObjectsPool::playerObject!=nullptr && ObjectsPool::playerObject->boundingBox().contains(x, y))
+        return ObjectsPool::playerObject;
+
+    if (ObjectsPool::eagleObject!=nullptr && ObjectsPool::eagleObject->boundingBox().contains(x, y))
+        return ObjectsPool::eagleObject;
+
+    for (GameObject *o : ObjectsPool::getObjectsByTypes({ "brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2", "concreteWall" })) {
+        assert( o != nullptr );
+        if (id == o->id())
+            continue;
+        if (o->mustBeDeleted())
+            continue;
+
+        if (o->boundingBox().contains(sf::Vector2i(x, y)))
+            return o;
+    }
+
+    return nullptr;
+}
+
+GameObject *GameObject::linecastInCurrentDirection() const
+{
+    using namespace globalTypes;
+    using namespace globalVars;
+
+    const int step = 4;
+    const int maxRange = 128;
+    switch (_direction) {
+        case Direction::Right:
+            for (int x = _x; x < std::min(mapSize.x, _x + maxRange); x += step) {
+                GameObject *obj = objectContainingPoint(_id, x, _y);
+                if (obj != nullptr)
+                    return obj;
+            } break;
+        case Direction::Left:
+            for (int x = _x; x > std::max(0, _x - maxRange) ; x -= step) {
+                GameObject *obj = objectContainingPoint(_id, x, _y);
+                if (obj != nullptr)
+                    return obj;
+            } break;
+        case Direction::Up:
+            for (int y = _y; y > std::max(0, _y - maxRange) ; y -= step) {
+                GameObject *obj = objectContainingPoint(_id, _x, y);
+                if (obj != nullptr)
+                    return obj;
+            } break;
+        case Direction::Down:
+            for (int y = _y; y < std::min(mapSize.y, _y + maxRange) ; y += step) {
+                GameObject *obj = objectContainingPoint(_id, _x, y);
+                if (obj != nullptr)
+                    return obj;
+            } break;
+    }
+
+    return nullptr;
 }
 
 

@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "GlobalTypes.h"
+
 class GameObject;
 
 class ObjectsPool
@@ -12,6 +14,7 @@ class ObjectsPool
 private:
     static std::unordered_set<GameObject *> allGameObjects;
     static std::unordered_map<std::string, std::unordered_set<GameObject *>> objectsByType;
+    static std::map<globalTypes::EagleWallDirection, GameObject *> eagleWalls;
 
 public:
     static GameObject *playerObject;
@@ -26,6 +29,8 @@ public:
     static decltype(allGameObjects)::iterator kill(decltype(allGameObjects)::iterator);
 
     static void addObject(GameObject *obj);
+    static void addEagleWall(globalTypes::EagleWallDirection, GameObject *);
+    static globalTypes::EagleWallDirection determineEagleWall(const GameObject * const obj);
 
     static void iterateObjectAndCleanDeleted(std::function<void(GameObject *)> func);
 
@@ -37,4 +42,6 @@ public:
     static int countObjectsByTypes(std::vector<std::string> types);
 
     static GameObject *findNpcById(int id);
+
+    static std::map<globalTypes::EagleWallDirection, GameObject *> &getEagleWalls();
 };

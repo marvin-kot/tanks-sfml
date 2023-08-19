@@ -20,4 +20,6 @@ public:
 
     void makeInvincible(bool);
     bool isInvincible() const;
+
+    void setInvincibilityOnHit(int);
 };

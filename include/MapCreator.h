@@ -84,9 +84,11 @@ public:
     int mapWidth() const { return map_w; }
     int mapHeight() const { return map_h; }
 
-protected:
-    GameObject *buildObject(std::string type);
-    GameObject *createSpawnerObject(const SpawnerData&);
+public:
+    static GameObject *buildObject(std::string type);
+    static GameObject *createSpawnerObject(const SpawnerData&);
+
+    static void placeBrickWall(int x, int y);
 
     void setupScreenBordersBasedOnMapSize();
 

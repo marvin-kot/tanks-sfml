@@ -1,5 +1,5 @@
+#include "Controller.h"
 #include "Damageable.h"
-
 #include "GameObject.h"
 
 Damageable::Damageable(GameObject *parent, int hp)
@@ -20,6 +20,11 @@ void Damageable::takeDamage(int dmg)
     } else {
         _hp -= dmg;
     }
+
+    auto controller = _gameObject->getComponent<Controller>();
+
+    if (controller)
+        controller->onDamaged();
 }
 
 bool Damageable::isDestroyed() const

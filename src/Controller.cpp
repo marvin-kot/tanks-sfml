@@ -7,6 +7,8 @@
 #include "Damageable.h"
 #include "Logger.h"
 
+#include <algorithm>
+
 
 Controller::Controller(GameObject *parent, int spd)
 : _gameObject(parent), _moveSpeed(spd)
@@ -40,6 +42,7 @@ int Controller::moveSpeedForCurrentFrame()
 
 void Controller::prepareMoveInDirection(globalTypes::Direction dir, int speed)
 {
+    assert(dir != globalTypes::Direction::Unknown);
     _gameObject->setCurrentDirection(dir);
 
     switch (dir) {
@@ -78,8 +81,9 @@ void Controller::checkForGamePause()
 /////
 
 TankRandomController::TankRandomController(GameObject *parent, int spd, float timeoutSec)
-: Controller(parent, spd), _actionTimeout(sf::seconds(timeoutSec)),distribution(1, 4)
+: Controller(parent, spd), _actionTimeout(sf::seconds(timeoutSec))
 {
+    //_gameObject->setCurrentDirection(globalTypes::Down);
     _clock.reset(true);
 }
 
@@ -106,38 +110,79 @@ void TankRandomController::update()
     }
 
 
-    int tries = 1;
-    int moved = 0; // TODO remove magic numbers
+    int moved = -1; // TODO remove magic numbers
     bool resetTimeout = false;
     int speed = moveSpeedForCurrentFrame();
+
+    using namespace globalTypes;
+    assert(_gameObject->direction() != globalTypes::Direction::Unknown );
+    const auto oldDirection = _gameObject->direction();
+    std::vector<Direction> possibleMoves = {Up, Left, Right, Down, oldDirection};
+    // add current direction to set to make moving in same direction more probable
     do {
-        globalTypes::Direction dir = globalTypes::Unknown;
-        if (_clock.getElapsedTime() <= _actionTimeout)
-            dir = _gameObject->direction();
-        else {
-            // change decision
+        globalTypes::Direction dir = _gameObject->direction();
+        if (dir == globalTypes::Unknown) {
+            Logger::instance() << "ERROR: direction unknown " << _gameObject->type();
+        }
+        if (moved == 0 || _clock.getElapsedTime() > _actionTimeout) {
             resetTimeout = true;
-            dir = static_cast<globalTypes::Direction> (distribution(Utils::generator));
+            // change decision
+            std::uniform_int_distribution<int> distribution(0, possibleMoves.size()-1);
+            int index = distribution(Utils::generator);
+            dir = possibleMoves[index];
+            assert(dir != globalTypes::Direction::Unknown);
         }
 
         prepareMoveInDirection(dir, speed);
-
 
         moved = _gameObject->move(_currMoveX, _currMoveY);
         if (moved == 0) {
             // try same direction but +1/-1 pixes aside
             moved = trySqueeze();
+            if (moved == 0) {
+                // remove the direction from possible moves and try again
+                possibleMoves.erase(std::remove(possibleMoves.begin(), possibleMoves.end(), dir), possibleMoves.end());
+                resetTimeout = true;
+            }
         }
-    } while (resetTimeout && --tries && moved == 0);
+
+    } while (resetTimeout && moved == 0 && !possibleMoves.empty());
 
     _isMoving = (moved == 1);
 
+    if (decideIfToShoot(oldDirection))
+        _gameObject->shoot();
+
     if (resetTimeout) {
         _clock.reset(true);
-        int shotChance = distribution(Utils::generator);
-        if (shotChance > 2)
-            _gameObject->shoot();
     }
+}
+
+bool TankRandomController::decideIfToShoot(globalTypes::Direction oldDir) const
+{
+    // do not shoot right after turn
+    if (_gameObject->direction() != oldDir)
+        return false;
+
+    GameObject *hit = _gameObject->linecastInCurrentDirection();
+
+    if (hit == nullptr)
+        return false;
+
+    if (hit == ObjectsPool::playerObject || hit == ObjectsPool::eagleObject) {
+        std::uniform_int_distribution<int> distribution(0, 10);
+        int shotChance = distribution(Utils::generator);
+        return (shotChance == 0);
+    }
+
+    if (hit->type().rfind("brickWall", 0, 9) != std::string::npos) {
+        std::uniform_int_distribution<int> distribution(0, 20);
+        int shotChance = distribution(Utils::generator);
+        return (shotChance == 0);
+    }
+
+    return false;
+
 }
 
 int TankRandomController::trySqueeze()
@@ -166,27 +211,19 @@ BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, 
 
 void BulletController::update()
 {
+
     checkForGamePause();
     if (_pause) return;
 
     if (_clock.getElapsedTime() > sf::milliseconds(globalConst::DefaultBulletLifetimeMs))
         _gameObject->markForDeletion();
 
+
     int speed = moveSpeedForCurrentFrame();
-    if (_direction == globalTypes::Left)
-    {
-        _gameObject->move(-speed, 0);
-        _gameObject->setCurrentAnimation("left");
-    } else if (_direction == globalTypes::Up) {
-        _gameObject->move(0, -speed);
-        _gameObject->setCurrentAnimation("up");
-    } else if (_direction == globalTypes::Right) {
-        _gameObject->move(speed, 0);
-        _gameObject->setCurrentAnimation("right");
-    } else if (_direction == globalTypes::Down) {
-        _gameObject->move(0, speed);
-        _gameObject->setCurrentAnimation("down");
-    }
+    assert(_direction != globalTypes::Direction::Unknown );
+    prepareMoveInDirection(_direction, speed);
+    _gameObject->move(_currMoveX, _currMoveY);
+
 }
 
 

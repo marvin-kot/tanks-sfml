@@ -1,15 +1,16 @@
 #include "GameObject.h"
 #include "Shootable.h"
 
-Shootable::Shootable(GameObject *parent, int timeout)
+Shootable::Shootable(GameObject *parent, int timeout, int bulletSpeed)
     : _gameObject(parent)
     , _actionTimeoutMs(timeout)
-    , _bulletSpeed(globalConst::DefaultBulletSpeed)
+    , _bulletSpeed(bulletSpeed)
     , _damage(globalConst::DefaultDamage)
     {}
 
 bool Shootable::shoot(globalTypes::Direction dir)
 {
+    assert( dir != globalTypes::Direction::Unknown);
     if (isShootingProhibited())
         return false;
     _clock.restart();
@@ -30,18 +31,38 @@ bool Shootable::shoot(globalTypes::Direction dir)
 }
 
 bool Shootable::isShootingProhibited() {
-    return sf::milliseconds(_actionTimeoutMs) > _clock.getElapsedTime();
+    return _clock.getElapsedTime() < sf::milliseconds(_actionTimeoutMs);
 }
 
 ////// PLayerShootable
 
 
 PlayerShootable::PlayerShootable(GameObject *parent, int level)
-: Shootable(parent, globalConst::PlayerShootTimeoutMs), _level(level)
+: Shootable(parent, globalConst::PlayerShootTimeoutMs, globalConst::DefaultPlayerBulletSpeed), _level(level)
 {}
 
 
 bool PlayerShootable::isShootingProhibited()
+{
+    if (Shootable::isShootingProhibited()) return true;
+    auto bullets = ObjectsPool::getObjectsByType("bullet");
+    int countPlayerBullets = 0;
+
+    for (auto b : bullets) {
+        if (b && !b->mustBeDeleted() && b->parentId() == _gameObject->id())
+            countPlayerBullets++;
+    }
+
+    return countPlayerBullets > _level;
+}
+
+
+EnemyTankShootable::EnemyTankShootable(GameObject *parent)
+: Shootable(parent, globalConst::EnemyShootTimeoutMs, globalConst::DefaultEnemyBulletSpeed)
+{}
+
+
+bool EnemyTankShootable::isShootingProhibited()
 {
     if (Shootable::isShootingProhibited()) return true;
     auto bullets = ObjectsPool::getObjectsByType("bullet");

@@ -27,7 +27,6 @@ GameObject * PlayerSpawnController::createObject()
     pc->setDamageable(new Damageable(pc, 1));
     // must be done after creating Damageable
     pc->setController(new PlayerController(pc));
-    pc->setCurrentDirection(globalTypes::Up);
 
     return pc;
 }

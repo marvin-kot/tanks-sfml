@@ -28,15 +28,20 @@ namespace globalConst
     constexpr int viewPortHeightPx = viewPortHeightTiles * spriteDisplaySizeY;
 
     constexpr int DefaultPlayerSpeed = 50;
-    constexpr int DefaultEnemySpeed = DefaultPlayerSpeed * 3 / 4;
+    constexpr int DefaultEnemySpeed = DefaultPlayerSpeed * 2 / 3;
+    constexpr int FastEnemySpeed = DefaultEnemySpeed * 4 / 3;
+    constexpr int SlowEnemySpeed = DefaultEnemySpeed * 2 / 3;
 
-    constexpr int DefaultBulletSpeed = DefaultPlayerSpeed * 7 / 3;
-    constexpr int DoubleBulletSpeed = DefaultBulletSpeed * 3 / 2;
+    constexpr int DefaultPlayerBulletSpeed = DefaultPlayerSpeed * 7 / 3;
+    constexpr int DoublePlayerBulletSpeed = DefaultPlayerBulletSpeed * 3 / 2;
+    constexpr int DefaultEnemyBulletSpeed = DefaultEnemySpeed * 8 / 3;
+    constexpr int DoubleEnemyBulletSpeed = DefaultEnemyBulletSpeed * 3 / 2;
     constexpr int DefaultDamage = 1;
     constexpr int DoubleDamage = 2;
     constexpr int DefaultTimeoutMs = 1000;
     constexpr int HalvedTimeoutMs = 500;
     constexpr int PlayerShootTimeoutMs = 200;
+    constexpr int EnemyShootTimeoutMs = 500;
 
     constexpr int DefaultBulletLifetimeMs = 2000;
 

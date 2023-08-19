@@ -14,39 +14,45 @@
 
 std::vector<PlayerUpgrade *> PlayerUpgrade::currentThreeRandomUpgrades = {};
 
-const std::unordered_set<PlayerUpgrade::UpgradeType> playerPlayerUpgradeTypes = {
-    PlayerUpgrade::FastBullets,
-    PlayerUpgrade::MoreBullets,
-    PlayerUpgrade::TankSpeed,
-    PlayerUpgrade::PowerBullets,
-    PlayerUpgrade::TankArmor,
-    PlayerUpgrade::XpAttractor,
+
+using UpgradeType = PlayerUpgrade::UpgradeType;
+const std::unordered_set<UpgradeType> tankUpgradeTypes = {
+    UpgradeType::FastBullets,
+    UpgradeType::MoreBullets,
+    UpgradeType::TankSpeed,
+    UpgradeType::PowerBullets,
+    UpgradeType::TankArmor,
+    UpgradeType::XpAttractor,
     PlayerUpgrade::BonusEffectiveness,
     PlayerUpgrade::Rocket
 };
 
-const std::unordered_set<PlayerUpgrade::UpgradeType> baseUpgradeTypes = {
-    PlayerUpgrade::BaseArmor,
-    PlayerUpgrade::RepairWalls,
-    PlayerUpgrade::BaseRestoreHP,
-    PlayerUpgrade::ReflectBullets,
-    PlayerUpgrade::PhoenixBase,
+const std::unordered_set<UpgradeType> baseUpgradeTypes = {
+    UpgradeType::BaseArmor,
+    UpgradeType::BaseInvincibility,
+    UpgradeType::RepairWalls,
+    UpgradeType::BaseRestoreHP,
+    UpgradeType::ReflectBullets,
+    UpgradeType::PhoenixBase,
 };
 
-const std::unordered_set<PlayerUpgrade::UpgradeType> oneTimeBonusTypes = {
-    PlayerUpgrade::FreezeEnemies,
-    PlayerUpgrade::InstantKillEnemies,
-    PlayerUpgrade::TempTankInvincibility,
-    PlayerUpgrade::AdditionalLife,
-    PlayerUpgrade::RandomWalls,
-    PlayerUpgrade::InstantKillBaseArea,
-    PlayerUpgrade::CollectAllFreeXP
+const std::unordered_set<UpgradeType> oneTimeBonusTypes = {
+    UpgradeType::FreezeEnemies,
+    UpgradeType::InstantKillEnemies,
+    UpgradeType::TempTankInvincibility,
+    UpgradeType::AdditionalLife,
+    UpgradeType::RandomWalls,
+    UpgradeType::InstantKillBaseArea,
+    UpgradeType::CollectAllFreeXP,
+    UpgradeType::RebuildEagleWalls
+};
+
+const std::map<UpgradeType, std::pair<UpgradeType, int>> upgradeDepencies = {
+    {UpgradeType::BaseInvincibility,  {UpgradeType::BaseArmor, 0}}
 };
 
 PlayerUpgrade::PlayerUpgrade(int level) : _currentLevel(level)
 {
-    _dependency.first = None;
-    _dependency.second = 0;
 }
 
 std::string PlayerUpgrade::name() const
@@ -80,7 +86,7 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
 
     currentThreeRandomUpgrades.clear();
 
-    std::vector<UpgradeType> availableTypes = {
+    const std::vector<UpgradeType> availableTypes = {
         FastBullets,
         MoreBullets,
         TankSpeed,
@@ -91,7 +97,10 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
         InstantKillEnemies,
         TempTankInvincibility,
         AdditionalLife,
-        BaseArmor
+        //RebuildEagleWalls,
+        RepairWalls,
+        BaseArmor,
+        BaseInvincibility
     };
 
     std::unordered_set<UpgradeType> alreadyGenerated;
@@ -108,12 +117,22 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
             if (alreadyGenerated.find(t) != alreadyGenerated.end())
                 continue;
 
-            if (controller->hasLevelOfUpgrade(t) > 2)
+            if (controller->hasLevelOfUpgrade(t) > 2 || eagleController->hasLevelOfUpgrade(t) > 2)
                 continue;
 
+            if (upgradeDepencies.contains(t)) {
+                if (tankUpgradeTypes.contains(t) && controller->hasLevelOfUpgrade(upgradeDepencies.at(t).first) == -1)
+                    continue;
+                else if (baseUpgradeTypes.contains(t) && eagleController->hasLevelOfUpgrade(upgradeDepencies.at(t).first) == -1)
+                    continue;
+            }
+
             // if this is not an instant bonus + player already have max number of upgrades -> generare another one
-            if (!oneTimeBonusTypes.contains(newType) && controller->hasLevelOfUpgrade(t) == -1
+            if (!oneTimeBonusTypes.contains(newType) && controller->hasLevelOfUpgrade(t) == -1 && eagleController->hasLevelOfUpgrade(t) == -1
                     && controller->numberOfUpgrades() + eagleController->numberOfUpgrades() >= globalConst::PlayerUpgradesLimit)
+                continue;
+
+             if (t == RebuildEagleWalls && ObjectsPool::getEagleWalls().size() == globalTypes::EagleWallDirection::MaxDirection)
                 continue;
 
             newType = t;
@@ -170,8 +189,17 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
         case AdditionalLife:
             newUpgrade = new TankAdditionalLifeBonus(level);
             break;
+        case RebuildEagleWalls:
+            newUpgrade = new RebuildEagleWallsBonus(level);
+            break;
+        case RepairWalls:
+            newUpgrade = new RebuildEagleWallsOnLevelup(level);
+            break;
         case BaseArmor:
             newUpgrade = new BaseArmorUpgrade(level);
+            break;
+        case BaseInvincibility:
+            newUpgrade = new EagleInvincibilityAfterDamage(level);
             break;
     }
 
@@ -256,7 +284,7 @@ TankInvincibilityBonus::TankInvincibilityBonus(int level)
 {
     _category = PlayerUpgrade::OneTimeBonus;
     _type = PlayerUpgrade::TempTankInvincibility;
-    _name = "Divine cloud";
+    _name = "Power shield";
 
     _timeBasedOnLevel = { 10, 15, 20, 25, 30 };
     for (auto time : _timeBasedOnLevel)
@@ -310,6 +338,92 @@ void TankAdditionalLifeBonus::onCollect(GameObject *collector)
 }
 
 
+/////////////
+RebuildEagleWallsBonus::RebuildEagleWallsBonus(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::OneTimeBonus;
+    _type = PlayerUpgrade::RebuildEagleWalls;
+    _name = "Repair works";
+
+     _numberBasedOnLevel = { 0, 0, 0, 0, 0 };
+    for (auto time : _numberBasedOnLevel) {
+        _effects.push_back("Restore the walls of your base");
+    }
+
+    _iconRect = AssetManager::instance().getAnimationFrame("shovelCollectable", "default", 0).rect;
+
+}
+
+void RebuildEagleWallsBonus::onCollect(GameObject *)
+{
+
+    auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
+    assert(eagleController != nullptr);
+    eagleController->fastRepairWalls(100);
+}
+
+///////////////
+
+RebuildEagleWallsOnLevelup::RebuildEagleWallsOnLevelup(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::BaseUpgrade;
+    _type = PlayerUpgrade::RepairWalls;
+    _name = "Inspired builders";
+
+    _numberBasedOnLevel = { 4, 3, 2, 1 };
+    std::vector<std::string> suffix = {"th", "rd", "nd", "st"};
+    int i=0;
+    for (auto num : _numberBasedOnLevel) {
+        _effects.push_back("Base walls will be rebuilt\non every " + std::to_string(num) + suffix[i] + " level up");
+        i++;
+    }
+
+    _iconRect = AssetManager::instance().getAnimationFrame("shovelCollectable", "default", 0).rect;
+
+}
+
+void RebuildEagleWallsOnLevelup::onCollect(GameObject *)
+{
+
+    if (levelupCounter % _numberBasedOnLevel[_currentLevel] == 0) {
+        auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
+        assert(eagleController != nullptr);
+        eagleController->fastRepairWalls(100);
+    }
+
+    levelupCounter++;
+}
+
+///////////////
+
+EagleInvincibilityAfterDamage::EagleInvincibilityAfterDamage(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::BaseUpgrade;
+    _type = PlayerUpgrade::BaseInvincibility;
+    _name = "Emergency cupola";
+
+    // requires any level of armor
+    _dependencies[BaseArmor] = 0;
+
+    _timeBasedOnLevel = { 5, 10, 15, 20 };
+    //std::vector<std::string> suffix = {"th", "rd", "nd", "st"};
+    for (auto time : _timeBasedOnLevel) {
+        _effects.push_back("After getting damaged,\nthe base will become\ninvincible for " + std::to_string(time) + " sec");
+    }
+
+    _iconRect = AssetManager::instance().getAnimationFrame("eagleCloudCollectable", "default", 0).rect;
+
+}
+
+void EagleInvincibilityAfterDamage::onCollect(GameObject *)
+{
+    auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
+    assert(eagleController != nullptr);
+    eagleController->setTempInvincibilityAfterDamage(_timeBasedOnLevel[_currentLevel]);
+}
 ///////////////
 
 FasterBulletUpgrade::FasterBulletUpgrade(int level)
@@ -335,7 +449,7 @@ void FasterBulletUpgrade::onCollect(GameObject *collector)
     assert(_currentLevel < _percentBasedOnLevel.size());
     int percent = _percentBasedOnLevel[_currentLevel];
 
-    const int newBulletSpeed = globalConst::DefaultBulletSpeed + (globalConst::DefaultBulletSpeed * percent / 100);
+    const int newBulletSpeed = globalConst::DefaultPlayerBulletSpeed + (globalConst::DefaultPlayerBulletSpeed * percent / 100);
     shootable->setBulletSpeed(newBulletSpeed);
 }
 

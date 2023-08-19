@@ -2,10 +2,30 @@
 #include "EagleController.h"
 #include "GameObject.h"
 #include "ObjectsPool.h"
+#include "MapCreator.h"
+#include "SoundPlayer.h"
 #include "SpriteRenderer.h"
 
+using namespace globalTypes;
+using namespace sf;
+
+static const std::map<EagleWallDirection, sf::Vector2i> dirOffsets = {
+    {DownLeft, Vector2i(-12, 12)},
+    {LeftLeftDown, Vector2i(-12, 4)},
+    {LeftLeftUp, Vector2i(-12, -4)},
+    {UpLeft, Vector2i(-12, -12)},
+    {UpUpLeft, Vector2i(-4, -12)},
+    {UpUpRight, Vector2i(4, -12)},
+    {UpRight, Vector2i(12, -12)},
+    {RightRightUp, Vector2i(12, -4)},
+    {RightRightDown, Vector2i(12, 4)},
+    {DownRight, Vector2i(12, 12)},
+    {DownDownRight, Vector2i(4, 12)},
+    {DownDownLeft, Vector2i(-4, 12)}
+};
+
 EagleController::EagleController(GameObject *obj)
-: Controller(obj, 0)
+: Controller(obj, 0), _state(Starting)
 {}
 
 EagleController::~EagleController()
@@ -17,10 +37,79 @@ EagleController::~EagleController()
     }
 }
 
+constexpr int initialWallsBuildTimeout = 150;
+
 void EagleController::update()
 {
     checkForGamePause();
     if (_pause) return;
+
+    if (_invincible) {
+        if (_invincibilityTimer.getElapsedTime() < sf::seconds(_invincibilityAfterDamageTimeout)) {
+            _gameObject->visualEffect->copyParentPosition(_gameObject);
+        } else {
+            _invincible = false;
+            delete _gameObject->visualEffect;
+            _gameObject->visualEffect = nullptr;
+            Damageable *d = _gameObject->getComponent<Damageable>();
+            d->makeInvincible(false);
+        }
+    }
+
+
+    switch (_state) {
+        case Starting:
+            _currentBuildDirection = globalTypes::EagleWallDirection::DownLeft;
+            _state = BuildingWalls;
+            _clock.reset(true);
+            _rebuildTimeouts.push(initialWallsBuildTimeout);
+            break;
+        case BuildingWalls:
+            assert(!_rebuildTimeouts.empty());
+            if (_clock.getElapsedTime() > sf::milliseconds(_rebuildTimeouts.top())) {
+                _clock.reset(true);
+                if (false == ObjectsPool::getEagleWalls().contains(_currentBuildDirection)) {
+                    SoundPlayer::instance().playDebuffSound();
+                    const int thisX = _gameObject->position().x;
+                    const int thisY = _gameObject->position().y;
+                    const auto offset = dirOffsets.at(_currentBuildDirection);
+                    Logger::instance() << "build dir " << (int)_currentBuildDirection << " coord " << thisX + offset.x << " " << thisY + offset.y << "\n";
+                    GameObject *obj = MapCreator::buildObject("brickWall1x1");
+                    assert(obj != nullptr);
+                    obj->setSize(8, 8);
+                    obj->setPosition(
+                    thisX + offset.x, thisY + offset.y);
+                    ObjectsPool::addEagleWall(_currentBuildDirection, obj);
+                }
+
+                _currentBuildDirection = static_cast<EagleWallDirection>((int)_currentBuildDirection + 1);
+                if (_currentBuildDirection == EagleWallDirection::MaxDirection) {
+                    if (_rebuildTimeouts.size() > 1 || !_isSlowRepairMode)
+                        _rebuildTimeouts.pop();
+                    _state = Waiting;
+                }
+            }
+            break;
+        case Waiting:
+            break;
+    }
+
+}
+
+void EagleController::fastRepairWalls(int timeout)
+{
+    _currentBuildDirection = globalTypes::EagleWallDirection::DownLeft;
+    _rebuildTimeouts.push(timeout);
+    _state = BuildingWalls;
+}
+
+void EagleController::setSlowRepairMode(int timeout)
+{
+
+    _currentBuildDirection = globalTypes::EagleWallDirection::DownLeft;
+    _rebuildTimeouts.push(timeout);
+    _state = BuildingWalls;
+    _isSlowRepairMode = true;
 }
 
 void EagleController::upgrade(PlayerUpgrade *upgrade)
@@ -104,4 +193,27 @@ PlayerUpgrade *EagleController::getUpgrade(int index) const
     }
 
     return nullptr;
+}
+
+void EagleController::setTempInvincibilityAfterDamage(int timeout)
+{
+    _invincibilityAfterDamageHit = true;
+    _invincibilityAfterDamageTimeout = timeout;
+}
+
+void EagleController::onDamaged()
+{
+    if (_invincibilityAfterDamageHit) {
+        _invincible = true;
+        _invincibilityTimer.reset(true);
+        Damageable *dmg = _gameObject->getComponent<Damageable>();
+        dmg->makeInvincible(true);
+
+        if (_gameObject->visualEffect == nullptr) {
+            GameObject *cloud = new GameObject(_gameObject, "cloud");
+            cloud->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
+            cloud->setRenderer(new LoopAnimationSpriteRenderer(cloud, "cloud"));
+            _gameObject->visualEffect = cloud;
+        }
+    }
 }

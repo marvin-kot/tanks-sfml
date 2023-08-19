@@ -21,7 +21,7 @@ class Shootable
 protected:
     GameObject *_gameObject;
 public:
-    Shootable(GameObject *parent, int timeout);
+    Shootable(GameObject *parent, int timeout, int bulletSpeed);
     inline void setActionTimeoutMs(int t) { _actionTimeoutMs = t; }
     inline void setBulletSpeed(int bs) { _bulletSpeed = bs; }
     inline void setDamage(int d) { _damage = d; }
@@ -42,4 +42,13 @@ protected:
 public:
     inline void increaseLevel() { _level++; }
     inline void resetLevel() { _level = 0; }
+};
+
+class EnemyTankShootable : public Shootable
+{
+    int _level;
+public:
+    EnemyTankShootable(GameObject *parent);
+protected:
+    bool isShootingProhibited() override;
 };

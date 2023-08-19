@@ -419,7 +419,7 @@ void Game::checkStatePostFrame()
     }
 
     // as the game just cleared all objects marked for deletion, all the existing enemies must be alive at this point
-    if (framesToWin == -1 && winConditionsMet()) {
+    if (framesToWin == -1 && framesToDie == -1 && winConditionsMet()) {
         // instant kill all enemies
         auto enemiesAlive = ObjectsPool::getObjectsByTypes({
             "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank",
@@ -433,7 +433,7 @@ void Game::checkStatePostFrame()
         HUD::instance().showWin(true);
     }
 
-    if (framesToDie == -1 && failConditionsMet()) {
+    if (framesToWin == -1 && framesToDie == -1 && failConditionsMet()) {
         framesToDie = globalConst::MaxFramesToDie;
         SoundPlayer::instance().stopAllSounds();
         SoundPlayer::instance().gameOver = true;

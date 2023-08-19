@@ -141,6 +141,7 @@ void PlayerController::update()
 
     if (_isMoving) {
         int speed = moveSpeedForCurrentFrame();
+        assert( direction != globalTypes::Direction::Unknown );
         prepareMoveInDirection(direction, speed);
         if (_gameObject->move(_currMoveX, _currMoveY) == 0) {
             // try same direction but +1/-1 pixes aside
@@ -197,26 +198,26 @@ void PlayerController::updatePowerLevel()
         case 0:
             shootable->resetLevel();
             shootable->setDamage(DefaultDamage);
-            shootable->setBulletSpeed(DefaultBulletSpeed);
+            shootable->setBulletSpeed(DefaultPlayerBulletSpeed);
             renderer->setSpriteSheetOffset(0, 0);
         case 1:
             shootable->resetLevel();
             shootable->setDamage(DefaultDamage);
-            shootable->setBulletSpeed(DoubleBulletSpeed);
+            shootable->setBulletSpeed(DefaultPlayerBulletSpeed);
             renderer->setSpriteSheetOffset(0, 16);
             break;
         case 2:
             shootable->resetLevel();
             shootable->increaseLevel();
             shootable->setDamage(DefaultDamage);
-            shootable->setBulletSpeed(DoubleBulletSpeed);
+            shootable->setBulletSpeed(DoublePlayerBulletSpeed);
             renderer->setSpriteSheetOffset(0, 32);
             break;
         case 3:
             shootable->resetLevel();
             shootable->increaseLevel();
             shootable->setDamage(DoubleDamage);
-            shootable->setBulletSpeed(DoubleBulletSpeed);
+            shootable->setBulletSpeed(DoublePlayerBulletSpeed);
             renderer->setSpriteSheetOffset(0, 48);
             break;
     }
