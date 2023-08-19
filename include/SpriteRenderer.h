@@ -33,6 +33,10 @@ protected:
 
     int _spriteSheetOffsetX = 0;
     int _spriteSheetOffsetY = 0;
+
+    int _oneFrameSpriteSheetOffsetX = 0;
+    int _oneFrameSpriteSheetOffsetY = 0;
+    bool _oneFrameOffset = false;
 public:
     SpriteRenderer(GameObject * parent, std::string type = "");
     virtual ~SpriteRenderer() {}
@@ -42,6 +46,7 @@ public:
     virtual void draw(bool paused = false);
     void playAnimation(bool);
     void setSpriteSheetOffset(int x, int y);
+    void setOneFrameSpriteSheetOffset(int x, int y);
     void showAnimationFrame(int i);
 };
 

@@ -56,8 +56,17 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
 
     sf::IntRect rect = _currentAnimationFrames[_currentFrame].rect;
 
-    rect.left += _spriteSheetOffsetX;
-    rect.top += _spriteSheetOffsetY;
+    int offsetX = _spriteSheetOffsetX;
+    int offsetY = _spriteSheetOffsetY;
+    if (_oneFrameOffset)
+    {
+        offsetX += _oneFrameSpriteSheetOffsetX;
+        offsetY += _oneFrameSpriteSheetOffsetY;
+        _oneFrameOffset = false;
+    }
+
+    rect.left += offsetX;
+    rect.top += offsetY;
     _parentObject->setSize(rect.width, rect.height);
     _sprite.setTextureRect(rect);
     _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
@@ -91,6 +100,13 @@ void SpriteRenderer::setSpriteSheetOffset(int x, int y)
 {
     _spriteSheetOffsetX = x;
     _spriteSheetOffsetY = y;
+}
+
+void SpriteRenderer::setOneFrameSpriteSheetOffset(int x, int y)
+{
+    _oneFrameSpriteSheetOffsetX = x;
+    _oneFrameSpriteSheetOffsetY = y;
+    _oneFrameOffset = true;
 }
 
 OneShotAnimationRenderer::OneShotAnimationRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}

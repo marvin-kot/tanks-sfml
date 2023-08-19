@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "Utils.h"
 #include "SoundPlayer.h"
+#include "SpriteRenderer.h"
 #include "Shootable.h"
 #include "Damageable.h"
 #include "Logger.h"
@@ -199,6 +200,13 @@ int TankRandomController::trySqueeze()
     }
 
     return 0;
+}
+
+void TankRandomController::onDamaged()
+{
+    SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
+    assert(renderer != nullptr);
+    renderer->setOneFrameSpriteSheetOffset(0, 128);
 }
 
 /////

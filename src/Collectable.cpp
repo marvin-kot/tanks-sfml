@@ -72,7 +72,7 @@ HelmetCollectable::HelmetCollectable(GameObject *parent)
 void HelmetCollectable::onCollected(GameObject *collector)
 {
     PlayerController *controller = collector->getComponent<PlayerController>();
-    controller->setTemporaryInvincibility(10);
+    controller->setTemporaryInvincibility(5000);
 
     Collectable::onCollected(collector);
 }

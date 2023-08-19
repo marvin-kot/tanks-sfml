@@ -23,6 +23,7 @@ const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     UpgradeType::PowerBullets,
     UpgradeType::TankArmor,
     UpgradeType::XpAttractor,
+    UpgradeType::XpIncreaser,
     PlayerUpgrade::BonusEffectiveness,
     PlayerUpgrade::Rocket
 };
@@ -51,6 +52,21 @@ const std::map<UpgradeType, std::pair<UpgradeType, int>> upgradeDepencies = {
     {UpgradeType::BaseInvincibility,  {UpgradeType::BaseArmor, 0}}
 };
 
+const std::map<UpgradeType, int> upgradeCap = {
+    {UpgradeType::BonusEffectiveness, 3},
+    {UpgradeType::RepairWalls, 3},
+    {UpgradeType::BaseInvincibility, 4},
+    {UpgradeType::FastBullets,  4},
+    {UpgradeType::MoreBullets,  4},
+    {UpgradeType::FastBullets,  4},
+    {UpgradeType::TankArmor,  4},
+    {UpgradeType::TankSpeed,  4},
+    {UpgradeType::PowerBullets,  4},
+    {UpgradeType::BaseArmor,  4},
+    {UpgradeType::XpIncreaser,  4},
+};
+
+
 PlayerUpgrade::PlayerUpgrade(int level) : _currentLevel(level)
 {
 }
@@ -58,7 +74,21 @@ PlayerUpgrade::PlayerUpgrade(int level) : _currentLevel(level)
 std::string PlayerUpgrade::name() const
 {
     using namespace std;
-    string levelStr = _category != OneTimeBonus ? string("\n{lvl." + to_string(_currentLevel+1) + "}") : string();
+
+    string levelStr;
+    switch (_category)
+    {
+        case OneTimeBonus:
+            levelStr = "\n{Instant bonus}";
+            break;
+        case TankUpgrade:
+            levelStr = "\n{Tank upgrade lvl." + to_string(_currentLevel+1) + "}";
+            break;
+        case BaseUpgrade:
+            levelStr = "\n{Base upgrade lvl." + to_string(_currentLevel+1) + "}";
+            break;
+    }
+
     return _name + levelStr;
 }
 
@@ -97,10 +127,11 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
         InstantKillEnemies,
         TempTankInvincibility,
         AdditionalLife,
-        //RebuildEagleWalls,
+        RebuildEagleWalls,
         RepairWalls,
         BaseArmor,
-        BaseInvincibility
+        BaseInvincibility,
+        XpIncreaser
     };
 
     std::unordered_set<UpgradeType> alreadyGenerated;
@@ -117,17 +148,21 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
             if (alreadyGenerated.find(t) != alreadyGenerated.end())
                 continue;
 
-            if (controller->hasLevelOfUpgrade(t) > 2 || eagleController->hasLevelOfUpgrade(t) > 2)
+            // check if player reached the limit of this upgrade
+            if (tankUpgradeTypes.contains(t) && controller->hasLevelOfUpgrade(t) == (upgradeCap.at(t) - 1))
+                continue;
+            if (baseUpgradeTypes.contains(t) && eagleController->hasLevelOfUpgrade(t) == (upgradeCap.at(t) - 1))
                 continue;
 
+            // check dependencies
             if (upgradeDepencies.contains(t)) {
-                if (tankUpgradeTypes.contains(t) && controller->hasLevelOfUpgrade(upgradeDepencies.at(t).first) == -1)
+                if (tankUpgradeTypes.contains(t) && controller->hasLevelOfUpgrade(upgradeDepencies.at(t).first) < upgradeDepencies.at(t).second)
                     continue;
-                else if (baseUpgradeTypes.contains(t) && eagleController->hasLevelOfUpgrade(upgradeDepencies.at(t).first) == -1)
+                else if (baseUpgradeTypes.contains(t) && eagleController->hasLevelOfUpgrade(upgradeDepencies.at(t).first) < upgradeDepencies.at(t).second)
                     continue;
             }
 
-            // if this is not an instant bonus + player already have max number of upgrades -> generare another one
+            // if this is not an instant bonus + player already have max number of upgrades -> generate another one
             if (!oneTimeBonusTypes.contains(newType) && controller->hasLevelOfUpgrade(t) == -1 && eagleController->hasLevelOfUpgrade(t) == -1
                     && controller->numberOfUpgrades() + eagleController->numberOfUpgrades() >= globalConst::PlayerUpgradesLimit)
                 continue;
@@ -201,6 +236,9 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
         case BaseInvincibility:
             newUpgrade = new EagleInvincibilityAfterDamage(level);
             break;
+        case XpIncreaser:
+            newUpgrade = new XpModifierUpgrade(level);
+            break;
     }
 
     return newUpgrade;
@@ -211,12 +249,11 @@ BonusEffectivenessIncreaser::BonusEffectivenessIncreaser(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = BonusEffectiveness;
-    _name = "Modern machinery";
+    _name = "Effective electronics";
 
-    _effects.push_back("Improves an effect of\nevery one-time bonus");
-    _effects.push_back("Severally improves an\neffect of every one-time bonus");
-    _effects.push_back("Greatly improves an effect\nof every one-time bonus");
-    _effects.push_back("Maxize an effect of\nevery one-time bonus");
+    _effects.push_back("Improves effect of\nevery instant bonus");
+    _effects.push_back("Greatly improves effect\nof every instant bonus");
+    _effects.push_back("Maxizes effect of\nevery instant bonus");
 
     _iconRect = AssetManager::instance().getAnimationFrame("starCollectable", "default", 0).rect;
 }
@@ -233,7 +270,7 @@ FreezeEnemiesBonus::FreezeEnemiesBonus(int level)
     _type = FreezeEnemies;
     _name = "Frostbite";
 
-    _timeoutBasedOnLevel = { 10, 13, 15, 20, 24 };
+    _timeoutBasedOnLevel = { 10, 15, 20, 25 };
     for (auto time : _timeoutBasedOnLevel)
         _effects.push_back("Freezes all enemy tanks\nfor " + std::to_string(time) + " sec");
 
@@ -258,7 +295,7 @@ KillEnemiesBonus::KillEnemiesBonus(int level)
     _type = InstantKillEnemies;
     _name = "Airstrike";
 
-    _percentBasedOnLevel = { 33, 50, 66, 90, 100 };
+    _percentBasedOnLevel = { 33, 50, 75, 100 };
     for (auto percent : _percentBasedOnLevel)
         _effects.push_back("Every enemy tank\nwill be destroyed\nwith " + std::to_string(percent) + "\% chance");
 
@@ -286,7 +323,7 @@ TankInvincibilityBonus::TankInvincibilityBonus(int level)
     _type = PlayerUpgrade::TempTankInvincibility;
     _name = "Power shield";
 
-    _timeBasedOnLevel = { 10, 15, 20, 25, 30 };
+    _timeBasedOnLevel = { 10, 15, 20, 25 };
     for (auto time : _timeBasedOnLevel)
         _effects.push_back("Player tank becomes\ninvincible for " + std::to_string(time) + " sec");
 
@@ -300,7 +337,7 @@ void TankInvincibilityBonus::onCollect(GameObject *collector)
     PlayerController *controller = collector->getComponent<PlayerController>();
     assert(controller != nullptr);
     assert(_currentLevel < _timeBasedOnLevel.size());
-    controller->setTemporaryInvincibility(_timeBasedOnLevel[_currentLevel]);
+    controller->setTemporaryInvincibility(_timeBasedOnLevel[_currentLevel] * 100);
 }
 
 ///////////////
@@ -312,7 +349,7 @@ TankAdditionalLifeBonus::TankAdditionalLifeBonus(int level)
     _type = PlayerUpgrade::AdditionalLife;
     _name = "Spare tank";
 
-    _numberBasedOnLevel = { 1, 1, 1, 2, 2 };
+    _numberBasedOnLevel = { 1, 1, 2, 3 };
     for (auto time : _numberBasedOnLevel) {
         std::string ending = time>1 ? " lives" : " life";
         _effects.push_back("+" + std::to_string(time) + ending);
@@ -348,7 +385,7 @@ RebuildEagleWallsBonus::RebuildEagleWallsBonus(int level)
 
      _numberBasedOnLevel = { 0, 0, 0, 0, 0 };
     for (auto time : _numberBasedOnLevel) {
-        _effects.push_back("Restore the walls of your base");
+        _effects.push_back("Restore the base walls. Once");
     }
 
     _iconRect = AssetManager::instance().getAnimationFrame("shovelCollectable", "default", 0).rect;
@@ -372,16 +409,16 @@ RebuildEagleWallsOnLevelup::RebuildEagleWallsOnLevelup(int level)
     _type = PlayerUpgrade::RepairWalls;
     _name = "Inspired builders";
 
-    _numberBasedOnLevel = { 4, 3, 2, 1 };
-    std::vector<std::string> suffix = {"th", "rd", "nd", "st"};
+    _numberBasedOnLevel = { 4, 2, 1 };
+    std::vector<std::string> suffix = {"4th ", "2nd ", ""};
+    std::string prefix = level == 0 ? "now and " : "";
     int i=0;
     for (auto num : _numberBasedOnLevel) {
-        _effects.push_back("Base walls will be rebuilt\non every " + std::to_string(num) + suffix[i] + " level up");
+        _effects.push_back("Base walls will be rebuilt\n" + prefix + "on every " + suffix[i] + "level up");
         i++;
     }
 
     _iconRect = AssetManager::instance().getAnimationFrame("shovelCollectable", "default", 0).rect;
-
 }
 
 void RebuildEagleWallsOnLevelup::onCollect(GameObject *)
@@ -431,7 +468,7 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = FastBullets;
-    _name = "Muzzle upgrade";
+    _name = "Fast delivery";
 
     _percentBasedOnLevel = { 30, 60, 80, 100 };
     for (auto percent : _percentBasedOnLevel)
@@ -460,7 +497,7 @@ MoreBulletsUpgrade::MoreBulletsUpgrade(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = MoreBullets;
-    _name = "Turret upgrade";
+    _name = "Productive turret";
 
     _numberBasedOnLevel = { 1, 2, 3, 4 };
     for (auto number : _numberBasedOnLevel)
@@ -490,7 +527,7 @@ ArmorUpgrade::ArmorUpgrade(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = TankArmor;
-    _name = "Armor upgrade";
+    _name = "Coat of steel";
 
     _numberBasedOnLevel = { 1, 2, 3, 4 };
     for (auto number : _numberBasedOnLevel)
@@ -517,8 +554,8 @@ FasterTankUpgrade::FasterTankUpgrade(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = TankSpeed;
-    _name = "Caterpillar upgrade";
-    _percentBasedOnLevel = { 20, 30, 40, 50 };
+    _name = "Horse powers";
+    _percentBasedOnLevel = { 20, 40, 60, 80 };
     for (auto percent : _percentBasedOnLevel)
         _effects.push_back("Tank speed +" + std::to_string(percent) + "\%");
 
@@ -543,7 +580,7 @@ PowerBulletUpgrade::PowerBulletUpgrade(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = PowerBullets;
-    _name = "Ammunition upgrade";
+    _name = "Quality ammunition";
 
     _numberBasedOnLevel = { 1, 2, 3, 4 };
     for (auto number : _numberBasedOnLevel)
@@ -571,7 +608,7 @@ BaseArmorUpgrade::BaseArmorUpgrade(int level)
 {
     _category = PlayerUpgrade::BaseUpgrade;
     _type = BaseArmor;
-    _name = "Base armor upgrade";
+    _name = "Thicker feathers";
 
     _numberBasedOnLevel = { 1, 2, 3, 4 };
     for (auto number : _numberBasedOnLevel)
@@ -590,4 +627,30 @@ void BaseArmorUpgrade::onCollect(GameObject *target)
     assert(_currentLevel < _numberBasedOnLevel.size());
     int newProtection = _numberBasedOnLevel[_currentLevel];
     damageable->setDefence(newProtection);
+}
+
+
+/////////////
+
+
+XpModifierUpgrade::XpModifierUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::TankUpgrade;
+    _type = XpIncreaser;
+    _name = "War machine learning";
+
+    _numberBasedOnLevel = { 20, 40, 60, 80 };
+    for (auto number : _numberBasedOnLevel)
+        _effects.push_back("Get " + std::to_string(number) + "\% more experience");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("xpCollectable", "default", 0).rect;
+}
+
+void XpModifierUpgrade::onCollect(GameObject *target)
+{
+    assert(target != nullptr);
+    assert(target->isFlagSet(GameObject::Player));
+    auto controller = target->getComponent<PlayerController>();
+    controller->setXpModifier(_numberBasedOnLevel[_currentLevel]);
 }

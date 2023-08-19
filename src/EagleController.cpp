@@ -37,7 +37,7 @@ EagleController::~EagleController()
     }
 }
 
-constexpr int initialWallsBuildTimeout = 150;
+constexpr int initialWallsBuildTimeout = 100;
 
 void EagleController::update()
 {
@@ -203,6 +203,9 @@ void EagleController::setTempInvincibilityAfterDamage(int timeout)
 
 void EagleController::onDamaged()
 {
+    updateAppearance();
+    SoundPlayer::instance().playDebuffSound();
+
     if (_invincibilityAfterDamageHit) {
         _invincible = true;
         _invincibilityTimer.reset(true);

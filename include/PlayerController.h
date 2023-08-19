@@ -39,6 +39,8 @@ class PlayerController : public Controller
 
     void trySqueeze();
 
+    int _xpModifier = 0;
+
 public:
     PlayerController(GameObject *obj);
     ~PlayerController();
@@ -50,7 +52,7 @@ public:
     void updateAppearance();
     void updateMoveSpeed(int speed) { _moveSpeed = speed; }
     int numberOfUpgrades() const;
-    void setTemporaryInvincibility(int sec);
+    void setTemporaryInvincibility(int msec);
     void addXP(int val);
     void resetXP();
     void levelUp();
@@ -58,6 +60,8 @@ public:
     void chooseUpgrade(int index);
     int hasLevelOfUpgrade(PlayerUpgrade::UpgradeType) const;
     PlayerUpgrade *getUpgrade(int) const;
+    void onDamaged() override;
+    void setXpModifier(int mod) { _xpModifier = mod; }
 };
 
 struct PlayerSignal

@@ -68,7 +68,7 @@ void PlayerSpawnController::update()
                     ObjectsPool::playerObject = newPc;
 
                     auto controller = newPc->getComponent<PlayerController>();
-                    controller->setTemporaryInvincibility(3);
+                    controller->setTemporaryInvincibility(3000);
                     for (int i=0; i<_initialPowerLevel; i++)
                         controller->increasePowerLevel(true);
                     _lives--;

@@ -7,6 +7,9 @@
 
 #include <SFML/Graphics/Rect.hpp>
 
+
+
+
 class GameObject;
 class PlayerUpgrade
 {
@@ -19,6 +22,7 @@ public:
         TankSpeed,
         PowerBullets,
         TankArmor,
+        XpIncreaser,
         XpAttractor,
         BonusEffectiveness,
         Rocket,
@@ -134,15 +138,6 @@ public:
     void onCollect(GameObject *collector) override;
 };
 
-class EagleInvincibilityAfterDamage : public PlayerUpgrade
-{
-    std::vector<int> _timeBasedOnLevel;
-public:
-    EagleInvincibilityAfterDamage(int level);
-    void onCollect(GameObject *collector) override;
-};
-
-
 class RebuildEagleWallsOnLevelup : public PlayerUpgrade
 {
     std::vector<int> _numberBasedOnLevel;
@@ -150,6 +145,22 @@ class RebuildEagleWallsOnLevelup : public PlayerUpgrade
 
 public:
     RebuildEagleWallsOnLevelup(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class BaseArmorUpgrade : public PlayerUpgrade
+{
+    std::vector<int> _numberBasedOnLevel;
+public:
+    BaseArmorUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class EagleInvincibilityAfterDamage : public PlayerUpgrade
+{
+    std::vector<int> _timeBasedOnLevel;
+public:
+    EagleInvincibilityAfterDamage(int level);
     void onCollect(GameObject *collector) override;
 };
 
@@ -193,10 +204,10 @@ public:
     void onCollect(GameObject *collector) override;
 };
 
-class BaseArmorUpgrade : public PlayerUpgrade
+class XpModifierUpgrade : public PlayerUpgrade
 {
     std::vector<int> _numberBasedOnLevel;
 public:
-    BaseArmorUpgrade(int level);
+    XpModifierUpgrade(int level);
     void onCollect(GameObject *collector) override;
 };

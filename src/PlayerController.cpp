@@ -49,7 +49,7 @@ void PlayerController::update()
 
     assert(_gameObject != nullptr);
     if (_invincible) {
-        if (_invincibilityTimer.getElapsedTime() < sf::seconds(_invincibilityTimeout))
+        if (_invincibilityTimer.getElapsedTime() < sf::milliseconds(_invincibilityTimeout))
             _gameObject->visualEffect->copyParentPosition(_gameObject);
         else {
             _invincible = false;
@@ -253,10 +253,20 @@ void PlayerController::updateAppearance()
     renderer->showAnimationFrame(0);
 }
 
-void PlayerController::setTemporaryInvincibility(int sec)
+void PlayerController::onDamaged()
+{
+    if (!_invincible) {
+        updateAppearance();
+        SoundPlayer::instance().playDebuffSound();
+        _gameObject->getComponent<SpriteRenderer>()->setOneFrameSpriteSheetOffset(128, 128);
+        setTemporaryInvincibility(500);
+    }
+}
+
+void PlayerController::setTemporaryInvincibility(int msec)
 {
     _invincible = true;
-    _invincibilityTimeout = sec;
+    _invincibilityTimeout = msec;
     _invincibilityTimer.restart();
     Damageable *dmg = _gameObject->getComponent<Damageable>();
     dmg->makeInvincible(true);
@@ -287,7 +297,7 @@ void PlayerController::addXP(int val)
 {
     _xp += val;
     Logger::instance() << "collect " << val << "xp\n";
-    globalVars::player1XP += val;
+    globalVars::player1XP += (val + val * _xpModifier / 100);
     if (_xp >= xpNeededForLevelUp[_level]) {
         levelUp();
     }

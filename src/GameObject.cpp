@@ -224,20 +224,10 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                 if (_lastUpdateFrame == Utils::currentFrame)
                     return;
                 _lastUpdateFrame = Utils::currentFrame;
-                // TODO: variable bullet damage
                 auto bullet = dynamic_cast<BulletController *>(other->_controller);
                 assert(bullet != nullptr);
+
                 _damageable->takeDamage(bullet->damage());
-                if (isFlagSet(Player) && visualEffect == nullptr) {
-                    auto ctr = dynamic_cast<PlayerController *>(_controller);
-                    ctr->updateAppearance();
-                    SoundPlayer::instance().playDebuffSound();
-                }
-                if (isFlagSet(Eagle)) {
-                    auto ctr = dynamic_cast<EagleController *>(_controller);
-                    ctr->updateAppearance();
-                    SoundPlayer::instance().playDebuffSound();
-                }
                 if (_damageable->isDestroyed()) {
                     _deleteme = true;
                     cancelMovement = true;

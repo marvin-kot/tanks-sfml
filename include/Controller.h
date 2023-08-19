@@ -47,6 +47,7 @@ class TankRandomController : public Controller
 public:
     TankRandomController(GameObject *parent, int spd, float timeoutSec);
     void update() override;
+    void onDamaged() override;
 };
 
 
