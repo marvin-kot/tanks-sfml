@@ -6,12 +6,11 @@ class Damageable
 {
 private:
     GameObject *_gameObject;
-    int _hp;
     int _def;
     bool _invincible;
 
 public:
-    Damageable(GameObject *parent, int hp);
+    Damageable(GameObject *parent, int def);
     void takeDamage(int dmg);
     bool isDestroyed() const;
 

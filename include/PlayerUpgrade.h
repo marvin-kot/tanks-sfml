@@ -21,6 +21,7 @@ public:
         MoreBullets,
         TankSpeed,
         PowerBullets,
+        PiercingBullets,
         TankArmor,
         XpIncreaser,
         XpAttractor,
@@ -51,12 +52,17 @@ public:
         BaseUpgrade,
         OneTimeBonus
     };
+
+    // TODO: incapsulate
+    static std::vector<UpgradeType> availableTypes;
+    static void removeFromAvailable(UpgradeType);
 protected:
     GameObject *_parent;
 
     UpgradeType _type;
     UpgradeCategory _category;
     int _currentLevel;
+    bool _synergic = false;
     std::map<UpgradeType, int> _dependencies;
 
     std::string _name;
@@ -209,5 +215,12 @@ class XpModifierUpgrade : public PlayerUpgrade
     std::vector<int> _numberBasedOnLevel;
 public:
     XpModifierUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class PiercingBulletsUpgrade : public PlayerUpgrade
+{
+public:
+    PiercingBulletsUpgrade(int level);
     void onCollect(GameObject *collector) override;
 };

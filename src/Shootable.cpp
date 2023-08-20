@@ -17,10 +17,10 @@ bool Shootable::shoot(globalTypes::Direction dir)
     GameObject *bullet = new GameObject(_gameObject, "bullet");
     bullet->setParentId(_gameObject->id());
     bullet->setFlags(GameObject::Bullet);
-    /*if (_damage == 4) {
-        bullet->setFlags(GameObject::PowerBullet);
-    }*/
-    bullet->setController(new BulletController(bullet, dir, _bulletSpeed, _damage));
+    if (_piercing) {
+        bullet->appendFlags(GameObject::PiercingBullet);
+    }
+    bullet->setController(new BulletController(bullet, dir, _bulletSpeed, _damage, _piercing));
     bullet->setRenderer(new SpriteRenderer(bullet));
     bullet->copyParentPosition(_gameObject);
 

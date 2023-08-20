@@ -31,14 +31,14 @@ game rules:
 - every killed enemy leaves piece of XP. amount depends on the tank type
 - player needs to collect XP to gain it
 - on level up player can choose one of 3 random upgrades
-- upgrades can be: player upgrades (1-4 levels), base upgrades (1-4 levels), one time bonuses
-- when losing a life, player loses all XP and levels
+- upgrades can be: tank upgrades (1-4 levels), base upgrades (1-4 levels), one time bonuses
+- when losing a life, player loses all XP and tank upgrades (but not the base upgrades!)
 - base can be destroyed by friendly fire!
 
 
 Upgrade ideas:
 
-- PLAYER LEVELING
+- TANK LEVELING
     1) faster bullet (up to x4)
     2) more simultaneous bullets (up to 4)
     3) faster tank (up to x3)
@@ -53,12 +53,13 @@ Upgrade ideas:
 
 - BASE LEVELING
     1) can survive more hits (up to 4)
-    2) [!]phoenix - can revive in initial state when destroyed
+    2) [!] sacrifice  - restore the base with the walls at the cost of 1 life (once, twice, depending on level)
     3) can rebuild wall once per X seconds (60, 45, 30, 15)
     4) can restore 1 hp if not shot during {20, 15, 10} seconds (depends on upgrade 1)
     5) reflecting bullets - requires at least 1 level of 1)
 
-- ONE TIME BONUSES
+
+- INSTANT BONUSES
     1) freeze all enemies (10/15/20/25 sec)
     2) kill every enemy with 50/75/90/100% probability
     3) make base walls concrete for some time (15/20/30/45 sec )

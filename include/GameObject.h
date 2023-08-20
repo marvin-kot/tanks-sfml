@@ -33,7 +33,8 @@ public:
         Static = 0x200,
         BonusOnHit = 0x400,
         CollectableBonus = 0x800,
-        PlayerSpawner = 0x1000
+        PlayerSpawner = 0x1000,
+        PiercingBullet = 0x2000
     };
 
 private:
@@ -73,6 +74,7 @@ public:
     void setFlags(ObjectFlags);
     void appendFlags(ObjectFlags);
     bool isFlagSet(ObjectFlags) const;
+//    bool isAnyOfFlagsSet(std::vector<ObjectFlags>) const;
 
     inline void setParentId(int pid) { _parentId = pid; }
     inline int parentId() { return _parentId; }

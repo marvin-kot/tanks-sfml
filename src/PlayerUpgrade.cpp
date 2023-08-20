@@ -12,10 +12,32 @@
 #include <unordered_set>
 #include <random>
 
-std::vector<PlayerUpgrade *> PlayerUpgrade::currentThreeRandomUpgrades = {};
-
-
 using UpgradeType = PlayerUpgrade::UpgradeType;
+
+std::vector<PlayerUpgrade *> PlayerUpgrade::currentThreeRandomUpgrades = {};
+std::vector<UpgradeType> PlayerUpgrade::availableTypes = {
+        FastBullets,
+        MoreBullets,
+        TankSpeed,
+        PowerBullets,
+        TankArmor,
+        BonusEffectiveness,
+        FreezeEnemies,
+        InstantKillEnemies,
+        TempTankInvincibility,
+        AdditionalLife,
+        RebuildEagleWalls,
+        RepairWalls,
+        BaseArmor,
+        BaseInvincibility,
+        XpIncreaser
+};
+
+void PlayerUpgrade::removeFromAvailable(PlayerUpgrade::UpgradeType t)
+{
+    std::remove(availableTypes.begin(), availableTypes.end(), t);
+}
+
 const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     UpgradeType::FastBullets,
     UpgradeType::MoreBullets,
@@ -25,7 +47,8 @@ const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     UpgradeType::XpAttractor,
     UpgradeType::XpIncreaser,
     PlayerUpgrade::BonusEffectiveness,
-    PlayerUpgrade::Rocket
+    PlayerUpgrade::Rocket,
+    PlayerUpgrade::PiercingBullets
 };
 
 const std::unordered_set<UpgradeType> baseUpgradeTypes = {
@@ -48,22 +71,20 @@ const std::unordered_set<UpgradeType> oneTimeBonusTypes = {
     UpgradeType::RebuildEagleWalls
 };
 
-const std::map<UpgradeType, std::pair<UpgradeType, int>> upgradeDepencies = {
-    {UpgradeType::BaseInvincibility,  {UpgradeType::BaseArmor, 0}}
-};
+const std::map<UpgradeType, std::pair<UpgradeType, int>> upgradeDepencies = {};
 
 const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::BonusEffectiveness, 3},
     {UpgradeType::RepairWalls, 3},
     {UpgradeType::BaseInvincibility, 4},
-    {UpgradeType::FastBullets,  4},
     {UpgradeType::MoreBullets,  4},
-    {UpgradeType::FastBullets,  4},
+    {UpgradeType::FastBullets,  3},
     {UpgradeType::TankArmor,  4},
     {UpgradeType::TankSpeed,  4},
-    {UpgradeType::PowerBullets,  4},
+    {UpgradeType::PowerBullets,  3},
     {UpgradeType::BaseArmor,  4},
     {UpgradeType::XpIncreaser,  4},
+    {UpgradeType::PiercingBullets,  1},
 };
 
 
@@ -76,17 +97,22 @@ std::string PlayerUpgrade::name() const
     using namespace std;
 
     string levelStr;
-    switch (_category)
-    {
-        case OneTimeBonus:
-            levelStr = "\n{Instant bonus}";
-            break;
-        case TankUpgrade:
-            levelStr = "\n{Tank upgrade lvl." + to_string(_currentLevel+1) + "}";
-            break;
-        case BaseUpgrade:
-            levelStr = "\n{Base upgrade lvl." + to_string(_currentLevel+1) + "}";
-            break;
+
+    if (!_synergic) {
+        switch (_category)
+        {
+            case OneTimeBonus:
+                levelStr = "\n{Instant bonus}";
+                break;
+            case TankUpgrade:
+                levelStr = "\n{Tank upgrade lvl." + to_string(_currentLevel+1) + "}";
+                break;
+            case BaseUpgrade:
+                levelStr = "\n{Base upgrade lvl." + to_string(_currentLevel+1) + "}";
+                break;
+        }
+    } else {
+        levelStr = "\n{Mega upgrade!}";
     }
 
     return _name + levelStr;
@@ -100,6 +126,12 @@ std::string PlayerUpgrade::currentEffectDescription() const
         return _effects[0];
     else
         return "Unknown effect";
+}
+
+
+static bool isUpgradedToMax(PlayerController *controller, PlayerUpgrade::UpgradeType t)
+{
+    return controller->hasLevelOfUpgrade(t) == (upgradeCap.at(t) - 1);
 }
 
 void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
@@ -116,42 +148,48 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
 
     currentThreeRandomUpgrades.clear();
 
-    const std::vector<UpgradeType> availableTypes = {
-        FastBullets,
-        MoreBullets,
-        TankSpeed,
-        PowerBullets,
-        TankArmor,
-        BonusEffectiveness,
-        FreezeEnemies,
-        InstantKillEnemies,
-        TempTankInvincibility,
-        AdditionalLife,
-        RebuildEagleWalls,
-        RepairWalls,
-        BaseArmor,
-        BaseInvincibility,
-        XpIncreaser
-    };
-
     std::unordered_set<UpgradeType> alreadyGenerated;
 
-    std::uniform_int_distribution<int> distr(0, availableTypes.size()-1);
+    std::vector<UpgradeType> availableTypesLocal = availableTypes;
+
+    // remove not needed upgrades
+    // TODO: find better solution
+    if (isUpgradedToMax(controller, PiercingBullets)) {
+        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), FastBullets);
+        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), PowerBullets);
+    }
+
+
+
+    std::uniform_int_distribution<int> distr(0, availableTypesLocal.size()-1);
+
+
+    // determine cases where special non-upgrades have to be generated
+    std::stack<UpgradeType> mandatoryUpgrades;
+    if (isUpgradedToMax(controller, FastBullets) && isUpgradedToMax(controller, PowerBullets))
+        mandatoryUpgrades.push(PiercingBullets);
 
     for (int i=0; i<3; i++) {
 
         UpgradeType newType = None;
         do {
             int index = distr(Utils::generator);
-            Logger::instance() << "index is" << index << "\n";
-            UpgradeType t = availableTypes[index];
+
+            UpgradeType t = None;
+            if (mandatoryUpgrades.empty()) {
+                t = availableTypesLocal[index];
+            } else {
+                t = mandatoryUpgrades.top();
+                mandatoryUpgrades.pop();
+            }
+
             if (alreadyGenerated.find(t) != alreadyGenerated.end())
                 continue;
 
             // check if player reached the limit of this upgrade
-            if (tankUpgradeTypes.contains(t) && controller->hasLevelOfUpgrade(t) == (upgradeCap.at(t) - 1))
+            if (tankUpgradeTypes.contains(t) && isUpgradedToMax(controller, t))
                 continue;
-            if (baseUpgradeTypes.contains(t) && eagleController->hasLevelOfUpgrade(t) == (upgradeCap.at(t) - 1))
+            if (baseUpgradeTypes.contains(t) && isUpgradedToMax(controller, t))
                 continue;
 
             // check dependencies
@@ -238,6 +276,9 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
             break;
         case XpIncreaser:
             newUpgrade = new XpModifierUpgrade(level);
+            break;
+        case PiercingBullets:
+            newUpgrade = new PiercingBulletsUpgrade(level);
             break;
     }
 
@@ -470,7 +511,7 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
     _type = FastBullets;
     _name = "Fast delivery";
 
-    _percentBasedOnLevel = { 30, 60, 80, 100 };
+    _percentBasedOnLevel = { 30, 60, 80 };
     for (auto percent : _percentBasedOnLevel)
         _effects.push_back("Bullet speed +" + std::to_string(percent) + "\%");
 
@@ -544,7 +585,7 @@ void ArmorUpgrade::onCollect(GameObject *collector)
 
     assert(_currentLevel < _numberBasedOnLevel.size());
     int number = _numberBasedOnLevel[_currentLevel];
-    damageable->setDefence(number);
+    damageable->setDefence(globalConst::DefaultPlayerProtection + number);
 }
 
 /////////////
@@ -580,9 +621,9 @@ PowerBulletUpgrade::PowerBulletUpgrade(int level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type = PowerBullets;
-    _name = "Quality ammunition";
+    _name = "Power bullets";
 
-    _numberBasedOnLevel = { 1, 2, 3, 4 };
+    _numberBasedOnLevel = { 1, 2, 3};
     for (auto number : _numberBasedOnLevel)
         _effects.push_back("Bullet damage +" + std::to_string(number) + "");
 
@@ -625,7 +666,7 @@ void BaseArmorUpgrade::onCollect(GameObject *target)
     auto damageable = target->getComponent<Damageable>();
     assert(damageable != nullptr);
     assert(_currentLevel < _numberBasedOnLevel.size());
-    int newProtection = _numberBasedOnLevel[_currentLevel];
+    int newProtection = globalConst::DefaultBaseProtection + _numberBasedOnLevel[_currentLevel];
     damageable->setDefence(newProtection);
 }
 
@@ -653,4 +694,37 @@ void XpModifierUpgrade::onCollect(GameObject *target)
     assert(target->isFlagSet(GameObject::Player));
     auto controller = target->getComponent<PlayerController>();
     controller->setXpModifier(_numberBasedOnLevel[_currentLevel]);
+}
+
+
+/////////////
+
+
+PiercingBulletsUpgrade::PiercingBulletsUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _synergic = true;
+    _category = PlayerUpgrade::TankUpgrade;
+    _type = PiercingBullets;
+    _name = "Piercing bullets";
+
+    _effects.push_back("Replaces Power Bullets and Fast Delivery\nBullets fly through enemies,\nlosing 1 damage per enemy.\nIgnores enemy bullets");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("piercingCollectable", "default", 0).rect;
+}
+
+void PiercingBulletsUpgrade::onCollect(GameObject *target)
+{
+    assert(target != nullptr);
+    assert(target->isFlagSet(GameObject::Player));
+    auto shootable = target->getComponent<Shootable>();
+    shootable->setPiercing(true);
+
+    // TODO: thing how to avoid magic numbers
+    int newDamage = globalConst::DefaultDamage + 3;
+    shootable->setDamage(newDamage);
+
+    const int newBulletSpeed = globalConst::DefaultPlayerBulletSpeed + (globalConst::DefaultPlayerBulletSpeed * 80 / 100);
+    shootable->setBulletSpeed(newBulletSpeed);
+
 }

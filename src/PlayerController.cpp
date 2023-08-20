@@ -12,11 +12,36 @@
 
 #include <cmath>
 
+static std::vector<int> xpNeededForLevelUp;
+
+
+ void initXpLevelupNumbers()
+ {
+    std::vector<int> limits = {400, 600, };
+    for (int i = 2; i < 20 ; i++) {
+        float coeff = i<6 ? 1.4 : i<10 ? 1.3 : 1.2;
+        int val = ((int)(limits[i-1] * coeff) / 100) * 100;
+        limits.push_back(val);
+    }
+
+    xpNeededForLevelUp.clear();
+
+    Logger::instance() << "XP limits for level ups:\n";
+    xpNeededForLevelUp.push_back(limits[0]);
+    for (int i = 1; i < limits.size() ; i++) {
+        xpNeededForLevelUp.push_back( xpNeededForLevelUp[i-1] + limits[i] );
+        Logger::instance() << "    l." << i << " - " << xpNeededForLevelUp[i-1] << "\n";
+    }
+ }
+
+
+
 PlayerController::PlayerController(GameObject *obj)
 : Controller(obj, globalConst::DefaultPlayerSpeed)
 {
     _clock.reset(true);
     resetXP();
+    initXpLevelupNumbers();
 }
 
 PlayerController::~PlayerController()
@@ -168,11 +193,15 @@ void PlayerController::update()
 void PlayerController::trySqueeze()
 {
     if (_currMoveX == 0) {
-        if (_gameObject->move(2, _currMoveY) == 0)
-            _gameObject->move(-2, _currMoveY);
+        if (_gameObject->move(1, _currMoveY) == 0)
+            if (_gameObject->move(-1, _currMoveY) == 0)
+                if (_gameObject->move(2, _currMoveY) == 0)
+                    _gameObject->move(-2, _currMoveY);
     } else if (_currMoveY == 0) {
-        if (_gameObject->move(_currMoveX, 2) == 0)
-            _gameObject->move(_currMoveX, -2);
+        if (_gameObject->move(_currMoveX, 1) == 0)
+            if (_gameObject->move(_currMoveX, -1) == 0)
+                if (_gameObject->move(_currMoveX, 2) == 0)
+                    _gameObject->move(_currMoveX, -2);
     }
 }
 
@@ -234,18 +263,21 @@ void PlayerController::updateAppearance()
 
     switch (damageable->defence()) {
         case 0:
-            renderer->setSpriteSheetOffset(0, 0);
+            renderer->setSpriteSheetOffset(0, 256);
             break;
         case 1:
-            renderer->setSpriteSheetOffset(0, 16);
+            renderer->setSpriteSheetOffset(0, 0);
             break;
         case 2:
-            renderer->setSpriteSheetOffset(0, 32);
+            renderer->setSpriteSheetOffset(0, 16);
             break;
         case 3:
-            renderer->setSpriteSheetOffset(0, 48);
+            renderer->setSpriteSheetOffset(0, 32);
             break;
         case 4:
+            renderer->setSpriteSheetOffset(0, 48);
+            break;
+        case 5:
             renderer->setSpriteSheetOffset(0, 48);
             break;
     }
@@ -280,24 +312,11 @@ void PlayerController::setTemporaryInvincibility(int msec)
 
 }
 
-std::vector<int> xpNeededForLevelUp = {
-    400, // 400
-    1000, // 600
-    2000, // 1000
-    3500, // 1500
-    5500,  // 2000
-    8000, // 2500
-    11000, // 3000
-    16000, // 5000
-    24000, // 8000
-    36000, // 12000
- };
-
 void PlayerController::addXP(int val)
 {
     _xp += val;
     Logger::instance() << "collect " << val << "xp\n";
-    globalVars::player1XP += (val + val * _xpModifier / 100);
+    globalVars::player1XP += (val + val*_xpModifier/100);
     if (_xp >= xpNeededForLevelUp[_level]) {
         levelUp();
     }
@@ -323,6 +342,7 @@ void PlayerController::levelUp()
 
     PlayerUpgrade::generateThreeRandomUpgradesForPlayer(_gameObject);
     LevelUpPopupMenu::instance().open();
+
 }
 
 void PlayerController::chooseUpgrade(int index)
@@ -352,6 +372,29 @@ void PlayerController::chooseUpgrade(int index)
             } else {
                 _collectedUpgrades[tp] = upgrade;
             }
+
+            // specific cases
+            if (tp == PlayerUpgrade::PiercingBullets) {
+                // delete power bullet upgrade
+                auto it1 = _collectedUpgrades.find(PlayerUpgrade::PowerBullets);
+                if (it1 != _collectedUpgrades.end()) {
+                    PlayerUpgrade *obj = (*it1).second;
+                    _collectedUpgrades.erase(it1);
+                    delete obj;
+                }
+
+                // delete fast bullet upgrade
+                auto it2 = _collectedUpgrades.find(PlayerUpgrade::FastBullets);
+                if (it2 != _collectedUpgrades.end()) {
+                    PlayerUpgrade *obj = (*it2).second;
+                    _collectedUpgrades.erase(it2);
+                    delete obj;
+                }
+
+                // remove from available to generate as well
+                //PlayerUpgrade::removeFromAvailable(PlayerUpgrade::PowerBullets);
+                //PlayerUpgrade::removeFromAvailable(PlayerUpgrade::FastBullets);
+            }
             break;
         }
         case PlayerUpgrade::BaseUpgrade:
@@ -369,6 +412,12 @@ void PlayerController::applyUpgrades()
     for (auto it : _collectedUpgrades) {
         it.second->onCollect(_gameObject);
     }
+
+    // restore basic defence if needed
+    Damageable *damageable = _gameObject->getComponent<Damageable>();
+    assert(damageable != nullptr);
+    if (damageable->defence() < globalConst::DefaultPlayerProtection)
+        damageable->setDefence(globalConst::DefaultPlayerProtection);
 
     updateAppearance();
 }

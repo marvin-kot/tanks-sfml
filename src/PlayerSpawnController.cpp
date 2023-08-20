@@ -24,7 +24,7 @@ GameObject * PlayerSpawnController::createObject()
     pc->setShootable(new PlayerShootable(pc, 0));
     pc->setFlags(GameObject::Player | GameObject::BulletKillable);
     pc->setRenderer(new SpriteRenderer(pc));
-    pc->setDamageable(new Damageable(pc, 1));
+    pc->setDamageable(new Damageable(pc, globalConst::DefaultPlayerProtection));
     // must be done after creating Damageable
     pc->setController(new PlayerController(pc));
 

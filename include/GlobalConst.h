@@ -6,6 +6,10 @@
 
 namespace globalConst
 {
+    constexpr int GameMajorVersion = 0;
+    constexpr int GameMinorVersion = 2;
+    constexpr int GameReleaseVersion = 1;
+
     constexpr int screen_w = 1920;
     constexpr int screen_h = 1080;
 
@@ -32,6 +36,8 @@ namespace globalConst
     constexpr int FastEnemySpeed = DefaultEnemySpeed * 4 / 3;
     constexpr int SlowEnemySpeed = DefaultEnemySpeed * 2 / 3;
 
+    constexpr int DefaultPlayerProtection = 1;
+    constexpr int DefaultBaseProtection = 1;
     constexpr int DefaultPlayerBulletSpeed = DefaultPlayerSpeed * 7 / 3;
     constexpr int DoublePlayerBulletSpeed = DefaultPlayerBulletSpeed * 3 / 2;
     constexpr int DefaultEnemyBulletSpeed = DefaultEnemySpeed * 8 / 3;

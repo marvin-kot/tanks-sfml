@@ -67,6 +67,8 @@ bool GameObject::isFlagSet(GameObject::ObjectFlags f) const
     return (_flags & f) != 0;
 }
 
+//bool isAnyOfFlagsSet(std::vector<ObjectFlags>) const;
+
 void GameObject::draw(bool paused)
 {
     if (_deleteme)
@@ -195,10 +197,16 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
     if (isBullet) {
         // just hit non-transparent target (and it's not its own creator)
         if (!other->isFlagSet(BulletPassable) && _parentId != other->id()) {
-            _deleteme = true;
+            if (isFlagSet(PiercingBullet) && other->isFlagSet(BulletKillable)) {
+                auto bullet = dynamic_cast<BulletController *>(_controller);
+                if (bullet->loseDamage() < 1)
+                    _deleteme = true;
+            } else {
+                _deleteme = true;
+            }
         }
 
-        if (other->isFlagSet(Bullet) && _parentId != other->_parentId)
+        if (!isFlagSet(PiercingBullet) && other->isFlagSet(Bullet) && _parentId != other->_parentId)
             _deleteme = true;
 
         return;
@@ -268,7 +276,7 @@ sf::IntRect GameObject::boundingBox() const
     int left = _x - _w/2;
     int top = _y - _h/2;
 
-    const int modif = (isFlagSet(GameObject::Bullet)) ? 0 : 1;
+    const int modif = (isFlagSet(Player|NPC|TankPassable|BulletPassable)) ? 1 : isFlagSet(CollectableBonus) ? -1 : 0;
 
     return sf::IntRect(left+modif, top+modif, _w-modif*2, _h-modif*2);
 }

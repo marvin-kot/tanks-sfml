@@ -18,6 +18,7 @@ class Shootable
     int _actionTimeoutMs;
     int _bulletSpeed;
     int _damage;
+    bool _piercing = false;
 protected:
     GameObject *_gameObject;
 public:
@@ -26,6 +27,7 @@ public:
     inline void setBulletSpeed(int bs) { _bulletSpeed = bs; }
     inline void setDamage(int d) { _damage = d; }
     bool shoot(globalTypes::Direction dir);
+    void setPiercing(bool p) { _piercing = p; }
 
 protected:
     virtual bool isShootingProhibited();

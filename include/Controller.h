@@ -55,15 +55,17 @@ public:
 
 class BulletController : public Controller
 {
-    const int _damage;
+    int _damage;
     globalTypes::Direction _direction;
+    bool _piercing;
 
 public:
-    BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg);
+    BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg, bool pierce = false);
     void update() override;
 
     int speed() const { return _moveSpeed; }
     int damage() const { return _damage; }
+    int loseDamage() { return --_damage; }
 };
 
 class SpawnController : public Controller

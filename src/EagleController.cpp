@@ -1,6 +1,7 @@
 #include "Damageable.h"
 #include "EagleController.h"
 #include "GameObject.h"
+#include "GlobalConst.h"
 #include "ObjectsPool.h"
 #include "MapCreator.h"
 #include "SoundPlayer.h"
@@ -133,6 +134,12 @@ void EagleController::applyUpgrades()
         it.second->onCollect(_gameObject);
     }
 
+    // restore basic defence if needed
+    Damageable *damageable = _gameObject->getComponent<Damageable>();
+    assert(damageable != nullptr);
+    if (damageable->defence() < globalConst::DefaultBaseProtection)
+        damageable->setDefence(globalConst::DefaultBaseProtection);
+
     updateAppearance();
 }
 
@@ -145,18 +152,21 @@ void EagleController::updateAppearance()
 
     switch (damageable->defence()) {
         case 0:
-            renderer->setSpriteSheetOffset(0, 0);
+            renderer->setSpriteSheetOffset(-16, 16);
             break;
         case 1:
-            renderer->setSpriteSheetOffset(0, 16);
+            renderer->setSpriteSheetOffset(0, 0);
             break;
         case 2:
-            renderer->setSpriteSheetOffset(0, 32);
+            renderer->setSpriteSheetOffset(0, 16);
             break;
         case 3:
             renderer->setSpriteSheetOffset(0, 32);
             break;
         case 4:
+            renderer->setSpriteSheetOffset(0, 32);
+            break;
+        case 5:
             renderer->setSpriteSheetOffset(0, 32);
             break;
     }

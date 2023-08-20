@@ -190,13 +190,16 @@ int TankRandomController::trySqueeze()
 {
     int moved = 1;
     if (_currMoveX == 0) {
-        moved = _gameObject->move(2, _currMoveY);
-        if (moved == 0)
-            moved = _gameObject->move(-2, _currMoveY);
+        moved = _gameObject->move(1, _currMoveY);
+        if (moved == 0) {
+            moved = _gameObject->move(-1, _currMoveY);
+        }
+
     } else if (_currMoveY == 0) {
-        moved = _gameObject->move(_currMoveX, 2);
-        if (moved == 0)
-            moved = _gameObject->move(_currMoveX, -2);
+        moved = _gameObject->move(_currMoveX, 1);
+        if (moved == 0) {
+            moved = _gameObject->move(_currMoveX, -1);
+        }
     }
 
     return 0;
@@ -211,8 +214,8 @@ void TankRandomController::onDamaged()
 
 /////
 
-BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg)
-: Controller(obj, spd), _direction(dir), _damage(dmg)
+BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg, bool pierce)
+: Controller(obj, spd), _direction(dir), _damage(dmg), _piercing(pierce)
 {
     _clock.reset(true);
 }

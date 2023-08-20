@@ -71,7 +71,7 @@ GameObject *MapCreator::buildObject(std::string type)
         GameObject *eagle = new GameObject("eagle");
         eagle->setFlags(GameObject::Eagle | GameObject::BulletKillable);
         eagle->setRenderer(new SpriteRenderer(eagle));
-        eagle->setDamageable(new Damageable(eagle, 1));
+        eagle->setDamageable(new Damageable(eagle, globalConst::DefaultBaseProtection));
         eagle->setController(new EagleController(eagle));
 
         return eagle;

@@ -93,7 +93,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setShootable(new EnemyTankShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
-        enemy->setDamageable(new Damageable(enemy, 1));
+        enemy->setDamageable(new Damageable(enemy, 0));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 1));
         enemy->setDropGenerator(new DropGenerator(enemy, 100));
 
@@ -106,7 +106,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->setShootable(new EnemyTankShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
         enemy->setRenderer(new SpriteRenderer(enemy));
-        enemy->setDamageable(new Damageable(enemy, 1));
+        enemy->setDamageable(new Damageable(enemy, 0));
         enemy->setController(new TankRandomController(enemy, globalConst::FastEnemySpeed, 0.75));
         enemy->setDropGenerator(new DropGenerator(enemy, 200));
 

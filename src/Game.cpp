@@ -490,7 +490,8 @@ void Game::drawTitleScreen()
 
     // game version
     constexpr int versionFontSize = titleFontSize / 6;
-    UiUtils::instance().drawText( "version  0.2", versionFontSize, screenCenterX, screenCenterY + versionFontSize);
+    static std::string version = std::format("version {}.{}.{}", GameMajorVersion, GameMinorVersion, GameReleaseVersion);
+    UiUtils::instance().drawText(version, versionFontSize, screenCenterX, screenCenterY + versionFontSize);
 
     // prompt
     constexpr int promptFontSize = titleFontSize / 4;
