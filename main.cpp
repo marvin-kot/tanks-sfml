@@ -6,8 +6,9 @@
 
 int main()
 {
-
+    using namespace allinone;
     Game game;
+    Logger::instance().setFilename("logfile_oneApp.txt");
     Logger::instance() << "Loading assets...";
     if (!game.loadAssets())
         return -1;
@@ -17,6 +18,7 @@ int main()
         return -1;
 
     Logger::instance() << "Starting the Game...";
+    game.initializeVariables();
     // main loop
     while (game.isWindowOpen())
     {
