@@ -47,6 +47,9 @@ struct XpCollectable : public Collectable
     XpCollectable(GameObject *parent, int value);
     void onCollected(GameObject *collector) override;
 
+    int value() const { return _value; }
+    void setValue(int val) { _value = val; }
+
 private:
     int _value;
 };

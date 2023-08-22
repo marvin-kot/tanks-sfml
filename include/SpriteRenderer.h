@@ -53,6 +53,7 @@ public:
     void setSpriteSheetOffset(int x, int y);
     void setOneFrameSpriteSheetOffset(int x, int y);
     void showAnimationFrame(int i);
+    void setNewObjectType(std::string type);
 };
 
 class OneShotAnimationRenderer : public SpriteRenderer

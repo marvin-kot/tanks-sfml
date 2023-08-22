@@ -255,8 +255,7 @@ void Game::updateAllObjectControllers()
     auto &allObjects = ObjectsPool::getAllObjects();
     // update object states
     for (GameObject *obj : allObjects) {
-        if (!obj->isFlagSet(GameObject::Static))
-            obj->update();
+        obj->update();
     }
 }
 

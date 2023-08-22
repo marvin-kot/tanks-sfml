@@ -22,6 +22,12 @@ SpriteRenderer::SpriteRenderer(GameObject * parent, std::string type)
     setCurrentAnimation("default");
 }
 
+void SpriteRenderer::setNewObjectType(std::string type)
+{
+    _objectType = type;
+    _currentAnimationFrames = AssetManager::instance().getAnimationFrames(_objectType, _currentAnimation);
+}
+
 void SpriteRenderer::setCurrentAnimation(std::string id)
 {
     assert(id.empty() == false);

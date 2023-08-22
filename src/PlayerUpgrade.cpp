@@ -131,7 +131,12 @@ std::string PlayerUpgrade::currentEffectDescription() const
 
 static bool isUpgradedToMax(PlayerController *controller, PlayerUpgrade::UpgradeType t)
 {
-    return controller->hasLevelOfUpgrade(t) == (upgradeCap.at(t) - 1);
+    return controller->hasLevelOfUpgrade(t) >= (upgradeCap.at(t) - 1);
+}
+
+static bool isUpgradedToMax(EagleController *controller, PlayerUpgrade::UpgradeType t)
+{
+    return controller->hasLevelOfUpgrade(t) >= (upgradeCap.at(t) - 1);
 }
 
 void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
@@ -189,7 +194,7 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
             // check if player reached the limit of this upgrade
             if (tankUpgradeTypes.contains(t) && isUpgradedToMax(controller, t))
                 continue;
-            if (baseUpgradeTypes.contains(t) && isUpgradedToMax(controller, t))
+            if (baseUpgradeTypes.contains(t) && isUpgradedToMax(eagleController, t))
                 continue;
 
             // check dependencies

@@ -174,7 +174,7 @@ void GameObject::copyParentPosition(const GameObject * parent)
 int GameObject::move(int x, int y)
 {
     if (_deleteme)
-        return -1;
+        return 0;
 
     if (spriteRenderer) {
         int mappedMoveX = x * globalConst::spriteScaleX;
@@ -223,6 +223,7 @@ int GameObject::move(int x, int y)
 
 void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
 {
+    if (_deleteme) return;
     bool isBullet = isFlagSet(Bullet);
 
     if (other == nullptr) {
@@ -294,6 +295,37 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
     // check if player gathered a collectable
     if (isFlagSet(Player) && other->isFlagSet(CollectableBonus)) {
         other->getCollectedBy(this);
+    }
+
+    // merge colliding xp points to reduce number of objects on map
+    if (isFlagSet(CollectableBonus) && other->isFlagSet(CollectableBonus)) {
+        XpCollectable *thisXp = dynamic_cast<XpCollectable *>(_collectable);
+        if (thisXp == nullptr)
+            return;
+        XpCollectable *thatXp = dynamic_cast<XpCollectable *>(other->_collectable);
+        if (thatXp == nullptr)
+            return;
+        int sum = thisXp->value() + thatXp->value();
+        if (sum > 500 || (sum % 100 != 0))
+            return; // 500 is maximum xp collectable...
+
+        // update value
+        thisXp->setValue(sum);
+        std::string newType;
+        switch (sum) {
+            case 200: newType = "200xp"; break;
+            case 300: newType = "300xp"; break;
+            case 400: newType = "400xp"; break;
+            case 500: newType = "500xp"; break;
+            default:
+                return;
+        }
+
+        spriteRenderer->setNewObjectType(newType);
+
+        // delete second object
+        other->markForDeletion();
+
     }
 }
 
@@ -509,6 +541,8 @@ net::ThinGameObject GameObject::update()
 {
     if (_controller)
         _controller->update();
+    else
+        move(0, 0);
 
     net::ThinGameObject thin;
     thin.id = _id;
