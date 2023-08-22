@@ -24,4 +24,5 @@ public:
     void moveCursorRight();
     void getSelectedUpgrade();
     bool isOpen() const { return _isOpen; }
+    int cursorPosition() const { return _currentUpgradeCursor; }
 };

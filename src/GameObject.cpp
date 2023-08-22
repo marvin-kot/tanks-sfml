@@ -12,6 +12,7 @@
 #include "SoundPlayer.h"
 #include "Utils.h"
 
+#include "NetGameTypes.h"
 #include <iostream>
 
 
@@ -69,7 +70,7 @@ bool GameObject::isFlagSet(GameObject::ObjectFlags f) const
 
 //bool isAnyOfFlagsSet(std::vector<ObjectFlags>) const;
 
-void GameObject::draw(bool paused)
+void GameObject::draw()
 {
     if (_deleteme)
         return;
@@ -95,13 +96,53 @@ void GameObject::draw(bool paused)
         int screenX = mappedX + globalVars::gameViewPort.left;
         int screenY = mappedY + globalVars::gameViewPort.top;
         spriteRenderer->_sprite.setPosition(screenX, screenY);
-        spriteRenderer->draw(paused);
+        spriteRenderer->draw();
     }
     else
         Logger::instance() << _type << "no renderer\n";
 
-    if (visualEffect)
-        visualEffect->draw(paused);
+    if (visualEffect) {
+        visualEffect->draw();
+    }
+}
+
+bool GameObject::networkDraw(net::ThinGameObject& thin)
+{
+    if (_deleteme)
+        return false;
+
+    using namespace globalVars;
+    int mappedX = _x * globalConst::spriteScaleX;
+    int mappedY = _y * globalConst::spriteScaleY;
+
+    // check if tile is outside view port
+    if (mappedX < mapViewPort.left || mappedX > (mapViewPort.left+mapViewPort.width)
+            || mappedY < mapViewPort.top || mappedY > (mapViewPort.top+mapViewPort.height)) {
+        if (_type == "smallExplosion" || _type == "bigExplosion")
+            _deleteme = true;
+        return false;
+    }
+
+    mappedX = mappedX - mapViewPort.left;
+    mappedY = mappedY - mapViewPort.top;
+
+
+    int screenX = mappedX + globalVars::gameViewPort.left;
+    int screenY = mappedY + globalVars::gameViewPort.top;
+
+
+    thin.x = screenX;
+    thin.y = screenY;
+    thin.id = _id;
+    thin.flags = static_cast<uint16_t>(_flags);
+    return spriteRenderer->networkDraw(thin);
+    /*if (visualEffect) {
+        net::ThinGameObject fx;
+        fx.zorder = 5;
+        if (visualEffect->networkDraw(fx))
+            ObjectsPool::thinGameObjects[visualEffect->id()] = fx;
+    }*/
+
 }
 
 void GameObject::hide(bool val)
@@ -464,10 +505,18 @@ bool GameObject::shoot()
 }
 
 
-void GameObject::update()
+net::ThinGameObject GameObject::update()
 {
     if (_controller)
         _controller->update();
+
+    net::ThinGameObject thin;
+    thin.id = _id;
+    thin.x = _x;
+    thin.x = _y;
+    thin.flags = static_cast<uint16_t>(_flags);
+
+    return thin;
 }
 
 template<typename T>

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "Controller.h"
+#include "NetGameTypes.h"
 #include "PlayerUpgrade.h"
 
 #include <SFML/Window/Keyboard.hpp>
 
 #include <map>
+
+#define SINGLE_APP
 
 
 class PlayerController : public Controller
@@ -41,6 +44,9 @@ class PlayerController : public Controller
 
     int _xpModifier = 0;
 
+
+    net::PlayerInput _recentPlayerInput;
+
 public:
     PlayerController(GameObject *obj);
     ~PlayerController();
@@ -62,6 +68,7 @@ public:
     PlayerUpgrade *getUpgrade(int) const;
     void onDamaged() override;
     void setXpModifier(int mod) { _xpModifier = mod; }
+    void setPlayerInput(const net::PlayerInput& input) { _recentPlayerInput = input; }
 };
 
 struct PlayerSignal

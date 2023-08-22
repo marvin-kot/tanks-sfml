@@ -9,6 +9,7 @@
 #include "Shootable.h"
 #include "SoundPlayer.h"
 #include "Utils.h"
+#include "PlayerControllerClient.h"
 
 #include <cmath>
 
@@ -86,85 +87,20 @@ void PlayerController::update()
     }
     bool action = false;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+#ifdef SINGLE_APP
+    PlayerControllerClient::instance().update(&_recentPlayerInput);
+#endif
+
+    if (_recentPlayerInput.shoot_request) {
         if (_gameObject->shoot())
-            SoundPlayer::instance().playShootSound();
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-        if (!wasPressed(LeftPressed))
-            _pressedKeys[sf::Keyboard::Left] = _clock.getElapsedTime();
-        setPressedFlag(LeftPressed, true);
-    } else {
-        setPressedFlag(LeftPressed, false);
-        _pressedKeys.erase(sf::Keyboard::Left);
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-        if (!wasPressed(UpPressed))
-            _pressedKeys[sf::Keyboard::Up] = _clock.getElapsedTime();
-        setPressedFlag(UpPressed, true);
-    } else {
-        setPressedFlag(UpPressed, false);
-        _pressedKeys.erase(sf::Keyboard::Up);
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-    {
-        if (!wasPressed(RightPressed))
-            _pressedKeys[sf::Keyboard::Right] = _clock.getElapsedTime();
-        setPressedFlag(RightPressed, true);
-    } else {
-        setPressedFlag(RightPressed, false);
-        _pressedKeys.erase(sf::Keyboard::Right);
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-    {
-        if (!wasPressed(DownPressed))
-            _pressedKeys[sf::Keyboard::Down] = _clock.getElapsedTime();
-        setPressedFlag(DownPressed, true);
-    } else {
-        setPressedFlag(DownPressed, false);
-        _pressedKeys.erase(sf::Keyboard::Down);
-    }
-
-    auto recentKey = sf::Keyboard::Unknown;
-    sf::Time latestTime = sf::milliseconds(0);
-
-    for (auto pk : _pressedKeys) {
-        if (pk.second > latestTime) {
-            recentKey = pk.first;
-            latestTime = pk.second;
-        }
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::Shoot, true);
     }
 
     //Logger::instance() << "speed: " << fSpeed << "/" << speed << "\n";
-    globalTypes::Direction direction = _gameObject->direction();
-    switch (recentKey) {
-        case sf::Keyboard::Left:
-            direction = globalTypes::Left;
-            _isMoving = true;
-            break;
-        case sf::Keyboard::Up:
-            direction = globalTypes::Up;
-            _isMoving = true;
-            break;
-        case sf::Keyboard::Right:
-            direction = globalTypes::Right;
-            _isMoving = true;
-            break;
-        case sf::Keyboard::Down:
-            direction = globalTypes::Down;
-            _isMoving = true;
-            break;
-        default:
-            _gameObject->moving = false;
-            _isMoving = false;
-            break;
-    }
+    globalTypes::Direction direction = static_cast<globalTypes::Direction>(_recentPlayerInput.direction_request);
 
-    if (_isMoving) {
+
+    if (direction != globalTypes::Direction::Unknown) {
         int speed = moveSpeedForCurrentFrame();
         assert( direction != globalTypes::Direction::Unknown );
         prepareMoveInDirection(direction, speed);
@@ -173,18 +109,18 @@ void PlayerController::update()
             trySqueeze();
         }
         _lastActionTime = _clock.getElapsedTime();
-        SoundPlayer::instance().playTankMoveSound();
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankMove, true);
         _gameObject->restartAnimation();
     } else {
         // check if on ice
         if (_gameObject->isOnIce()) {
-            SoundPlayer::instance().playIceSkidSound();
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::iceSkid, true);
             if (_gameObject->move(_currMoveX, _currMoveY) == 0) {
-                SoundPlayer::instance().playTankStandSound();
+                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankStand, true);
                 _gameObject->stopAnimation();
             }
         } else {
-            SoundPlayer::instance().playTankStandSound();
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankStand, true);
             _gameObject->stopAnimation();
         }
     }
@@ -289,7 +225,7 @@ void PlayerController::onDamaged()
 {
     if (!_invincible) {
         updateAppearance();
-        SoundPlayer::instance().playDebuffSound();
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::debuff, true);
         _gameObject->getComponent<SpriteRenderer>()->setOneFrameSpriteSheetOffset(128, 128);
         setTemporaryInvincibility(500);
     }

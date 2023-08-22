@@ -4,3 +4,9 @@
 [submodule "lib/sftools"]
 	path = lib/sftools
 	url = https://github.com/mantognini/sftools.git
+[submodule "lib/paho.mqtt.c"]
+	path = lib/paho.mqtt.c
+	url = https://github.com/eclipse/paho.mqtt.c.git
+[submodule "lib/paho.mqtt.cpp"]
+	path = lib/paho.mqtt.cpp
+	url = https://github.com/eclipse/paho.mqtt.cpp.git

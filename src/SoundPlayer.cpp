@@ -86,6 +86,76 @@ void SoundPlayer::stopAllSounds()
     tankStandSound.stop();
 }
 
+void SoundPlayer::playSound(SoundPlayer::SoundType type)
+{
+    switch (type)
+    {
+        case NoSound:
+            stopAllSounds();
+            break;
+        case TankStand:
+            playTankStandSound();
+            break;
+        case TankMove:
+            playTankMoveSound();
+            break;
+        case Shoot:
+            playShootSound();
+            break;
+        case bulletHitWall:
+            playBulletHitWallSound();
+            break;
+        case smallExplosion:
+            playSmallExplosionSound();
+            break;
+        case bigExplosion:
+            playBigExplosionSound();
+            break;
+        case bonusAppear:
+            playBonusAppearSound();
+            break;
+        case bonusCollect:
+            playBonusCollectSound();
+            break;
+        case iceSkid:
+            playIceSkidSound();
+            break;
+        case pause:
+            playPauseSound();
+            break;
+        case xpCollect:
+            playXpCollectSound();
+            break;
+        case tick:
+            playTickSound();
+            break;
+        case win:
+            playWinJingle();
+            break;
+        case fail:
+            playFailJingle();
+            break;
+        case debuff:
+            playDebuffSound();
+            break;
+    }
+}
+
+void SoundPlayer::stopSound(SoundPlayer::SoundType type)
+{
+    switch (type)
+    {
+        case TankStand:
+            tankStandSound.stop();
+            break;
+        case TankMove:
+            tankMoveSound.stop();
+            break;
+        default:
+            break;
+    }
+}
+
 
 void SoundPlayer::playTankStandSound()
 {
@@ -187,4 +257,33 @@ void SoundPlayer::playFailJingle()
 void SoundPlayer::playDebuffSound()
 {
     debuffSound.play();
+}
+
+void SoundPlayer::enqueueSound(SoundType type, bool play)
+{
+    if (play)
+        _sounds_to_play.push(type);
+    else
+        _sounds_to_stop.push(type);
+}
+
+std::queue<SoundPlayer::SoundType>& SoundPlayer::getSoundsQueue(bool play)
+{
+    if (play)
+        return _sounds_to_play;
+    else
+        return _sounds_to_stop;
+}
+
+void SoundPlayer::processQueuedSounds()
+{
+    while (!_sounds_to_stop.empty()) {
+        stopSound(_sounds_to_stop.front());
+        _sounds_to_stop.pop();
+    }
+
+    while (!_sounds_to_play.empty()) {
+        playSound(_sounds_to_play.front());
+        _sounds_to_play.pop();
+    }
 }

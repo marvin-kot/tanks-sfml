@@ -16,6 +16,7 @@
 
 #include <format>
 
+namespace allinone {
 
 std::vector<std::string> levelMaps = {
     "assets/testmap4.txt",
@@ -24,7 +25,7 @@ std::vector<std::string> levelMaps = {
 };
 
 
-Game::Game() {}
+Game::Game() : gameState(TitleScreen) {}
 
 bool Game::loadAssets()
 {
@@ -47,7 +48,7 @@ bool Game::initializeWindow()
     using namespace globalConst;
     Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML");
     //window.setVerticalSyncEnabled(true);
-    Utils::window.setFramerateLimit(30);
+    Utils::window.setFramerateLimit(FixedFrameRate);
     return true;
 }
 
@@ -77,11 +78,16 @@ bool Game::update()
         processDeletedObjects();
     }
 
+    // play sounds
+    SoundPlayer::instance().processQueuedSounds();
+
     drawGameScreen();
     if (!globalVars::gameIsPaused)
         recalculateViewPort();
     drawObjects();
     HUD::instance().draw();
+
+
 
     if (LevelUpPopupMenu::instance().isOpen()) {
         SoundPlayer::instance().stopAllSounds();
@@ -285,7 +291,7 @@ void Game::processDeletedObjects()
                     objectsToAdd.push_back(explosion);
 
                     if (obj->getParentObject()->isFlagSet(GameObject::Player))
-                        SoundPlayer::instance().playBulletHitWallSound();
+                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
                 }
 
                 if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle)) {
@@ -297,14 +303,14 @@ void Game::processDeletedObjects()
                     objectsToAdd.push_back(explosion);
 
                     if (obj->isFlagSet(GameObject::Player | GameObject::Eagle))
-                        SoundPlayer::instance().playBigExplosionSound();
+                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
                     else
-                        SoundPlayer::instance().playSmallExplosionSound();
+                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
                 }
 
                 if (obj->isFlagSet(GameObject::BonusOnHit)) {
                     obj->generateDrop();
-                    SoundPlayer::instance().playBonusAppearSound();
+                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
                 } else
                     obj->dropXp();
 
@@ -382,7 +388,7 @@ void Game::drawObjects()
 
     // 2. draw tanks and bullets
     std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "bullet"});
-    std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(globalVars::gameIsPaused); });
+    std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(); });
 
     // 3. draw walls and trees
     auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({
@@ -397,7 +403,7 @@ void Game::drawObjects()
         "100xp", "200xp", "300xp", "400xp", "500xp",
         "smallExplosion", "bigExplosion"
         });
-    std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(globalVars::gameIsPaused); });
+    std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(); });
 }
 
 void Game::updateDisplay()
@@ -407,6 +413,9 @@ void Game::updateDisplay()
 
 void Game::checkStatePostFrame()
 {
+    if (gameState != PlayingLevel)
+        return;
+
     if (framesToDie > -1) {
         if (--framesToDie <= 0)
             gameState = GameOver;
@@ -589,3 +598,4 @@ void Game::drawGameOverScreen()
     Utils::window.display();
 }
 
+}

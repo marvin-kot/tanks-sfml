@@ -13,6 +13,9 @@ namespace globalConst
     constexpr int screen_w = 1920;
     constexpr int screen_h = 1080;
 
+    constexpr int FixedFrameRate = 60;
+    constexpr float FixedFrameLength = 1 / (float)FixedFrameRate;
+
     constexpr int spriteOriginalSizeX = 16;
     constexpr int spriteOriginalSizeY = 16;
 

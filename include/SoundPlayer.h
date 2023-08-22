@@ -6,8 +6,31 @@
 
 #include <SFML/Audio.hpp>
 
+#include <queue>
+
 class SoundPlayer
 {
+public:
+    enum SoundType
+    {
+        NoSound,
+        TankStand,
+        TankMove,
+        Shoot,
+        bulletHitWall,
+        smallExplosion,
+        bigExplosion,
+        bonusAppear,
+        bonusCollect,
+        iceSkid,
+        pause,
+        xpCollect,
+        tick,
+        win,
+        fail,
+        debuff
+    };
+private:
     sf::SoundBuffer tankStandBuffer;
     sf::Sound       tankStandSound;
 
@@ -53,6 +76,9 @@ class SoundPlayer
     sf::SoundBuffer debuffBuffer;
     sf::Sound       debuffSound;
 
+    std::queue<SoundType> _sounds_to_stop;
+    std::queue<SoundType> _sounds_to_play;
+
 public:
     bool gameOver = false;
 private:
@@ -65,6 +91,9 @@ private:
 
 public:
     static SoundPlayer& instance();
+
+    void playSound(SoundType);
+    void stopSound(SoundType);
 
     int loadSounds();
     void stopAllSounds();
@@ -83,4 +112,10 @@ public:
     void playWinJingle();
     void playFailJingle();
     void playDebuffSound();
+
+    void enqueueSound(SoundType, bool);
+
+    std::queue<SoundType>& getSoundsQueue(bool);
+
+    void processQueuedSounds();
 };

@@ -9,6 +9,10 @@ class Damageable;
 class DropGenerator;
 class Collectable;
 
+namespace net {
+    class ThinGameObject;
+}
+
 class GameObject
 {
     friend class OneShotAnimationRenderer;
@@ -34,7 +38,8 @@ public:
         BonusOnHit = 0x400,
         CollectableBonus = 0x800,
         PlayerSpawner = 0x1000,
-        PiercingBullet = 0x2000
+        PiercingBullet = 0x2000,
+        Delete = 0x4000
     };
 
 private:
@@ -74,12 +79,12 @@ public:
     void setFlags(ObjectFlags);
     void appendFlags(ObjectFlags);
     bool isFlagSet(ObjectFlags) const;
-//    bool isAnyOfFlagsSet(std::vector<ObjectFlags>) const;
 
     inline void setParentId(int pid) { _parentId = pid; }
     inline int parentId() { return _parentId; }
 
-    virtual void draw(bool paused = false);
+    void draw();
+    bool networkDraw(net::ThinGameObject&);
     void hide(bool);
     void setPosition(int x, int y);
     int move(int x, int y);
@@ -101,7 +106,7 @@ public:
     inline std::string type() const { return _type; }
     inline int id() const { return _id; }
     inline bool mustBeDeleted() const { return _deleteme; }
-    inline void markForDeletion() { _deleteme = true; }
+    inline void markForDeletion() { _deleteme = true; appendFlags(Delete); }
 
     void setController(Controller *);
     void setShootable(Shootable *);
@@ -120,7 +125,7 @@ public:
     void stopAnimation();
     void restartAnimation();
 
-    void update();
+    net::ThinGameObject update();
     bool shoot();
 
     template <typename T>

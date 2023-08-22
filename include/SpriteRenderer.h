@@ -7,6 +7,7 @@
 #include <SFML/System/Clock.hpp>
 
 #include "AssetManager.h"
+#include "NetGameTypes.h"
 
 class GameObject;
 
@@ -37,13 +38,17 @@ protected:
     int _oneFrameSpriteSheetOffsetX = 0;
     int _oneFrameSpriteSheetOffsetY = 0;
     bool _oneFrameOffset = false;
+
+    void setAnimationFrame(int frameNum, net::ThinGameObject& obj);
+
 public:
     SpriteRenderer(GameObject * parent, std::string type = "");
     virtual ~SpriteRenderer() {}
     void setCurrentAnimation(std::string id);
     void hide(bool);
     bool isHidden();
-    virtual void draw(bool paused = false);
+    virtual void draw();
+    virtual bool networkDraw(net::ThinGameObject&);
     void playAnimation(bool);
     void setSpriteSheetOffset(int x, int y);
     void setOneFrameSpriteSheetOffset(int x, int y);
@@ -54,13 +59,15 @@ class OneShotAnimationRenderer : public SpriteRenderer
 {
 public:
     OneShotAnimationRenderer(GameObject * parent, std::string type = "");
-    void draw(bool paused = false) override;
+    void draw() override;
+    bool networkDraw(net::ThinGameObject&) override;
 };
 
 class LoopAnimationSpriteRenderer : public SpriteRenderer
 {
 public:
     LoopAnimationSpriteRenderer(GameObject * parent, std::string type = "");
-    void draw(bool paused = false) override;
+    void draw() override;
+    bool networkDraw(net::ThinGameObject&) override;
 };
 

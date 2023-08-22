@@ -139,8 +139,8 @@ GameObject *MapCreator::buildObject(std::string type)
 void MapCreator::setupScreenBordersBasedOnMapSize()
 {
     assert(map_w > 0 && map_h > 0);
-    globalVars::borderWidth = (globalConst::screen_w - globalVars::mapViewPort.width)/2; //(globalConst::screen_w - mapWidth()*globalConst::spriteDisplaySizeX) / 2;
-    globalVars::borderHeight = (globalConst::screen_h - globalVars::mapViewPort.height)/2;// (globalConst::screen_h - mapHeight()*globalConst::spriteDisplaySizeY) / 2;
+    globalVars::borderWidth = (globalConst::screen_w - globalVars::mapViewPort.width)/2;
+    globalVars::borderHeight = (globalConst::screen_h - globalVars::mapViewPort.height)/2;
     globalVars::gameViewPort = sf::IntRect(globalVars::borderWidth, globalVars::borderHeight, globalVars::mapViewPort.width, globalVars::mapViewPort.height);
 
     // WARNING: side effect - save map size globally
