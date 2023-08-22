@@ -68,16 +68,42 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
     rect.left += offsetX;
     rect.top += offsetY;
     _parentObject->setSize(rect.width, rect.height);
+
     _sprite.setTextureRect(rect);
     _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
     _sprite.setOrigin(rect.width/2, rect.height/2);
 }
 
-void SpriteRenderer::draw(bool paused)
+void SpriteRenderer::setAnimationFrame(int frameNum, net::ThinGameObject& obj)
+{
+    assert(_currentAnimation.empty() == false);
+
+    _currentFrame = frameNum;
+
+    sf::IntRect rect = _currentAnimationFrames[_currentFrame].rect;
+
+    int offsetX = _spriteSheetOffsetX;
+    int offsetY = _spriteSheetOffsetY;
+    if (_oneFrameOffset) {
+        offsetX += _oneFrameSpriteSheetOffsetX;
+        offsetY += _oneFrameSpriteSheetOffsetY;
+        _oneFrameOffset = false;
+    }
+
+    rect.left += offsetX;
+    rect.top += offsetY;
+
+    obj.spr_left = rect.left;
+    obj.spr_top = rect.top;
+    obj.spr_w = rect.width;
+    obj.spr_h = rect.height;
+}
+
+void SpriteRenderer::draw()
 {
     if (isHidden()) return;
 
-    if (!paused) {
+    if (!globalVars::gameIsPaused) {
         int framesCount = _currentAnimationFrames.size();
         // play set next frame if duration of current frame passed
         if (framesCount > 1 && _animate) {
@@ -88,7 +114,29 @@ void SpriteRenderer::draw(bool paused)
             }
         }
     }
+
     Utils::window.draw(_sprite);
+}
+
+bool SpriteRenderer::networkDraw(net::ThinGameObject& object)
+{
+    if (isHidden()) return false;
+
+    if (!globalVars::gameIsPaused) {
+        int framesCount = _currentAnimationFrames.size();
+        // play set next frame if duration of current frame passed
+        if (framesCount > 1 && _animate) {
+            if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
+                int nextFrame = _currentFrame+1 < framesCount ? _currentFrame+1 : 0;
+                setAnimationFrame(nextFrame, object);
+                _clock.restart();
+            } else
+                setAnimationFrame(0, object);
+        } else
+            setAnimationFrame(0, object);
+    }
+
+    return true;
 }
 
 void SpriteRenderer::playAnimation(bool play)
@@ -111,10 +159,10 @@ void SpriteRenderer::setOneFrameSpriteSheetOffset(int x, int y)
 
 OneShotAnimationRenderer::OneShotAnimationRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}
 
-void OneShotAnimationRenderer::draw(bool paused)
+void OneShotAnimationRenderer::draw()
 {
     if (isHidden()) return;
-    if (!paused) {
+    if (!globalVars::gameIsPaused) {
         int framesCount = _currentAnimationFrames.size();
         // play set next frame if duration of current frame passed
         if (framesCount > 1 && _animate) {
@@ -133,14 +181,41 @@ void OneShotAnimationRenderer::draw(bool paused)
     Utils::window.draw(_sprite);
 }
 
+bool OneShotAnimationRenderer::networkDraw(net::ThinGameObject& object)
+{
+    if (isHidden()) return false;
+    if (!globalVars::gameIsPaused) {
+        int framesCount = _currentAnimationFrames.size();
+        // play set next frame if duration of current frame passed
+        if (framesCount > 1 && _animate) {
+            if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
+                int nextFrame = _currentFrame+1;
+
+                if (nextFrame == framesCount) {
+                    _parentObject->markForDeletion();
+                    return false;
+                }
+                setAnimationFrame(nextFrame, object);
+                _clock.restart();
+            } else
+                setAnimationFrame(0, object);
+        } else
+                setAnimationFrame(0, object);
+    }
+    //Utils::window.draw(_sprite);
+
+    return true;
+}
+
+
+
 LoopAnimationSpriteRenderer::LoopAnimationSpriteRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}
 
-void LoopAnimationSpriteRenderer::draw(bool paused)
+void LoopAnimationSpriteRenderer::draw()
 {
     if (isHidden()) return;
 
-    if (!paused) {
-        //Logger::instance() << "LoopAnimationSpriteRenderer::draw()";
+    if (!globalVars::gameIsPaused) {
         int framesCount = _currentAnimationFrames.size();
         // play set next frame if duration of current frame passed
         if (framesCount > 1 && _animate) {
@@ -157,4 +232,30 @@ void LoopAnimationSpriteRenderer::draw(bool paused)
     }
 
     Utils::window.draw(_sprite);
+}
+
+
+bool LoopAnimationSpriteRenderer::networkDraw(net::ThinGameObject& object)
+{
+    if (isHidden()) return false;
+    if (!globalVars::gameIsPaused) {
+        int framesCount = _currentAnimationFrames.size();
+        // play set next frame if duration of current frame passed
+        if (framesCount > 1 && _animate) {
+            if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
+                int nextFrame = _currentFrame+1;
+
+                if (nextFrame >= framesCount) {
+                    nextFrame = 0;
+                }
+                setAnimationFrame(nextFrame, object);
+                _clock.restart();
+            } else
+                setAnimationFrame(0, object);
+        } else
+            setAnimationFrame(0, object);
+    }
+
+    return true;
+    //Utils::window.draw(_sprite);
 }

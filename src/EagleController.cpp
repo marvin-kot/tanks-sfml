@@ -70,7 +70,7 @@ void EagleController::update()
             if (_clock.getElapsedTime() > sf::milliseconds(_rebuildTimeouts.top())) {
                 _clock.reset(true);
                 if (false == ObjectsPool::getEagleWalls().contains(_currentBuildDirection)) {
-                    SoundPlayer::instance().playDebuffSound();
+                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::debuff, true);
                     const int thisX = _gameObject->position().x;
                     const int thisY = _gameObject->position().y;
                     const auto offset = dirOffsets.at(_currentBuildDirection);
@@ -214,7 +214,7 @@ void EagleController::setTempInvincibilityAfterDamage(int timeout)
 void EagleController::onDamaged()
 {
     updateAppearance();
-    SoundPlayer::instance().playDebuffSound();
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::debuff, true);
 
     if (_invincibilityAfterDamageHit) {
         _invincible = true;

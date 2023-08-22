@@ -1,9 +1,13 @@
 #pragma once
 
 #include "MapCreator.h"
+#include "NetGameTypes.h"
 
 
 #include <string>
+
+namespace allinone
+{
 
 class Game
 {
@@ -18,13 +22,12 @@ private:
         GameOver
     };
 
-    GameState gameState = TitleScreen;
+    GameState gameState;
     int currentLevel;
     Level::Properties _currentLevelProperties;
     int _surviveTimeoutSec;
 
     int framesToDie, framesToWin;
-
 
 public:
     Game();
@@ -57,3 +60,5 @@ private:
     bool winConditionsMet() const;
     bool failConditionsMet() const;
 };
+
+}

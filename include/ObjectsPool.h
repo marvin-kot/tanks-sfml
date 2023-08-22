@@ -7,6 +7,8 @@
 
 #include "GlobalTypes.h"
 
+#include "NetGameTypes.h"
+
 class GameObject;
 
 class ObjectsPool
@@ -16,7 +18,10 @@ private:
     static std::unordered_map<std::string, std::unordered_set<GameObject *>> objectsByType;
     static std::map<globalTypes::EagleWallDirection, GameObject *> eagleWalls;
 
+
 public:
+    static std::unordered_map<int, net::ThinGameObject> thinGameObjects;
+
     static GameObject *playerObject;
     static GameObject *eagleObject;
     static GameObject *playerSpawnerObject;

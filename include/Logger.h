@@ -6,7 +6,7 @@
 class Logger
 {
 private:
-    Logger() : out("logfile.txt")  {
+    Logger() : out()  {
         coutbuf = std::cout.rdbuf();
         std::cout.rdbuf(out.rdbuf()); //redirect std::cout to logfile
     }
@@ -27,13 +27,22 @@ public:
     template <typename T>
     Logger& operator<<(T&& t) // provide a generic operator<<
     {
+        if (!filenameSpecified)
+            setFilename("logfile.txt");
        out << t;
        return *this;
     }
 
+    void setFilename(std::string filename)
+    {
+        out.open(filename);
+        filenameSpecified = true;
+    }
 
 private:
     std::ofstream out;
     std::streambuf *coutbuf;
+
+    bool filenameSpecified = false;
 
 };

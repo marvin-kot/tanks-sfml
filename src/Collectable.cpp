@@ -14,7 +14,7 @@ Collectable::Collectable(GameObject *parent)
 void Collectable::onCollected(GameObject *collector)
 {
     (void *)collector;
-    SoundPlayer::instance().playBonusCollectSound();
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusCollect, true);
 }
 
 ///////
@@ -110,6 +110,5 @@ void XpCollectable::onCollected(GameObject *collector)
     PlayerController *controller = collector->getComponent<PlayerController>();
     controller->addXP(_value);
 
-    //Collectable::onCollected(collector);
-    SoundPlayer::instance().playXpCollectSound();
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::xpCollect, true);
 }
