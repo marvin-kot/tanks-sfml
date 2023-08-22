@@ -65,10 +65,12 @@ private:
     void assignUniqueId();
 
     int _lastUpdateFrame = 0;
+
 public:
     SpriteRenderer *spriteRenderer = nullptr;
     GameObject *visualEffect = nullptr;
     bool moving = false;
+    int damage = 0;
 public:
     GameObject(std::string name);
     GameObject(GameObject *, std::string name);
@@ -79,6 +81,7 @@ public:
     void setFlags(ObjectFlags);
     void appendFlags(ObjectFlags);
     bool isFlagSet(ObjectFlags) const;
+    void unsetFlags(ObjectFlags);
 
     inline void setParentId(int pid) { _parentId = pid; }
     inline int parentId() { return _parentId; }
@@ -136,4 +139,9 @@ public:
 inline GameObject::ObjectFlags operator|(GameObject::ObjectFlags a, GameObject::ObjectFlags b)
 {
     return static_cast<GameObject::ObjectFlags>(static_cast<int>(a) | static_cast<int>(b));
+}
+
+inline GameObject::ObjectFlags operator&(GameObject::ObjectFlags a, GameObject::ObjectFlags b)
+{
+    return static_cast<GameObject::ObjectFlags>(static_cast<int>(a) & static_cast<int>(b));
 }

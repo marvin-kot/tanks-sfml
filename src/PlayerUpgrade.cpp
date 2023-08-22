@@ -164,10 +164,7 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
         std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), PowerBullets);
     }
 
-
-
     std::uniform_int_distribution<int> distr(0, availableTypesLocal.size()-1);
-
 
     // determine cases where special non-upgrades have to be generated
     std::stack<UpgradeType> mandatoryUpgrades;

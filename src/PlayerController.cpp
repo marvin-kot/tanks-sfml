@@ -99,15 +99,28 @@ void PlayerController::update()
     //Logger::instance() << "speed: " << fSpeed << "/" << speed << "\n";
     globalTypes::Direction direction = static_cast<globalTypes::Direction>(_recentPlayerInput.direction_request);
 
-
+    bool moved = false;
     if (direction != globalTypes::Direction::Unknown) {
         int speed = moveSpeedForCurrentFrame();
         assert( direction != globalTypes::Direction::Unknown );
-        prepareMoveInDirection(direction, speed);
-        if (_gameObject->move(_currMoveX, _currMoveY) == 0) {
-            // try same direction but +1/-1 pixes aside
-            trySqueeze();
+
+        if (_gameObject->direction() != direction) {
+            resetMoveStartTimer();
         }
+
+        prepareMoveInDirection(direction, speed);
+        if (_gameObject->move(_currMoveX, _currMoveY) > 0) {
+            moved = true;
+        } else {
+            // try same direction but +1/-1 pixes aside
+            moved = (trySqueeze() > 0);
+        }
+
+        if (!_prevMoved && moved)
+            resetMoveStartTimer();
+
+        _prevMoved = moved;
+
         _lastActionTime = _clock.getElapsedTime();
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankMove, true);
         _gameObject->restartAnimation();
@@ -118,27 +131,46 @@ void PlayerController::update()
             if (_gameObject->move(_currMoveX, _currMoveY) == 0) {
                 SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankStand, true);
                 _gameObject->stopAnimation();
+                _prevMoved = false;
             }
         } else {
             SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankStand, true);
             _gameObject->stopAnimation();
+            _prevMoved = false;
         }
+    }
+
+    if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(1)) {
+        // if "bullet tank" ability - become bullet + invulnerable + blink
+        if (Utils::currentFrame % 2 == 0)
+            _gameObject->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
+        _gameObject->damage = _gameObject->getComponent<Shootable>()->damage();
+        setTemporaryInvincibility(globalConst::FixedFrameLength);
+    } else {
+        _gameObject->damage = 0;
     }
 }
 
-void PlayerController::trySqueeze()
+void PlayerController::resetMoveStartTimer()
+{
+    _moveStartClock.reset(true);
+}
+
+int PlayerController::trySqueeze()
 {
     if (_currMoveX == 0) {
         if (_gameObject->move(1, _currMoveY) == 0)
             if (_gameObject->move(-1, _currMoveY) == 0)
                 if (_gameObject->move(2, _currMoveY) == 0)
-                    _gameObject->move(-2, _currMoveY);
+                    return _gameObject->move(-2, _currMoveY);
     } else if (_currMoveY == 0) {
         if (_gameObject->move(_currMoveX, 1) == 0)
             if (_gameObject->move(_currMoveX, -1) == 0)
                 if (_gameObject->move(_currMoveX, 2) == 0)
-                    _gameObject->move(_currMoveX, -2);
+                    return _gameObject->move(_currMoveX, -2);
     }
+
+    return 1;
 }
 
 void PlayerController::increasePowerLevel(bool inc)
@@ -226,7 +258,7 @@ void PlayerController::onDamaged()
     if (!_invincible) {
         updateAppearance();
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::debuff, true);
-        _gameObject->getComponent<SpriteRenderer>()->setOneFrameSpriteSheetOffset(128, 128);
+        _gameObject->getComponent<SpriteRenderer>()->setOneFrameTintColor(sf::Color::Red);
         setTemporaryInvincibility(500);
     }
 }

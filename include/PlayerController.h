@@ -40,7 +40,10 @@ class PlayerController : public Controller
     sf::Clock _invincibilityTimer;
     int _invincibilityTimeout;
 
-    void trySqueeze();
+    sftools::Chronometer _moveStartClock;
+
+    int trySqueeze();
+    bool _prevMoved = false;
 
     int _xpModifier = 0;
 
@@ -69,6 +72,7 @@ public:
     void onDamaged() override;
     void setXpModifier(int mod) { _xpModifier = mod; }
     void setPlayerInput(const net::PlayerInput& input) { _recentPlayerInput = input; }
+    void resetMoveStartTimer();
 };
 
 struct PlayerSignal

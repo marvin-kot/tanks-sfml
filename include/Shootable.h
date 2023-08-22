@@ -26,6 +26,7 @@ public:
     inline void setActionTimeoutMs(int t) { _actionTimeoutMs = t; }
     inline void setBulletSpeed(int bs) { _bulletSpeed = bs; }
     inline void setDamage(int d) { _damage = d; }
+    inline int damage() const { return _damage; }
     bool shoot(globalTypes::Direction dir);
     void setPiercing(bool p) { _piercing = p; }
 

@@ -35,9 +35,7 @@ protected:
     int _spriteSheetOffsetX = 0;
     int _spriteSheetOffsetY = 0;
 
-    int _oneFrameSpriteSheetOffsetX = 0;
-    int _oneFrameSpriteSheetOffsetY = 0;
-    bool _oneFrameOffset = false;
+    sf::Color _oneFrameTintColor = sf::Color::White;
 
     void setAnimationFrame(int frameNum, net::ThinGameObject& obj);
 
@@ -51,7 +49,7 @@ public:
     virtual bool networkDraw(net::ThinGameObject&);
     void playAnimation(bool);
     void setSpriteSheetOffset(int x, int y);
-    void setOneFrameSpriteSheetOffset(int x, int y);
+    void setOneFrameTintColor(sf::Color);
     void showAnimationFrame(int i);
     void setNewObjectType(std::string type);
 };

@@ -64,12 +64,6 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
 
     int offsetX = _spriteSheetOffsetX;
     int offsetY = _spriteSheetOffsetY;
-    if (_oneFrameOffset)
-    {
-        offsetX += _oneFrameSpriteSheetOffsetX;
-        offsetY += _oneFrameSpriteSheetOffsetY;
-        _oneFrameOffset = false;
-    }
 
     rect.left += offsetX;
     rect.top += offsetY;
@@ -90,11 +84,6 @@ void SpriteRenderer::setAnimationFrame(int frameNum, net::ThinGameObject& obj)
 
     int offsetX = _spriteSheetOffsetX;
     int offsetY = _spriteSheetOffsetY;
-    if (_oneFrameOffset) {
-        offsetX += _oneFrameSpriteSheetOffsetX;
-        offsetY += _oneFrameSpriteSheetOffsetY;
-        _oneFrameOffset = false;
-    }
 
     rect.left += offsetX;
     rect.top += offsetY;
@@ -120,6 +109,9 @@ void SpriteRenderer::draw()
             }
         }
     }
+
+    _sprite.setColor(_oneFrameTintColor);
+    _oneFrameTintColor = sf::Color::White;
 
     Utils::window.draw(_sprite);
 }
@@ -156,11 +148,9 @@ void SpriteRenderer::setSpriteSheetOffset(int x, int y)
     _spriteSheetOffsetY = y;
 }
 
-void SpriteRenderer::setOneFrameSpriteSheetOffset(int x, int y)
+void SpriteRenderer::setOneFrameTintColor(sf::Color color)
 {
-    _oneFrameSpriteSheetOffsetX = x;
-    _oneFrameSpriteSheetOffsetY = y;
-    _oneFrameOffset = true;
+    _oneFrameTintColor = color;
 }
 
 OneShotAnimationRenderer::OneShotAnimationRenderer(GameObject * parent, std::string type) : SpriteRenderer(parent, type) {}

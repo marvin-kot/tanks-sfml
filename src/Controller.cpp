@@ -209,7 +209,7 @@ void TankRandomController::onDamaged()
 {
     SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
     assert(renderer != nullptr);
-    renderer->setOneFrameSpriteSheetOffset(0, 128);
+    renderer->setOneFrameTintColor(sf::Color::Red);
 }
 
 /////

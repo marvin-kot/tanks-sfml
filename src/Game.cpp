@@ -47,7 +47,7 @@ bool Game::initializeWindow()
 {
     using namespace globalConst;
     Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML");
-    //window.setVerticalSyncEnabled(true);
+    //Utils::window.setVerticalSyncEnabled(true);
     Utils::window.setFramerateLimit(FixedFrameRate);
     return true;
 }

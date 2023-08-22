@@ -63,6 +63,14 @@ void GameObject::appendFlags(GameObject::ObjectFlags f)
     _flags = _flags | f;
 }
 
+void GameObject::unsetFlags(GameObject::ObjectFlags flags)
+{
+    int newFlag = (int)flags;
+    int oldFlag = (int)_flags;
+
+    _flags = static_cast<GameObject::ObjectFlags>(oldFlag & ~newFlag);
+}
+
 bool GameObject::isFlagSet(GameObject::ObjectFlags f) const
 {
     return (_flags & f) != 0;
@@ -254,8 +262,6 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         return;
     }
 
-    assert(isBullet == false);
-
     // is Hit by bullet
     if (other->isFlagSet(Bullet)) {
         if (isFlagSet(BulletKillable) && _damageable) {
@@ -295,6 +301,18 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
     // check if player gathered a collectable
     if (isFlagSet(Player) && other->isFlagSet(CollectableBonus)) {
         other->getCollectedBy(this);
+    }
+
+    if (isFlagSet(Player) && damage>0 && other->isFlagSet(BulletKillable)) {
+        other->_damageable->takeDamage(damage);
+        if (other->_damageable->isDestroyed()) {
+            other->markForDeletion();
+            cancelMovement = false;
+        } else {
+            // if goal is not killed, stop the sequence
+            dynamic_cast<PlayerController *>(_controller)->resetMoveStartTimer();
+        }
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
     }
 
     // merge colliding xp points to reduce number of objects on map
