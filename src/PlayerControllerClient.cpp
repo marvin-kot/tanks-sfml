@@ -1,7 +1,6 @@
 #include "PlayerControllerClient.h"
-#include "GameClient.h"
 #include "GlobalTypes.h"
-
+#include "NetGameTypes.h"
 
 
 
