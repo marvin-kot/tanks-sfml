@@ -125,14 +125,13 @@ bool SpriteRenderer::networkDraw(net::ThinGameObject& object)
         // play set next frame if duration of current frame passed
         if (framesCount > 1 && _animate) {
             if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
-                int nextFrame = _currentFrame+1 < framesCount ? _currentFrame+1 : 0;
-                setAnimationFrame(nextFrame, object);
+                _currentFrame = _currentFrame+1 < framesCount ? _currentFrame+1 : 0;
                 _clock.restart();
-            } else
-                setAnimationFrame(0, object);
-        } else
-            setAnimationFrame(0, object);
+            }
+        }
     }
+
+    setAnimationFrame(_currentFrame, object);
 
     return true;
 }

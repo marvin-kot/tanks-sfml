@@ -50,6 +50,7 @@ Upgrade ideas:
     9) improved optics - can see invisible tanks
     10) piercing bullet  (1 level) - synergy of 1 and 4 - when powerful bullet kills weak enemy, it loses part of its power, but continues to fly
     11) splitting bullet (1 level) - synergy of 4 and 8 - when exploded, bullet splits in two (with half power) bullets flying in opposite directions
+    12) bullet tank (1 level) - synergy of 3 and 5 - when moving in one direction without stopping, tank becomes invulnerable and affecting damage to enemies (until something stops it)
 
 - BASE LEVELING
     1) can survive more hits (up to 4)
