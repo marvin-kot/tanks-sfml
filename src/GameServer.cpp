@@ -93,11 +93,10 @@ bool GameServer::update()
 
 
     int stateResult = processStateChange();
-    if (stateResult == -1) {
+    if (stateResult == -1)
         return false;
-    } else if (stateResult == 0) {
+    else if (stateResult == 0)
         return true;
-    }
     // else if 1 - proceed
 
     updateAllObjectControllers();
@@ -111,8 +110,37 @@ bool GameServer::update()
 
     // populate thin object container
     networkDraw();
+
+    populateNetworkFrame();
     // send world state to client
-    _lastFrame.frame_num = Utils::currentFrame;
+
+    // send
+    Logger::instance() << "send frame " << _lastFrame.frame_num << "\n";
+    auto status = _sendSocket.send((void *)&_lastFrame, sizeof(net::FrameDetails), "127.0.0.1", net::SERVER_SEND_PORT);
+
+    if (status != sf::Socket::Done)
+        Logger::instance() << "UDP send Error" << status << "\n";
+
+
+    /*if (LevelUpPopupMenu::instance().isOpen()) {
+        SoundPlayer::instance().stopAllSounds();
+        LevelUpPopupMenu::instance().draw();
+    }*/
+
+    // send sound commands if any
+
+    if (!globalVars::gameIsPaused)
+        checkStatePostFrame();
+
+    // TEMP for debug screen
+    drawPlayingScreen();
+    Utils::window.display();
+    return true;
+}
+
+void GameServer::populateNetworkFrame()
+{
+     _lastFrame.frame_num = Utils::currentFrame;
 
     int i = 0;
     for (auto it = ObjectsPool::thinGameObjects.cbegin(); it != ObjectsPool::thinGameObjects.cend(); ++it) {
@@ -142,29 +170,6 @@ bool GameServer::update()
         i++;
     }
     _lastFrame.splay_num = i;
-
-    // send
-    Logger::instance() << "send frame " << _lastFrame.frame_num << "\n";
-    auto status = _sendSocket.send((void *)&_lastFrame, sizeof(net::FrameDetails), "127.0.0.1", net::SERVER_SEND_PORT);
-
-    if (status != sf::Socket::Done)
-        Logger::instance() << "UDP send Error" << status << "\n";
-
-
-    /*if (LevelUpPopupMenu::instance().isOpen()) {
-        SoundPlayer::instance().stopAllSounds();
-        LevelUpPopupMenu::instance().draw();
-    }*/
-
-    // send sound commands if any
-
-    if (!globalVars::gameIsPaused)
-        checkStatePostFrame();
-
-    // TEMP for debug screen
-    drawPlayingScreen();
-    Utils::window.display();
-    return true;
 }
 
 void GameServer::updateFrameClock()
@@ -173,9 +178,9 @@ void GameServer::updateFrameClock()
 
     auto diff = now - Utils::lastFrameTime;
     auto fixedLength = sf::seconds(globalConst::FixedFrameLength);
-    if (diff < fixedLength) {
+    /*if (diff < fixedLength) {
         sf::sleep(fixedLength - diff);
-    }
+    }*/
 
     Utils::lastFrameTime = now;
 

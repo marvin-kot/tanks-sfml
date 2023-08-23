@@ -55,6 +55,7 @@ private:
     void checkStatePostFrame();
     void pause(bool);
     void networkDraw();
+    void populateNetworkFrame();
     void recalculateViewPort();
 
     bool winConditionsMet() const;

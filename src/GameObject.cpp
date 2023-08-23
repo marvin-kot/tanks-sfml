@@ -136,12 +136,12 @@ bool GameObject::networkDraw(net::ThinGameObject& thin)
     thin.id = _id;
     thin.flags = static_cast<uint16_t>(_flags);
     return spriteRenderer->networkDraw(thin);
-    /*if (visualEffect) {
+    if (visualEffect) {
         net::ThinGameObject fx;
         fx.zorder = 5;
         if (visualEffect->networkDraw(fx))
             ObjectsPool::thinGameObjects[visualEffect->id()] = fx;
-    }*/
+    }
 
 }
 
