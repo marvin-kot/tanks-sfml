@@ -19,7 +19,8 @@ private:
         StartLevelScreen,
         StartLevel,
         PlayingLevel,
-        GameOver
+        GameOver,
+        BonusShop
     };
 
     GameState gameState;

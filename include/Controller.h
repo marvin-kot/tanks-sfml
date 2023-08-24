@@ -103,6 +103,7 @@ class PlayerSpawnController : public Controller
 {
     enum SpawnStates {
         Starting,
+        Spawning,
         Waiting,
         PlayingAnimation,
         CreateObject
@@ -111,7 +112,6 @@ class PlayerSpawnController : public Controller
     SpawnStates _state;
     sf::Clock _spawnAnimationclock;
     const sf::Time _spawnAnimationTime = sf::seconds(1);
-    int _lives;
     int _initialPowerLevel;
 
     static GameObject *createObject();

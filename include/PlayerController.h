@@ -45,10 +45,9 @@ class PlayerController : public Controller
     int trySqueeze();
     bool _prevMoved = false;
 
-    int _xpModifier = 0;
-
-
     net::PlayerInput _recentPlayerInput;
+
+    int _xpModifier = 0;
 
 public:
     PlayerController(GameObject *obj);
@@ -63,14 +62,17 @@ public:
     int numberOfUpgrades() const;
     void setTemporaryInvincibility(int msec);
     void addXP(int val);
+    int xp() const { return _xp; }
     void resetXP();
     void levelUp();
 
     void chooseUpgrade(int index);
     int hasLevelOfUpgrade(PlayerUpgrade::UpgradeType) const;
     PlayerUpgrade *getUpgrade(int) const;
+    void removeUpgrade(PlayerUpgrade::UpgradeType);
     void onDamaged() override;
     void setXpModifier(int mod) { _xpModifier = mod; }
+    int xpModifier() const { return _xpModifier; }
     void setPlayerInput(const net::PlayerInput& input) { _recentPlayerInput = input; }
     void resetMoveStartTimer();
 };

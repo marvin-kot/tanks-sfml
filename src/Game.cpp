@@ -1,11 +1,13 @@
 #include "Game.h"
 
 #include "AssetManager.h"
+#include "BonusShopWindow.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
 #include "HUD.h"
 #include "LevelUpPopupMenu.h"
 #include "ObjectsPool.h"
+#include "PersistentGameData.h"
 #include "PlayerController.h"
 #include "Logger.h"
 #include "SoundPlayer.h"
@@ -57,6 +59,8 @@ void Game::initializeVariables()
     currentLevel = 0;
     framesToDie = -1;
     framesToWin = -1;
+    PersistentGameData::instance().loadDataFromDisk();
+    PlayerUpgrade::generatePerks();
     gameState = TitleScreen;
 }
 
@@ -120,6 +124,7 @@ void Game::processWindowEvents()
     while (Utils::window.pollEvent(event)) {
         switch (event.type) {
             case sf::Event::Closed:
+                PlayerUpgrade::deletePerks();
                 Utils::window.close();
                 break;
             case sf::Event::KeyPressed:
@@ -155,6 +160,21 @@ void Game::processWindowEvents()
                     } else if (event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::P) {
                         pause(!globalVars::gameIsPaused);
                     }
+                } else if (gameState == BonusShop) {
+                    if (event.key.scancode == sf::Keyboard::Scan::Left)
+                        BonusShopWindow::instance().moveCursorLeft();
+                    else if (event.key.scancode == sf::Keyboard::Scan::Right)
+                        BonusShopWindow::instance().moveCursorRight();
+                    else if (event.key.scancode == sf::Keyboard::Scan::Down)
+                        BonusShopWindow::instance().moveCursorDown();
+                    else if (event.key.scancode == sf::Keyboard::Scan::Up)
+                        BonusShopWindow::instance().moveCursorUp();
+                    else if (event.key.scancode == sf::Keyboard::Scan::Enter)
+                        BonusShopWindow::instance().getSelectedUpgrade();
+                    else if (event.key.scancode == sf::Keyboard::Scan::Escape)
+                        gameState = TitleScreen;
+                    else if (event.key.scancode == sf::Keyboard::Scan::Space)
+                        gameState = LoadNextLevel;
                 }
                 break;
             case sf::Event::Resized:
@@ -223,7 +243,11 @@ int Game::processStateChange()
     else if (gameState == GameOver) {
         SoundPlayer::instance().stopAllSounds();
         ObjectsPool::clearEverything();
-        gameState = TitleScreen;
+        gameState = BonusShop;
+        PlayerUpgrade::generatePerks();
+        return 0;
+    } else if (gameState == BonusShop) {
+        BonusShopWindow::instance().draw();
         return 0;
     }
 
@@ -269,7 +293,7 @@ void Game::processDeletedObjects()
             GameObject *obj = *it;
             if (obj->mustBeDeleted()) {
                 if (obj->isFlagSet(GameObject::Player)) {
-                    globalVars::player1Lives--;
+                    //globalVars::player1Lives--;
                     ObjectsPool::playerObject = nullptr;
                 }
 

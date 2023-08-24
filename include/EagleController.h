@@ -32,8 +32,7 @@ class EagleController : public Controller
 
     std::stack<int> _rebuildTimeouts;
 
-    bool _invincibilityAfterDamageHit = false;
-    int _invincibilityAfterDamageTimeout = 0;
+    int _invincibilityAfterDamageTimeout;
     bool _invincible;
     sftools::Chronometer _invincibilityTimer;
 public:

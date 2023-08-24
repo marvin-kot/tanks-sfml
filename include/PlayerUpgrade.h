@@ -7,7 +7,7 @@
 
 #include <SFML/Graphics/Rect.hpp>
 
-
+#include <unordered_set>
 
 
 class GameObject;
@@ -21,12 +21,14 @@ public:
         MoreBullets,
         TankSpeed,
         PowerBullets,
-        PiercingBullets,
         TankArmor,
-        XpIncreaser,
         XpAttractor,
         BonusEffectiveness,
+        // tank super upgrades
+        FourDirectionBullets,
+        PiercingBullets,
         Rocket,
+        BulletTank,
         // base upgrades
         BaseArmor,
         RepairWalls,
@@ -34,6 +36,7 @@ public:
         ReflectBullets,
         PhoenixBase,
         BaseInvincibility,
+        BaseRevengeOnDamage,
         // one time bonuses
         FreezeEnemies,
         InstantKillEnemies,
@@ -43,14 +46,21 @@ public:
         RandomWalls,
         InstantKillBaseArea,
         CollectAllFreeXP,
-        RebuildEagleWalls
+        RebuildEagleWalls,
+        DepositXP,
+        // perks (tank upgrades bouht before run)
+        PlusLifeOnStart,
+        XpIncreaser,
+        KillAllOnDeath,
+        SacrificeLifeForBase,
     };
 
     enum UpgradeCategory
     {
         TankUpgrade,
         BaseUpgrade,
-        OneTimeBonus
+        OneTimeBonus,
+        Perk
     };
 
     // TODO: incapsulate
@@ -69,6 +79,9 @@ protected:
     std::vector<std::string> _effects;
 
     sf::IntRect _iconRect;
+
+    bool _applied = false;
+    int _price = 0; // for perks only
 public:
     PlayerUpgrade(int level);
 
@@ -83,12 +96,20 @@ public:
     std::string currentEffectDescription() const;
     sf::IntRect iconRect() const { return _iconRect; }
     std::pair<UpgradeType, int> dependency() const;
+    bool firstApplication();
+    void reset();
+
+    int price() const { return _price; }
 
 // STATIC methods
 public:
     static PlayerUpgrade *createUpgrade(UpgradeType type, int level);
     static std::vector<PlayerUpgrade *> currentThreeRandomUpgrades;
+    static std::vector<PlayerUpgrade *> availablePerkObjects;
+    static std::unordered_set<UpgradeType> playerOwnedPerks;
     static void generateThreeRandomUpgradesForPlayer(GameObject *playerObject);
+    static void generatePerks();
+    static void deletePerks();
 };
 
 
@@ -130,10 +151,18 @@ public:
 
 class TankAdditionalLifeBonus : public PlayerUpgrade
 {
+protected:
     std::vector<int> _numberBasedOnLevel;
 public:
+    TankAdditionalLifeBonus();
     TankAdditionalLifeBonus(int level);
     void onCollect(GameObject *collector) override;
+};
+
+class TankAdditionalLifePerk : public TankAdditionalLifeBonus
+{
+public:
+    TankAdditionalLifePerk();
 };
 
 class RebuildEagleWallsBonus : public PlayerUpgrade
@@ -143,6 +172,14 @@ public:
     RebuildEagleWallsBonus(int level);
     void onCollect(GameObject *collector) override;
 };
+
+class DepositXpBonus : public PlayerUpgrade
+{
+public:
+    DepositXpBonus(int level);
+    void onCollect(GameObject *collector) override;
+};
+
 
 class RebuildEagleWallsOnLevelup : public PlayerUpgrade
 {
@@ -224,3 +261,30 @@ public:
     PiercingBulletsUpgrade(int level);
     void onCollect(GameObject *collector) override;
 };
+
+class BulletTankUpgrade : public PlayerUpgrade
+{
+public:
+    BulletTankUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class KillAllOnTankDeathUpgrade : public PlayerUpgrade
+{
+public:
+    KillAllOnTankDeathUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class SacrificeLifeForBaseUpgrade : public PlayerUpgrade
+{
+public:
+    SacrificeLifeForBaseUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+////// PERKS
+/*  PlayerUpgrade::KillAllOnDeath,
+    PlayerUpgrade::SacrificeLifeForBase,
+    PlayerUpgrade::PlusLifeOnStart,
+    PlayerUpgrade::GreedForXP*/

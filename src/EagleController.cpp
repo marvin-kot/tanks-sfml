@@ -3,6 +3,8 @@
 #include "GameObject.h"
 #include "GlobalConst.h"
 #include "ObjectsPool.h"
+#include "PersistentGameData.h"
+#include "PlayerController.h"
 #include "MapCreator.h"
 #include "SoundPlayer.h"
 #include "SpriteRenderer.h"
@@ -26,7 +28,7 @@ static const std::map<EagleWallDirection, sf::Vector2i> dirOffsets = {
 };
 
 EagleController::EagleController(GameObject *obj)
-: Controller(obj, 0), _state(Starting)
+: Controller(obj, 0), _state(Starting), _invincibilityAfterDamageTimeout(500),_invincible(false)
 {}
 
 EagleController::~EagleController()
@@ -46,7 +48,7 @@ void EagleController::update()
     if (_pause) return;
 
     if (_invincible) {
-        if (_invincibilityTimer.getElapsedTime() < sf::seconds(_invincibilityAfterDamageTimeout)) {
+        if (_invincibilityTimer.getElapsedTime() < sf::milliseconds(_invincibilityAfterDamageTimeout)) {
             _gameObject->visualEffect->copyParentPosition(_gameObject);
         } else {
             _invincible = false;
@@ -207,7 +209,6 @@ PlayerUpgrade *EagleController::getUpgrade(int index) const
 
 void EagleController::setTempInvincibilityAfterDamage(int timeout)
 {
-    _invincibilityAfterDamageHit = true;
     _invincibilityAfterDamageTimeout = timeout;
 }
 
@@ -216,7 +217,9 @@ void EagleController::onDamaged()
     updateAppearance();
     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::debuff, true);
 
-    if (_invincibilityAfterDamageHit) {
+    Damageable *dmg = _gameObject->getComponent<Damageable>();
+
+    if (_invincibilityAfterDamageTimeout > 0) {
         _invincible = true;
         _invincibilityTimer.reset(true);
         Damageable *dmg = _gameObject->getComponent<Damageable>();
@@ -227,6 +230,28 @@ void EagleController::onDamaged()
             cloud->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
             cloud->setRenderer(new LoopAnimationSpriteRenderer(cloud, "cloud"));
             _gameObject->visualEffect = cloud;
+        }
+    }
+
+
+    if (ObjectsPool::playerObject == nullptr)
+        return;
+
+    PlayerController *controller = ObjectsPool::playerObject->getComponent<PlayerController>();
+
+
+    if (dmg->isDestroyed()) {
+        if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::SacrificeLifeForBase)) {
+            ObjectsPool::playerObject->markForDeletion(); // kill player
+            dmg->setDefence(globalConst::DefaultBaseProtection);
+            updateAppearance();
+            fastRepairWalls(100);
+
+            // can be used only once per run
+            PlayerUpgrade::playerOwnedPerks.erase(PlayerUpgrade::SacrificeLifeForBase);
+        } else {
+            // eagle is dead - run is finished
+            //PersistentGameData::instance().addToXpDeposit(controller->xp());
         }
     }
 }

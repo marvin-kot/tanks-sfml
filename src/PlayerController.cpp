@@ -1,4 +1,3 @@
-#include "PlayerController.h"
 
 #include "Damageable.h"
 #include "EagleController.h"
@@ -6,6 +5,8 @@
 #include "GlobalConst.h"
 #include "LevelUpPopupMenu.h"
 #include "ObjectsPool.h"
+#include "PersistentGameData.h"
+#include "PlayerController.h"
 #include "Shootable.h"
 #include "SoundPlayer.h"
 #include "Utils.h"
@@ -43,15 +44,24 @@ PlayerController::PlayerController(GameObject *obj)
     _clock.reset(true);
     resetXP();
     initXpLevelupNumbers();
+
+    for (auto obj : PlayerUpgrade::availablePerkObjects) {
+        if (PlayerUpgrade::playerOwnedPerks.contains(obj->type()))
+            obj->onCollect(_gameObject);
+    }
 }
 
 PlayerController::~PlayerController()
 {
-    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ) {
-        PlayerUpgrade *obj = (*it).second;
-        it = _collectedUpgrades.erase(it);
-        delete obj;
+    // if player has "atomic core" trait, kill all enemies instantly
+
+    if (hasLevelOfUpgrade(PlayerUpgrade::KillAllOnDeath) > -1) {
+        std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank"});
+        std::for_each(objectsToKill.cbegin(), objectsToKill.cend(), [](GameObject *obj) {
+            obj->markForDeletion();
+        });
     }
+
     resetXP();
 }
 
@@ -139,6 +149,9 @@ void PlayerController::update()
             _prevMoved = false;
         }
     }
+
+    if (hasLevelOfUpgrade(PlayerUpgrade::BulletTank) == -1)
+        return;
 
     if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(1)) {
         // if "bullet tank" ability - become bullet + invulnerable + blink
@@ -284,7 +297,8 @@ void PlayerController::addXP(int val)
 {
     _xp += val;
     Logger::instance() << "collect " << val << "xp\n";
-    globalVars::player1XP += (val + val*_xpModifier/100);
+
+    globalVars::player1XP += (val + val * _xpModifier / 100);
     if (_xp >= xpNeededForLevelUp[_level]) {
         levelUp();
     }
@@ -294,6 +308,12 @@ void PlayerController::resetXP()
 {
     _xp = 0;
     _level = 0;
+
+    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ) {
+        PlayerUpgrade *obj = (*it).second;
+        it = _collectedUpgrades.erase(it);
+        delete obj;
+    }
 
     globalVars::player1XP = 0;
     globalVars::player1Level = 1;
@@ -343,25 +363,12 @@ void PlayerController::chooseUpgrade(int index)
 
             // specific cases
             if (tp == PlayerUpgrade::PiercingBullets) {
-                // delete power bullet upgrade
-                auto it1 = _collectedUpgrades.find(PlayerUpgrade::PowerBullets);
-                if (it1 != _collectedUpgrades.end()) {
-                    PlayerUpgrade *obj = (*it1).second;
-                    _collectedUpgrades.erase(it1);
-                    delete obj;
-                }
-
-                // delete fast bullet upgrade
-                auto it2 = _collectedUpgrades.find(PlayerUpgrade::FastBullets);
-                if (it2 != _collectedUpgrades.end()) {
-                    PlayerUpgrade *obj = (*it2).second;
-                    _collectedUpgrades.erase(it2);
-                    delete obj;
-                }
-
-                // remove from available to generate as well
-                //PlayerUpgrade::removeFromAvailable(PlayerUpgrade::PowerBullets);
-                //PlayerUpgrade::removeFromAvailable(PlayerUpgrade::FastBullets);
+                removeUpgrade(PlayerUpgrade::PowerBullets);
+                removeUpgrade(PlayerUpgrade::FastBullets);
+            }
+            if (tp == PlayerUpgrade::BulletTank) {
+                removeUpgrade(PlayerUpgrade::TankArmor);
+                removeUpgrade(PlayerUpgrade::TankSpeed);
             }
             break;
         }
@@ -373,6 +380,16 @@ void PlayerController::chooseUpgrade(int index)
     // re-apply all bonuses (like, armor protection etc) on every level-up
     applyUpgrades();
     eagleController->applyUpgrades();
+}
+
+void PlayerController::removeUpgrade(PlayerUpgrade::UpgradeType t)
+{
+    auto it2 = _collectedUpgrades.find(t);
+    if (it2 != _collectedUpgrades.end()) {
+        PlayerUpgrade *obj = (*it2).second;
+        _collectedUpgrades.erase(it2);
+        delete obj;
+    }
 }
 
 void PlayerController::applyUpgrades()

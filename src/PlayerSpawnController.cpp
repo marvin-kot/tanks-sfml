@@ -2,12 +2,13 @@
 #include "Damageable.h"
 #include "GameObject.h"
 #include "PlayerController.h"
+#include "PlayerUpgrade.h"
 #include "Shootable.h"
 #include "Logger.h"
 #include "ObjectsPool.h"
 
 PlayerSpawnController::PlayerSpawnController(GameObject *parent, int lives, int powerLevel)
-: Controller(parent, 0), _lives(lives), _initialPowerLevel(powerLevel)
+: Controller(parent, 0)
 {
     _gameObject->hide(true);
     _state = Starting;
@@ -37,18 +38,20 @@ void PlayerSpawnController::update()
     if (_pause) return;
 
     switch (_state) {
+        case Starting: {
+            _state = Spawning;
+        }   break;
         case Waiting:
             if (ObjectsPool::playerObject == nullptr) {
-                if (_lives < 1) {
+                if (globalVars::player1Lives < 1) {
                     _gameObject->markForDeletion();
                     return;
                 }
-                _initialPowerLevel = 0; // as player was killed, its power resets to 0
                 globalVars::player1PowerLevel = 0;
-                _state = Starting;
+                _state = Spawning;
             }
             break;
-        case Starting:
+        case Spawning:
             _gameObject->hide(false);
             _spawnAnimationclock.restart();
             _state = PlayingAnimation;
@@ -69,9 +72,6 @@ void PlayerSpawnController::update()
 
                     auto controller = newPc->getComponent<PlayerController>();
                     controller->setTemporaryInvincibility(3000);
-                    for (int i=0; i<_initialPowerLevel; i++)
-                        controller->increasePowerLevel(true);
-                    _lives--;
                 }
 
                 _clock.reset(true);
@@ -84,6 +84,5 @@ void PlayerSpawnController::update()
 
 void PlayerSpawnController::appendLife()
 {
-    _lives++;
     globalVars::player1Lives++;
 }

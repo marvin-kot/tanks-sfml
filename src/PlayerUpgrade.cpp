@@ -1,20 +1,24 @@
 #include "AssetManager.h"
 #include "Damageable.h"
-#include <EagleController.h>
+#include "EagleController.h"
 #include "GameObject.h"
 #include "ObjectsPool.h"
+#include "PersistentGameData.h"
 #include "PlayerUpgrade.h"
 #include "PlayerController.h"
 #include "Shootable.h"
 #include "GlobalConst.h"
 #include "Utils.h"
 
-#include <unordered_set>
 #include <random>
 
 using UpgradeType = PlayerUpgrade::UpgradeType;
 
 std::vector<PlayerUpgrade *> PlayerUpgrade::currentThreeRandomUpgrades = {};
+std::vector<PlayerUpgrade *> PlayerUpgrade::availablePerkObjects = {};
+std::unordered_set<UpgradeType> PlayerUpgrade::playerOwnedPerks = {};
+
+
 std::vector<UpgradeType> PlayerUpgrade::availableTypes = {
         FastBullets,
         MoreBullets,
@@ -30,7 +34,7 @@ std::vector<UpgradeType> PlayerUpgrade::availableTypes = {
         RepairWalls,
         BaseArmor,
         BaseInvincibility,
-        XpIncreaser
+        DepositXP
 };
 
 void PlayerUpgrade::removeFromAvailable(PlayerUpgrade::UpgradeType t)
@@ -45,10 +49,10 @@ const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     UpgradeType::PowerBullets,
     UpgradeType::TankArmor,
     UpgradeType::XpAttractor,
-    UpgradeType::XpIncreaser,
     PlayerUpgrade::BonusEffectiveness,
     PlayerUpgrade::Rocket,
-    PlayerUpgrade::PiercingBullets
+    PlayerUpgrade::PiercingBullets,
+    PlayerUpgrade::BulletTank
 };
 
 const std::unordered_set<UpgradeType> baseUpgradeTypes = {
@@ -68,7 +72,15 @@ const std::unordered_set<UpgradeType> oneTimeBonusTypes = {
     UpgradeType::RandomWalls,
     UpgradeType::InstantKillBaseArea,
     UpgradeType::CollectAllFreeXP,
-    UpgradeType::RebuildEagleWalls
+    UpgradeType::RebuildEagleWalls,
+    UpgradeType::DepositXP
+};
+
+const std::unordered_set<UpgradeType> perkTypes = {
+    PlayerUpgrade::KillAllOnDeath,
+    PlayerUpgrade::SacrificeLifeForBase,
+    PlayerUpgrade::PlusLifeOnStart,
+    PlayerUpgrade::XpIncreaser
 };
 
 const std::map<UpgradeType, std::pair<UpgradeType, int>> upgradeDepencies = {};
@@ -83,8 +95,10 @@ const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::TankSpeed,  4},
     {UpgradeType::PowerBullets,  3},
     {UpgradeType::BaseArmor,  4},
-    {UpgradeType::XpIncreaser,  4},
+    {UpgradeType::XpIncreaser,  1},
     {UpgradeType::PiercingBullets,  1},
+    {UpgradeType::KillAllOnDeath,  1},
+    {UpgradeType::BulletTank,  1}
 };
 
 
@@ -112,7 +126,7 @@ std::string PlayerUpgrade::name() const
                 break;
         }
     } else {
-        levelStr = "\n{Mega upgrade!}";
+        levelStr = "\n{Super Upgrade}";
     }
 
     return _name + levelStr;
@@ -131,12 +145,14 @@ std::string PlayerUpgrade::currentEffectDescription() const
 
 static bool isUpgradedToMax(PlayerController *controller, PlayerUpgrade::UpgradeType t)
 {
-    return controller->hasLevelOfUpgrade(t) >= (upgradeCap.at(t) - 1);
+    int cap = upgradeCap.contains(t) ? upgradeCap.at(t) : 4;
+    return controller->hasLevelOfUpgrade(t) >= (cap - 1);
 }
 
 static bool isUpgradedToMax(EagleController *controller, PlayerUpgrade::UpgradeType t)
 {
-    return controller->hasLevelOfUpgrade(t) >= (upgradeCap.at(t) - 1);
+    int cap = upgradeCap.contains(t) ? upgradeCap.at(t) : 4;
+    return controller->hasLevelOfUpgrade(t) >= (cap - 1);
 }
 
 void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
@@ -164,12 +180,21 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
         std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), PowerBullets);
     }
 
+    if (isUpgradedToMax(controller, BulletTank)) {
+        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), TankSpeed);
+        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), TankArmor);
+    }
+
     std::uniform_int_distribution<int> distr(0, availableTypesLocal.size()-1);
 
     // determine cases where special non-upgrades have to be generated
     std::stack<UpgradeType> mandatoryUpgrades;
     if (isUpgradedToMax(controller, FastBullets) && isUpgradedToMax(controller, PowerBullets))
         mandatoryUpgrades.push(PiercingBullets);
+
+    if (isUpgradedToMax(controller, TankSpeed) && isUpgradedToMax(controller, TankArmor))
+        mandatoryUpgrades.push(BulletTank);
+
 
     for (int i=0; i<3; i++) {
 
@@ -230,6 +255,27 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
     }
 }
 
+void PlayerUpgrade::generatePerks()
+{
+    if (!availablePerkObjects.empty()) return;
+
+    for (auto perkType : perkTypes) {
+        availablePerkObjects.push_back(createUpgrade(perkType, 0));
+    }
+}
+
+void PlayerUpgrade::deletePerks()
+{
+    if (availablePerkObjects.empty()) return;
+
+    while (!availablePerkObjects.empty()) {
+        auto it = std::prev(availablePerkObjects.end());
+        PlayerUpgrade *obj = *it;
+        availablePerkObjects.erase(it);
+        delete obj;
+    }
+}
+
 PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
 {
     PlayerUpgrade *newUpgrade = nullptr;
@@ -267,6 +313,9 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
         case RebuildEagleWalls:
             newUpgrade = new RebuildEagleWallsBonus(level);
             break;
+        case DepositXP:
+            newUpgrade = new DepositXpBonus(level);
+            break;
         case RepairWalls:
             newUpgrade = new RebuildEagleWallsOnLevelup(level);
             break;
@@ -282,9 +331,32 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
         case PiercingBullets:
             newUpgrade = new PiercingBulletsUpgrade(level);
             break;
+        case KillAllOnDeath:
+            newUpgrade = new KillAllOnTankDeathUpgrade(level);
+            break;
+        case BulletTank:
+            newUpgrade = new BulletTankUpgrade(level);
+        case SacrificeLifeForBase:
+            newUpgrade = new SacrificeLifeForBaseUpgrade(level);
+            break;
+        case PlusLifeOnStart:
+            newUpgrade = new TankAdditionalLifePerk();
+            break;
     }
 
     return newUpgrade;
+}
+
+bool PlayerUpgrade::firstApplication() {
+    if (!_applied) {
+        _applied = true;
+        return true;
+    } else return false;
+}
+
+void PlayerUpgrade::reset()
+{
+    _applied = false;
 }
 
 BonusEffectivenessIncreaser::BonusEffectivenessIncreaser(int level)
@@ -384,6 +456,7 @@ void TankInvincibilityBonus::onCollect(GameObject *collector)
 }
 
 ///////////////
+TankAdditionalLifeBonus::TankAdditionalLifeBonus() : PlayerUpgrade(0) {}
 
 TankAdditionalLifeBonus::TankAdditionalLifeBonus(int level)
 : PlayerUpgrade(level)
@@ -404,17 +477,38 @@ TankAdditionalLifeBonus::TankAdditionalLifeBonus(int level)
 
 void TankAdditionalLifeBonus::onCollect(GameObject *collector)
 {
-    assert(collector != nullptr);
-    assert(collector->isFlagSet(GameObject::Player));
+    if (!firstApplication()) return;
 
-    auto spawnerObject = collector->getParentObject();
-    assert(spawnerObject != nullptr);
-    assert(spawnerObject->isFlagSet(GameObject::PlayerSpawner));
+    globalVars::player1Lives++;
 
-    auto spawnerController = spawnerObject->getComponent<PlayerSpawnController>();
+    /*GameObject *playerSpawnerObject;
+    if (collector->isFlagSet(GameObject::Player))
+        playerSpawnerObject = collector->getParentObject();
+    else if (collector->isFlagSet(GameObject::PlayerSpawner))
+        playerSpawnerObject = collector;
+    else
+        playerSpawnerObject = ObjectsPool::playerSpawnerObject;
+
+    assert(playerSpawnerObject != nullptr);
+    assert(playerSpawnerObject->isFlagSet(GameObject::PlayerSpawner));
+
+    auto spawnerController = playerSpawnerObject->getComponent<PlayerSpawnController>();
     assert(spawnerController != nullptr);
 
-    spawnerController->appendLife();
+    spawnerController->appendLife();*/
+}
+
+TankAdditionalLifePerk::TankAdditionalLifePerk()
+{
+    _currentLevel = 0;
+    _category = PlayerUpgrade::Perk;
+    _price = 0;
+    _type = PlayerUpgrade::PlusLifeOnStart;
+    _name = "Spare tank";
+
+    _effects.push_back("Start with +1 life");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("plusCollectable", "default", 0).rect;
 }
 
 
@@ -441,6 +535,31 @@ void RebuildEagleWallsBonus::onCollect(GameObject *)
     auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
     assert(eagleController != nullptr);
     eagleController->fastRepairWalls(100);
+}
+
+DepositXpBonus::DepositXpBonus(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::OneTimeBonus;
+    _type = PlayerUpgrade::DepositXP;
+    _name = "Knowledge is money";
+
+    _effects.push_back("\nturn all your XP to $\nand put it on deposit\n$ can be used in shop later\nall xp and tank upgrades will be reset");
+
+
+    _iconRect = AssetManager::instance().getAnimationFrame("depositXpCollectable", "default", 0).rect;
+
+}
+
+void DepositXpBonus::onCollect(GameObject *collector)
+{
+    assert(collector != nullptr);
+    PlayerController *controller = collector->getComponent<PlayerController>();
+    assert(controller != nullptr);
+    int xpToSave = controller->xp();
+    controller->resetXP();
+
+    PersistentGameData::instance().addToXpDeposit(xpToSave);
 }
 
 ///////////////
@@ -502,7 +621,7 @@ void EagleInvincibilityAfterDamage::onCollect(GameObject *)
 {
     auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
     assert(eagleController != nullptr);
-    eagleController->setTempInvincibilityAfterDamage(_timeBasedOnLevel[_currentLevel]);
+    eagleController->setTempInvincibilityAfterDamage(_timeBasedOnLevel[_currentLevel] * 1000);
 }
 ///////////////
 
@@ -676,32 +795,6 @@ void BaseArmorUpgrade::onCollect(GameObject *target)
 /////////////
 
 
-XpModifierUpgrade::XpModifierUpgrade(int level)
-: PlayerUpgrade(level)
-{
-    _category = PlayerUpgrade::TankUpgrade;
-    _type = XpIncreaser;
-    _name = "War machine learning";
-
-    _numberBasedOnLevel = { 20, 40, 60, 80 };
-    for (auto number : _numberBasedOnLevel)
-        _effects.push_back("Get " + std::to_string(number) + "\% more experience");
-
-    _iconRect = AssetManager::instance().getAnimationFrame("xpCollectable", "default", 0).rect;
-}
-
-void XpModifierUpgrade::onCollect(GameObject *target)
-{
-    assert(target != nullptr);
-    assert(target->isFlagSet(GameObject::Player));
-    auto controller = target->getComponent<PlayerController>();
-    controller->setXpModifier(_numberBasedOnLevel[_currentLevel]);
-}
-
-
-/////////////
-
-
 PiercingBulletsUpgrade::PiercingBulletsUpgrade(int level)
 : PlayerUpgrade(level)
 {
@@ -729,4 +822,94 @@ void PiercingBulletsUpgrade::onCollect(GameObject *target)
     const int newBulletSpeed = globalConst::DefaultPlayerBulletSpeed + (globalConst::DefaultPlayerBulletSpeed * 80 / 100);
     shootable->setBulletSpeed(newBulletSpeed);
 
+}
+
+/////////////
+
+
+BulletTankUpgrade::BulletTankUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _synergic = true;
+    _category = PlayerUpgrade::TankUpgrade;
+    _type  = BulletTank;
+    _name = "Death machine";
+
+    _effects.push_back("Replaces [Speed] and [Armor] upgrades\nAfter moving straight for 1 sec,\nTank becomes an invulnerable death\nmachine, until it stops");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("bulletTankCollectable", "default", 0).rect;
+}
+
+void BulletTankUpgrade::onCollect(GameObject *)
+{
+    // nothing is needed except the fact of presense of this effect
+}
+
+
+/////////////
+
+
+XpModifierUpgrade::XpModifierUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::Perk;
+    _price = 0;
+    _type = XpIncreaser;
+    _name = "War machine learning";
+
+    _numberBasedOnLevel = { 25 };
+    for (auto number : _numberBasedOnLevel)
+        _effects.push_back("Get +" + std::to_string(number) + "\% more experience");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("xpCollectable", "default", 0).rect;
+}
+
+void XpModifierUpgrade::onCollect(GameObject *target)
+{
+    assert(target != nullptr);
+    assert(target->isFlagSet(GameObject::Player));
+    auto controller = target->getComponent<PlayerController>();
+    controller->setXpModifier(_numberBasedOnLevel[_currentLevel]);
+}
+
+//////////
+
+
+
+
+KillAllOnTankDeathUpgrade::KillAllOnTankDeathUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::Perk;
+    _price = 0;
+    _type = KillAllOnDeath;
+    _name = "Atomic Core";
+
+    _effects.push_back("When your tank dies,\nall the enemies will perish");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("redTankCollectable", "default", 0).rect;
+}
+
+void KillAllOnTankDeathUpgrade::onCollect(GameObject *)
+{
+     // nothing is needed except the fact of presense of this effect
+}
+
+
+SacrificeLifeForBaseUpgrade::SacrificeLifeForBaseUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::Perk;
+    _price = 0;
+    _type = SacrificeLifeForBase;
+    _name = "Sacrifice";
+
+    _effects.push_back("Sacrifice 1 life once to revive\nthe base and repair its walls");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("redEagleCollectable", "default", 0).rect;
+}
+
+void SacrificeLifeForBaseUpgrade::onCollect(GameObject *)
+{
+     // nothing is needed except the fact of presense of this effect
 }
