@@ -32,7 +32,6 @@ class PlayerController : public Controller
 
     std::map<PlayerUpgrade::UpgradeType, PlayerUpgrade *> _collectedUpgrades;
 
-    int _powerLevel = 0;
     int _xp;
     int _level = 0;
 
@@ -49,13 +48,12 @@ class PlayerController : public Controller
 
     int _xpModifier = 0;
 
+    bool _4dirSet = false;
+
 public:
     PlayerController(GameObject *obj);
     ~PlayerController();
     void update() override;
-    int powerLevel() const { return _powerLevel; }
-    void increasePowerLevel(bool);
-    void updatePowerLevel();
     void applyUpgrades();
     void updateAppearance();
     void updateMoveSpeed(int speed) { _moveSpeed = speed; }
@@ -75,6 +73,8 @@ public:
     int xpModifier() const { return _xpModifier; }
     void setPlayerInput(const net::PlayerInput& input) { _recentPlayerInput = input; }
     void resetMoveStartTimer();
+
+    void setFourDirectionTurret();
 };
 
 struct PlayerSignal

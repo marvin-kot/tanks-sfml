@@ -14,7 +14,7 @@
 
 using UpgradeType = PlayerUpgrade::UpgradeType;
 
-std::vector<PlayerUpgrade *> PlayerUpgrade::currentThreeRandomUpgrades = {};
+std::vector<PlayerUpgrade *> PlayerUpgrade::currentRandomUpgrades = {};
 std::vector<PlayerUpgrade *> PlayerUpgrade::availablePerkObjects = {};
 std::unordered_set<UpgradeType> PlayerUpgrade::playerOwnedPerks = {};
 
@@ -52,7 +52,8 @@ const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     PlayerUpgrade::BonusEffectiveness,
     PlayerUpgrade::Rocket,
     PlayerUpgrade::PiercingBullets,
-    PlayerUpgrade::BulletTank
+    PlayerUpgrade::BulletTank,
+    PlayerUpgrade::FourDirectionBullets
 };
 
 const std::unordered_set<UpgradeType> baseUpgradeTypes = {
@@ -98,7 +99,8 @@ const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::XpIncreaser,  1},
     {UpgradeType::PiercingBullets,  1},
     {UpgradeType::KillAllOnDeath,  1},
-    {UpgradeType::BulletTank,  1}
+    {UpgradeType::BulletTank,  1},
+    {UpgradeType::FourDirectionBullets,  1}
 };
 
 
@@ -155,9 +157,9 @@ static bool isUpgradedToMax(EagleController *controller, PlayerUpgrade::UpgradeT
     return controller->hasLevelOfUpgrade(t) >= (cap - 1);
 }
 
-void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
+void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
 {
-    Logger::instance() << "generate three random upgrades\n";
+    Logger::instance() << "generate four random upgrades\n";
     assert(playerObj != nullptr);
 
     auto controller = playerObj->getComponent<PlayerController>();
@@ -166,8 +168,12 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
     assert(ObjectsPool::eagleObject != nullptr);
     auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
     assert(eagleController != nullptr);
+    if (eagleController == nullptr) {
+         Logger::instance() << "[ERROR]No eagle!\n";
+        return;
+    }
 
-    currentThreeRandomUpgrades.clear();
+    currentRandomUpgrades.clear();
 
     std::unordered_set<UpgradeType> alreadyGenerated;
 
@@ -185,20 +191,28 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
         std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), TankArmor);
     }
 
+    if (isUpgradedToMax(controller, FourDirectionBullets)) {
+        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), MoreBullets);
+        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), PowerBullets);
+    }
+
     std::uniform_int_distribution<int> distr(0, availableTypesLocal.size()-1);
 
-    // determine cases where special non-upgrades have to be generated
+    // determine cases where special upgrades have to be generated
     std::stack<UpgradeType> mandatoryUpgrades;
     if (isUpgradedToMax(controller, FastBullets) && isUpgradedToMax(controller, PowerBullets))
         mandatoryUpgrades.push(PiercingBullets);
-
     if (isUpgradedToMax(controller, TankSpeed) && isUpgradedToMax(controller, TankArmor))
         mandatoryUpgrades.push(BulletTank);
+    if (isUpgradedToMax(controller, MoreBullets) && isUpgradedToMax(controller, PowerBullets))
+        mandatoryUpgrades.push(FourDirectionBullets);
 
+    // TEMP
+    //mandatoryUpgrades.push(FourDirectionBullets);
 
-    for (int i=0; i<3; i++) {
-
+    for (int i = 0; i < globalConst::NumOfUpgradesOnLevelup; i++) {
         UpgradeType newType = None;
+        int count = 200;
         do {
             int index = distr(Utils::generator);
 
@@ -238,7 +252,12 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
             newType = t;
             alreadyGenerated.insert(t);
 
-        } while (newType == None);
+        } while (newType == None && --count);
+
+        if (count == 0) {
+            Logger::instance() << "[ERROR] Could not generate upgrade!\n";
+            return;
+        }
 
         int oldLevel = controller->hasLevelOfUpgrade(newType);
 
@@ -251,7 +270,7 @@ void PlayerUpgrade::generateThreeRandomUpgradesForPlayer(GameObject *playerObj)
         if (baseUpgradeTypes.contains(newType))
             oldLevel = eagleController->hasLevelOfUpgrade(newType);
 
-        currentThreeRandomUpgrades.push_back(createUpgrade(newType, oldLevel+1));
+        currentRandomUpgrades.push_back(createUpgrade(newType, oldLevel+1));
     }
 }
 
@@ -333,6 +352,9 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
             break;
         case KillAllOnDeath:
             newUpgrade = new KillAllOnTankDeathUpgrade(level);
+            break;
+        case FourDirectionBullets:
+            newUpgrade = new FourDirectionTurretUpgrade(level);
             break;
         case BulletTank:
             newUpgrade = new BulletTankUpgrade(level);
@@ -452,7 +474,7 @@ void TankInvincibilityBonus::onCollect(GameObject *collector)
     PlayerController *controller = collector->getComponent<PlayerController>();
     assert(controller != nullptr);
     assert(_currentLevel < _timeBasedOnLevel.size());
-    controller->setTemporaryInvincibility(_timeBasedOnLevel[_currentLevel] * 100);
+    controller->setTemporaryInvincibility(_timeBasedOnLevel[_currentLevel] * 1000);
 }
 
 ///////////////
@@ -502,7 +524,7 @@ TankAdditionalLifePerk::TankAdditionalLifePerk()
 {
     _currentLevel = 0;
     _category = PlayerUpgrade::Perk;
-    _price = 0;
+    _price = 8000;
     _type = PlayerUpgrade::PlusLifeOnStart;
     _name = "Spare tank";
 
@@ -544,7 +566,7 @@ DepositXpBonus::DepositXpBonus(int level)
     _type = PlayerUpgrade::DepositXP;
     _name = "Knowledge is money";
 
-    _effects.push_back("\nturn all your XP to $\nand put it on deposit\n$ can be used in shop later\nall xp and tank upgrades will be reset");
+    _effects.push_back("turns all your XP to $\nand put it on deposit\n$ can be used in shop later\nall xp and tank upgrades\nwill be reset");
 
 
     _iconRect = AssetManager::instance().getAnimationFrame("depositXpCollectable", "default", 0).rect;
@@ -558,6 +580,7 @@ void DepositXpBonus::onCollect(GameObject *collector)
     assert(controller != nullptr);
     int xpToSave = controller->xp();
     controller->resetXP();
+    controller->updateAppearance();
 
     PersistentGameData::instance().addToXpDeposit(xpToSave);
 }
@@ -849,11 +872,36 @@ void BulletTankUpgrade::onCollect(GameObject *)
 /////////////
 
 
+FourDirectionTurretUpgrade::FourDirectionTurretUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _synergic = true;
+    _category = PlayerUpgrade::TankUpgrade;
+    _type  = FourDirectionBullets;
+    _name = "Cross fire";
+
+    _effects.push_back("Replaces [Power Bullets] and\n[Productive turret] upgrades\nNew turret shoots in all\n4 directions at once");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("fourBulletsCollectable", "default", 0).rect;
+}
+
+void FourDirectionTurretUpgrade::onCollect(GameObject *target)
+{
+    // nothing is needed except the fact of presense of this effect
+    assert(target != nullptr);
+    assert(target->isFlagSet(GameObject::Player));
+    auto controller = target->getComponent<PlayerController>();
+    controller->setFourDirectionTurret();
+}
+
+/////////////
+
+
 XpModifierUpgrade::XpModifierUpgrade(int level)
 : PlayerUpgrade(level)
 {
     _category = PlayerUpgrade::Perk;
-    _price = 0;
+    _price = 9000;
     _type = XpIncreaser;
     _name = "War machine learning";
 
@@ -881,7 +929,7 @@ KillAllOnTankDeathUpgrade::KillAllOnTankDeathUpgrade(int level)
 : PlayerUpgrade(level)
 {
     _category = PlayerUpgrade::Perk;
-    _price = 0;
+    _price = 10000;
     _type = KillAllOnDeath;
     _name = "Atomic Core";
 
@@ -900,7 +948,7 @@ SacrificeLifeForBaseUpgrade::SacrificeLifeForBaseUpgrade(int level)
 : PlayerUpgrade(level)
 {
     _category = PlayerUpgrade::Perk;
-    _price = 0;
+    _price = 2000;
     _type = SacrificeLifeForBase;
     _name = "Sacrifice";
 

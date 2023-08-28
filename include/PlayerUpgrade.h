@@ -104,10 +104,10 @@ public:
 // STATIC methods
 public:
     static PlayerUpgrade *createUpgrade(UpgradeType type, int level);
-    static std::vector<PlayerUpgrade *> currentThreeRandomUpgrades;
+    static std::vector<PlayerUpgrade *> currentRandomUpgrades;
     static std::vector<PlayerUpgrade *> availablePerkObjects;
     static std::unordered_set<UpgradeType> playerOwnedPerks;
-    static void generateThreeRandomUpgradesForPlayer(GameObject *playerObject);
+    static void generateRandomUpgradesForPlayer(GameObject *playerObject);
     static void generatePerks();
     static void deletePerks();
 };
@@ -266,6 +266,13 @@ class BulletTankUpgrade : public PlayerUpgrade
 {
 public:
     BulletTankUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class FourDirectionTurretUpgrade : public PlayerUpgrade
+{
+public:
+    FourDirectionTurretUpgrade(int level);
     void onCollect(GameObject *collector) override;
 };
 

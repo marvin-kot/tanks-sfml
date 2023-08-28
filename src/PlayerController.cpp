@@ -20,7 +20,7 @@ static std::vector<int> xpNeededForLevelUp;
  void initXpLevelupNumbers()
  {
     std::vector<int> limits = {400, 600, };
-    for (int i = 2; i < 20 ; i++) {
+    for (int i = 2; i < 40 ; i++) {
         float coeff = i<6 ? 1.4 : i<10 ? 1.3 : 1.2;
         int val = ((int)(limits[i-1] * coeff) / 100) * 100;
         limits.push_back(val);
@@ -175,65 +175,21 @@ int PlayerController::trySqueeze()
         if (_gameObject->move(1, _currMoveY) == 0)
             if (_gameObject->move(-1, _currMoveY) == 0)
                 if (_gameObject->move(2, _currMoveY) == 0)
-                    return _gameObject->move(-2, _currMoveY);
+                    if (_gameObject->move(-2, _currMoveY) == 0)
+                        if (_gameObject->move(3, _currMoveY) == 0)
+                            return _gameObject->move(-3, _currMoveY);
     } else if (_currMoveY == 0) {
         if (_gameObject->move(_currMoveX, 1) == 0)
             if (_gameObject->move(_currMoveX, -1) == 0)
                 if (_gameObject->move(_currMoveX, 2) == 0)
-                    return _gameObject->move(_currMoveX, -2);
+                    if (_gameObject->move(_currMoveX, -2) == 0)
+                        if (_gameObject->move(_currMoveX, 3) == 0)
+                            return _gameObject->move(_currMoveX, -3);
     }
 
     return 1;
 }
 
-void PlayerController::increasePowerLevel(bool inc)
-{
-    if (inc  && _powerLevel<3) _powerLevel++;
-    if (!inc && _powerLevel>0) _powerLevel--;
-
-    updatePowerLevel();
-}
-
-void PlayerController::updatePowerLevel()
-{
-    SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
-    assert(renderer != nullptr);
-
-    PlayerShootable *shootable = _gameObject->getComponent<PlayerShootable>();
-    assert(shootable != nullptr);
-
-    using namespace globalConst;
-
-    switch (_powerLevel) {
-        case 0:
-            shootable->resetLevel();
-            shootable->setDamage(DefaultDamage);
-            shootable->setBulletSpeed(DefaultPlayerBulletSpeed);
-            renderer->setSpriteSheetOffset(0, 0);
-        case 1:
-            shootable->resetLevel();
-            shootable->setDamage(DefaultDamage);
-            shootable->setBulletSpeed(DefaultPlayerBulletSpeed);
-            renderer->setSpriteSheetOffset(0, 16);
-            break;
-        case 2:
-            shootable->resetLevel();
-            shootable->increaseLevel();
-            shootable->setDamage(DefaultDamage);
-            shootable->setBulletSpeed(DoublePlayerBulletSpeed);
-            renderer->setSpriteSheetOffset(0, 32);
-            break;
-        case 3:
-            shootable->resetLevel();
-            shootable->increaseLevel();
-            shootable->setDamage(DoubleDamage);
-            shootable->setBulletSpeed(DoublePlayerBulletSpeed);
-            renderer->setSpriteSheetOffset(0, 48);
-            break;
-    }
-
-    globalVars::player1PowerLevel = _powerLevel;
-}
 
 void PlayerController::updateAppearance()
 {
@@ -299,6 +255,12 @@ void PlayerController::addXP(int val)
     Logger::instance() << "collect " << val << "xp\n";
 
     globalVars::player1XP += (val + val * _xpModifier / 100);
+
+    if (_level >= xpNeededForLevelUp.size()) {
+        Logger::instance() << "[ERROR] Level too big!\n";
+        return;
+    }
+
     if (_xp >= xpNeededForLevelUp[_level]) {
         levelUp();
     }
@@ -317,6 +279,18 @@ void PlayerController::resetXP()
 
     globalVars::player1XP = 0;
     globalVars::player1Level = 1;
+
+    using namespace globalConst;
+    PlayerShootable *shootable = _gameObject->getComponent<PlayerShootable>();
+    assert(shootable != nullptr);
+    shootable->resetLevel(); // 1 bullet
+    shootable->setDamage(DefaultDamage); // 1 dmg
+    shootable->setBulletSpeed(DefaultPlayerBulletSpeed);
+
+    Damageable *damageable = _gameObject->getComponent<Damageable>();
+    damageable->setDefence(DefaultPlayerProtection);
+
+    updateMoveSpeed(DefaultPlayerSpeed);
 }
 
 void PlayerController::levelUp()
@@ -328,16 +302,16 @@ void PlayerController::levelUp()
     _level++;
     globalVars::player1Level++;
 
-    PlayerUpgrade::generateThreeRandomUpgradesForPlayer(_gameObject);
+    PlayerUpgrade::generateRandomUpgradesForPlayer(_gameObject);
     LevelUpPopupMenu::instance().open();
 
 }
 
 void PlayerController::chooseUpgrade(int index)
 {
-    assert(index>=0 && index <= 3);
-    assert(PlayerUpgrade::currentThreeRandomUpgrades.size() == 3);
-    auto upgrade = PlayerUpgrade::currentThreeRandomUpgrades[index];
+    assert(index>=0 && index <= globalConst::NumOfUpgradesOnLevelup);
+    assert(PlayerUpgrade::currentRandomUpgrades.size() == globalConst::NumOfUpgradesOnLevelup);
+    auto upgrade = PlayerUpgrade::currentRandomUpgrades[index];
     assert(upgrade != nullptr);
 
     assert(ObjectsPool::eagleObject != nullptr);
@@ -432,4 +406,29 @@ PlayerUpgrade *PlayerController::getUpgrade(int index) const
     }
 
     return nullptr;
+}
+
+
+void PlayerController::setFourDirectionTurret()
+{
+    if (_4dirSet) return;
+    _4dirSet = true;
+
+    // take old turret values
+    auto oldShootable = _gameObject->getComponent<Shootable>();
+    int actionTimeout = oldShootable->actionTimeoutMs();
+    int damage = oldShootable->damage();
+    int bulletSpeed = oldShootable->bulletSpeed();
+
+    // delete old turret
+    delete oldShootable;
+
+    // set new turret
+    auto newShootable = new FourDirectionShootable(_gameObject);
+    newShootable->setActionTimeoutMs(actionTimeout);
+    newShootable->setDamage(damage);
+    newShootable->setBulletSpeed(bulletSpeed);
+
+    _gameObject->setShootable(newShootable);
+    updateAppearance();
 }

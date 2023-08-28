@@ -245,6 +245,10 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
     assert(other != nullptr);
 
     if (isBullet) {
+        // to handle 1-turre-4-bullets situation
+        if (other->isFlagSet(Bullet) && _parentId == other->_parentId)
+            return;
+
         // just hit non-transparent target (and it's not its own creator)
         if (!other->isFlagSet(BulletPassable) && _parentId != other->id()) {
             if (isFlagSet(PiercingBullet) && other->isFlagSet(BulletKillable)) {
