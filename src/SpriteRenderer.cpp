@@ -36,7 +36,25 @@ void SpriteRenderer::setCurrentAnimation(std::string id)
         return;
 
     _currentAnimation = id;
-    _currentAnimationFrames = AssetManager::instance().getAnimationFrames(_objectType, _currentAnimation);
+
+    if (id == "default") {
+        // TODO: organize it better
+    } else if (id == "up") {
+        _mirror = false;
+        _turn = false;
+        // do nothing
+    } else if (id == "right") {
+        _mirror = false;
+        _turn = true;
+    } else if (id == "down") {
+        _mirror = true;
+        _turn = false;
+    } else if (id == "left") {
+        _mirror = true;
+        _turn = true;
+    }
+
+    _currentAnimationFrames = AssetManager::instance().getAnimationFrames(_objectType, "default");
 
     showAnimationFrame(0);
     playAnimation(true);
@@ -70,8 +88,10 @@ void SpriteRenderer::showAnimationFrame(int frameNum)
     _parentObject->setSize(rect.width, rect.height);
 
     _sprite.setTextureRect(rect);
-    _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
+
     _sprite.setOrigin(rect.width/2, rect.height/2);
+    _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY * (_mirror ? -1 : 1));
+    _sprite.setRotation(_turn ? 90 : 0);
 }
 
 void SpriteRenderer::setAnimationFrame(int frameNum, net::ThinGameObject& obj)

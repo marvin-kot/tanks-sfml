@@ -17,12 +17,6 @@ struct GrenadeCollectable : public Collectable
     void onCollected(GameObject *collector) override;
 };
 
-struct StarCollectable : public Collectable
-{
-    StarCollectable(GameObject *parent);
-    void onCollected(GameObject *collector) override;
-};
-
 struct TimerCollectable : public Collectable
 {
     TimerCollectable(GameObject *parent);

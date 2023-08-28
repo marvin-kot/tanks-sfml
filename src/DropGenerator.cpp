@@ -72,8 +72,6 @@ GameObject * DropGenerator::createObject(std::string type)
             component = new TimerCollectable(collectable);
         else if (type == "grenadeCollectable")
             component = new GrenadeCollectable(collectable);
-        else if (type == "starCollectable")
-            component = new StarCollectable(collectable);
         else if (type == "tankCollectable")
             component = new TankCollectable(collectable);
         else if (type == "100xp")

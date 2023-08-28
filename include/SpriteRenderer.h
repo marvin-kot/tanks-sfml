@@ -39,6 +39,9 @@ protected:
 
     void setAnimationFrame(int frameNum, net::ThinGameObject& obj);
 
+    bool _mirror = false;
+    bool _turn = false;
+
 public:
     SpriteRenderer(GameObject * parent, std::string type = "");
     virtual ~SpriteRenderer() {}
