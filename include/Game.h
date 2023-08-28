@@ -15,12 +15,13 @@ private:
     enum GameState
     {
         TitleScreen = 0,
-        LoadNextLevel,
+        LoadNextLevel = 1,
         StartLevelScreen,
         StartLevel,
         PlayingLevel,
-        GameOver,
-        BonusShop
+        GameOver = 5,
+        BonusShop,
+        ExitGame
     };
 
     GameState gameState;
@@ -54,7 +55,6 @@ private:
     void checkStatePostFrame();
     void pause(bool);
 
-    void drawTitleScreen();
     void drawStartLevelScreen();
     void drawGameOverScreen();
 

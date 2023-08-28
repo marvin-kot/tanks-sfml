@@ -1,6 +1,30 @@
 #include "SoundPlayer.h"
 
 
+using SoundType = SoundPlayer::SoundType;
+using namespace std;
+
+static std::unordered_map<SoundType, std::string> soundPaths = {
+    {SoundType::TankStand, string("assets/audio/tankStanding.wav")},
+    {SoundType::TankMove, string("assets/audio/tankMoving.wav")},
+    {SoundType::Shoot, string("assets/audio/shot.wav")},
+    {SoundType::bulletHitWall, string("assets/audio/bulletHitWall.wav")},
+    {SoundType::smallExplosion, string("assets/audio/smallExplosion.wav")},
+    {SoundType::bigExplosion, string("assets/audio/bigExplosion.wav")},
+    {SoundType::bonusAppear, string("assets/audio/bonusAppear.wav")},
+    {SoundType::bonusCollect, string("assets/audio/bonus.wav")},
+    {SoundType::iceSkid, string("assets/audio/ice.wav")},
+    {SoundType::pause, string("assets/audio/pause.wav")},
+    {SoundType::xpCollect, string("assets/audio/xpCollect.wav")},
+    {SoundType::tick, string("assets/audio/tick.wav")},
+    {SoundType::win, string("assets/audio/8_Bit_Dendy_Battle_City.wav")},
+    {SoundType::fail, string("assets/audio/game_over.wav")},
+    {SoundType::debuff, string("assets/audio/debuff.wav")},
+    {SoundType::moveCursor, string("assets/new_sounds/Coin Pickup 48.wav")},
+    {SoundType::startGame, string("assets/new_sounds/Coin Pickup 42.wav")}
+};
+
+
 SoundPlayer::SoundPlayer()
 {
     if (-1 == loadSounds())
@@ -17,73 +41,24 @@ SoundPlayer& SoundPlayer::instance()
 
 int SoundPlayer::loadSounds()
 {
-    if (!tankStandBuffer.loadFromFile("assets/audio/tankStanding.wav"))
-        return -1;
-    tankStandSound.setBuffer(tankStandBuffer);
+    for (auto item : soundPaths) {
+        auto soundType = item.first;
+        auto soundPath = item.second;
 
-    if (!tankMoveBuffer.loadFromFile("assets/audio/tankMoving.wav"))
-        return -1;
-    tankMoveSound.setBuffer(tankMoveBuffer);
-
-    if (!shootBuffer.loadFromFile("assets/audio/shot.wav"))
-        return -1;
-    shootSound.setBuffer(shootBuffer);
-
-    if (!bulletHitWallBuffer.loadFromFile("assets/audio/bulletHitWall.wav"))
-        return -1;
-    bulletHitWallSound.setBuffer(bulletHitWallBuffer);
-
-    if (!smallExplosionBuffer.loadFromFile("assets/audio/smallExplosion.wav"))
-        return -1;
-    smallExplosionSound.setBuffer(smallExplosionBuffer);
-
-    if (!bigExplosionBuffer.loadFromFile("assets/audio/bigExplosion.wav"))
-        return -1;
-    bigExplosionSound.setBuffer(bigExplosionBuffer);
-
-    if (!bonusAppearBuffer.loadFromFile("assets/audio/bonusAppear.wav"))
-        return -1;
-    bonusAppearSound.setBuffer(bonusAppearBuffer);
-
-    if (!bonusCollectBuffer.loadFromFile("assets/audio/bonus.wav"))
-        return -1;
-    bonusCollectSound.setBuffer(bonusCollectBuffer);
-
-    if (!iceSkidBuffer.loadFromFile("assets/audio/ice.wav"))
-        return -1;
-    iceSkidSound.setBuffer(iceSkidBuffer);
-
-    if (!pauseBuffer.loadFromFile("assets/audio/pause.wav"))
-        return -1;
-    pauseSound.setBuffer(pauseBuffer);
-
-    if (!xpCollectBuffer.loadFromFile("assets/audio/xpCollect.wav"))
-        return -1;
-    xpCollectSound.setBuffer(xpCollectBuffer);
-
-    if (!tickBuffer.loadFromFile("assets/audio/tick.wav"))
-        return -1;
-    tickSound.setBuffer(tickBuffer);
-
-    if (!winBuffer.loadFromFile("assets/audio/8_Bit_Dendy_Battle_City.wav"))
-        return -1;
-    winSound.setBuffer(winBuffer);
-
-    if (!failBuffer.loadFromFile("assets/audio/game_over.wav"))
-        return -1;
-    failSound.setBuffer(failBuffer);
-
-    if (!debuffBuffer.loadFromFile("assets/audio/debuff.wav"))
-        return -1;
-    debuffSound.setBuffer(debuffBuffer);
+        loadedSounds[soundType] = {};
+        auto& thisBuffer = loadedSounds.at(soundType);
+        if (!thisBuffer.first.loadFromFile(soundPath))
+            return -1;
+        thisBuffer.second.setBuffer(thisBuffer.first);
+    }
 
     return 0;
 }
 
 void SoundPlayer::stopAllSounds()
 {
-    tankMoveSound.stop();
-    tankStandSound.stop();
+    stopSound(TankStand);
+    stopSound(TankMove);
 }
 
 void SoundPlayer::playSound(SoundPlayer::SoundType type)
@@ -99,44 +74,10 @@ void SoundPlayer::playSound(SoundPlayer::SoundType type)
         case TankMove:
             playTankMoveSound();
             break;
-        case Shoot:
-            playShootSound();
-            break;
-        case bulletHitWall:
-            playBulletHitWallSound();
-            break;
-        case smallExplosion:
-            playSmallExplosionSound();
-            break;
-        case bigExplosion:
-            playBigExplosionSound();
-            break;
-        case bonusAppear:
-            playBonusAppearSound();
-            break;
-        case bonusCollect:
-            playBonusCollectSound();
-            break;
         case iceSkid:
             playIceSkidSound();
-            break;
-        case pause:
-            playPauseSound();
-            break;
-        case xpCollect:
-            playXpCollectSound();
-            break;
-        case tick:
-            playTickSound();
-            break;
-        case win:
-            playWinJingle();
-            break;
-        case fail:
-            playFailJingle();
-            break;
-        case debuff:
-            playDebuffSound();
+        default:
+            loadedSounds.at(type).second.play();
             break;
     }
 }
@@ -146,10 +87,10 @@ void SoundPlayer::stopSound(SoundPlayer::SoundType type)
     switch (type)
     {
         case TankStand:
-            tankStandSound.stop();
+            loadedSounds.at(TankStand).second.stop();
             break;
         case TankMove:
-            tankMoveSound.stop();
+            loadedSounds.at(TankMove).second.stop();
             break;
         default:
             break;
@@ -159,6 +100,9 @@ void SoundPlayer::stopSound(SoundPlayer::SoundType type)
 
 void SoundPlayer::playTankStandSound()
 {
+    auto& tankStandSound = loadedSounds.at(TankStand).second;
+    auto& tankMoveSound = loadedSounds.at(TankMove).second;
+
     sf::SoundSource::Status standStatus = tankStandSound.getStatus();
     sf::SoundSource::Status moveStatus = tankMoveSound.getStatus();
 
@@ -178,6 +122,9 @@ void SoundPlayer::playTankStandSound()
 
 void SoundPlayer::playTankMoveSound()
 {
+    auto& tankStandSound = loadedSounds.at(TankStand).second;
+    auto& tankMoveSound = loadedSounds.at(TankMove).second;
+
     sf::SoundSource::Status standStatus = tankStandSound.getStatus();
     sf::SoundSource::Status moveStatus = tankMoveSound.getStatus();
 
@@ -190,73 +137,12 @@ void SoundPlayer::playTankMoveSound()
     }
 }
 
-
-void SoundPlayer::playShootSound()
-{
-    shootSound.play();
-}
-
-void SoundPlayer::playBulletHitWallSound()
-{
-    bulletHitWallSound.play();
-}
-
-void SoundPlayer::playSmallExplosionSound()
-{
-    smallExplosionSound.play();
-}
-
-void SoundPlayer::playBigExplosionSound()
-{
-    bigExplosionSound.play();
-}
-
-
-void SoundPlayer::playBonusAppearSound()
-{
-    bonusAppearSound.play();
-}
-
-void SoundPlayer::playBonusCollectSound()
-{
-    bonusCollectSound.play();
-}
-
 void SoundPlayer::playIceSkidSound()
 {
+    auto iceSkidSound = loadedSounds.at(iceSkid).second;
     sf::SoundSource::Status skidStatus = iceSkidSound.getStatus();
     if (skidStatus != sf::SoundSource::Status::Playing)
         iceSkidSound.play();
-}
-
-void SoundPlayer::playPauseSound()
-{
-    pauseSound.play();
-}
-
-void SoundPlayer::playXpCollectSound()
-{
-    xpCollectSound.play();
-}
-
-void SoundPlayer::playTickSound()
-{
-    tickSound.play();
-}
-
-void SoundPlayer::playWinJingle()
-{
-    winSound.play();
-}
-
-void SoundPlayer::playFailJingle()
-{
-    failSound.play();
-}
-
-void SoundPlayer::playDebuffSound()
-{
-    debuffSound.play();
 }
 
 void SoundPlayer::enqueueSound(SoundType type, bool play)

@@ -24,7 +24,8 @@ void BonusShopWindow::open()
 {
     _isOpen = true;
     SoundPlayer::instance().stopAllSounds();
-    SoundPlayer::instance().playBonusCollectSound();
+    SoundPlayer::instance().playSound(SoundPlayer::SoundType::bonusCollect);
+
     globalVars::gameIsPaused = true;
     globalVars::globalChronometer.pause();
     globalVars::globalFreezeChronometer.pause();
@@ -76,13 +77,11 @@ void BonusShopWindow::draw()
     UiUtils::instance().drawText( subtitle, subtitleSize, centerX, currentStringY);
 
     const int promptSize = 20;
-    /*currentStringY += subtitleSize * 2;
-    std::string prompt = "Press [Enter] to buy an item, and [escape] to exit";
-    UiUtils::instance().drawText( prompt, promptSize, centerX, currentStringY, false, sf::Color::Yellow); */
+
     currentStringY += 96;
 
     std::string amount = "Deposit: $" + std::to_string(PersistentGameData::instance().xpDeposit());
-    const int amountSize = 16;
+    const int amountSize = 20;
     UiUtils::instance().drawText( amount, amountSize, menuWidth/5-64, currentStringY, true) ;
 
     currentStringY += amountSize;
@@ -110,33 +109,12 @@ void BonusShopWindow::draw()
     const int bottomOffsetX = menuWidth / 4;
     const int bottomY = menuHeight - 30;
 
-    UiUtils::instance().drawText("[escape] exit to main menu", promptSize, bottomOffsetX, bottomY, false, sf::Color::Red);
-    UiUtils::instance().drawText("[enter] buy an item", promptSize, bottomOffsetX*2, bottomY, false, sf::Color::Green);
+    UiUtils::instance().drawText("[escape] exit to main menu", promptSize, bottomOffsetX, bottomY, false, sf::Color(120, 4, 34));
+    UiUtils::instance().drawText("[enter] buy an item", promptSize, bottomOffsetX*2, bottomY, false, sf::Color(31, 81, 43));
     UiUtils::instance().drawText("[space] start the game", promptSize, bottomOffsetX*3, bottomY, false, sf::Color::Yellow);
 
     Utils::window.display();
 }
-
-
-/*void BonusShopWindow::drawCursor(int startY, sf::RectangleShape& parentRect)
-{
-    const int menuWidth = parentRect.getSize().x;
-    const int offsetX = menuWidth/5;
-    const int offsetY = 240;
-
-    const int i = _currentUpgradeCursor;
-
-    int cursorX = offsetX + offsetX * (i%4);
-    int cursorY = startY + offsetY * (i/4);
-
-    sf::RectangleShape whiteRect(sf::Vector2f(18, 18));
-    whiteRect.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
-    whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
-    whiteRect.setPosition(cursorX, cursorY);
-    whiteRect.setFillColor(sf::Color(200, 200, 200));
-
-    Utils::window.draw(whiteRect);
-}*/
 
 void BonusShopWindow::drawCursor(int x,  int y)
 {
@@ -162,8 +140,8 @@ void BonusShopWindow::drawEdging(int x,  int y)
 
 void BonusShopWindow::drawUpgrade(int index, int x, int y)
 {
-    //assert(index >=0 && index < PlayerUpgrade::currentThreeRandomUpgrades.size());
-    //auto upgrade = PlayerUpgrade::currentThreeRandomUpgrades[index];
+    //assert(index >=0 && index < PlayerUpgrade::currentRandomUpgrades.size());
+    //auto upgrade = PlayerUpgrade::currentRandomUpgrades[index];
 
 
     assert(index < PlayerUpgrade::availablePerkObjects.size());
@@ -201,7 +179,7 @@ void BonusShopWindow::drawUpgrade(int index, int x, int y)
 
 void BonusShopWindow::moveCursorLeft()
 {
-    SoundPlayer::instance().playTickSound();
+    SoundPlayer::instance().playSound(SoundPlayer::SoundType::tick);
 
     if (_currentUpgradeCursor%4 == 0)
         _currentUpgradeCursor += 3;
@@ -211,7 +189,7 @@ void BonusShopWindow::moveCursorLeft()
 
 void BonusShopWindow::moveCursorRight()
 {
-    SoundPlayer::instance().playTickSound();
+    SoundPlayer::instance().playSound(SoundPlayer::SoundType::tick);
     _currentUpgradeCursor++;
     if (_currentUpgradeCursor%4 == 0)
         _currentUpgradeCursor -= 4;
@@ -221,7 +199,7 @@ void BonusShopWindow::moveCursorUp()
 {
     const int perksNum = PlayerUpgrade::availablePerkObjects.size();
     const int lastRow = (perksNum-1)/4;
-    SoundPlayer::instance().playTickSound();
+    SoundPlayer::instance().playSound(SoundPlayer::SoundType::tick);
     if (_currentUpgradeCursor < 4)
         _currentUpgradeCursor += lastRow*4;
     else
@@ -232,7 +210,7 @@ void BonusShopWindow::moveCursorDown()
 {
     const int perksNum = PlayerUpgrade::availablePerkObjects.size();
     const int lastRow = (perksNum-1)/4;
-    SoundPlayer::instance().playTickSound();
+    SoundPlayer::instance().playSound(SoundPlayer::SoundType::tick);
     if (_currentUpgradeCursor >= lastRow*4)
         _currentUpgradeCursor -= lastRow*4;
     else
@@ -251,14 +229,14 @@ void BonusShopWindow::getSelectedUpgrade()
             // if can afford
             PersistentGameData::instance().subtractFromDeposit(upgrade->price());
             PlayerUpgrade::playerOwnedPerks.insert(perkType);
-            SoundPlayer::instance().playShootSound();
+            SoundPlayer::instance().playSound(SoundPlayer::SoundType::Shoot);
         } else {
             // if cannot afford
-            SoundPlayer::instance().playIceSkidSound();
+            SoundPlayer::instance().playSound(SoundPlayer::SoundType::iceSkid);
         }
     } else {
         PersistentGameData::instance().addToXpDeposit(upgrade->price());
         PlayerUpgrade::playerOwnedPerks.erase(perkType);
-        SoundPlayer::instance().playBulletHitWallSound();
+        SoundPlayer::instance().playSound(SoundPlayer::SoundType::bulletHitWall);
     }
 }

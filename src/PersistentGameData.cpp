@@ -8,7 +8,7 @@ using json = nlohmann::json;
 
 const std::string DefaultSaveFilePath = "playerdata_decoded.json";
 
-PersistentGameData::PersistentGameData() : _xpDeposit(0)
+PersistentGameData::PersistentGameData() : _xpDeposit(0), _filePath(DefaultSaveFilePath)
 {
 }
 
@@ -47,7 +47,10 @@ int PersistentGameData::saveDataToDisk()
     json data;
 
     data["deposit"] = _xpDeposit;
-
+    Logger::instance() << "save to file: " << _filePath;
     std::ofstream file(_filePath);
     file << data;
+    file.close();
+
+    return 0;
 }

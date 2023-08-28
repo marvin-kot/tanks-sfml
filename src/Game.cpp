@@ -6,11 +6,12 @@
 #include "GlobalConst.h"
 #include "HUD.h"
 #include "LevelUpPopupMenu.h"
+#include "Logger.h"
 #include "ObjectsPool.h"
 #include "PersistentGameData.h"
 #include "PlayerController.h"
-#include "Logger.h"
 #include "SoundPlayer.h"
+#include "TitleScreen.h"
 #include "Utils.h"
 #include "UiUtils.h"
 
@@ -125,20 +126,14 @@ void Game::processWindowEvents()
         switch (event.type) {
             case sf::Event::Closed:
                 PlayerUpgrade::deletePerks();
+                PersistentGameData::instance().saveDataToDisk();
                 Utils::window.close();
                 break;
             case sf::Event::KeyPressed:
                 if (gameState == TitleScreen) {
-                    if (event.key.scancode == sf::Keyboard::Scan::Escape)
-                        Utils::window.close();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Space) {
-                        currentLevel = 0;
-                        globalVars::player1Lives = globalConst::InitialLives;
-                        globalVars::player1PowerLevel = globalConst::InitialPowerLevel;
-                        gameState = LoadNextLevel;
-                    }
+                    TitleScreen::instance().processKeyboardPress(event.key.scancode);
                 } else if (gameState == StartLevelScreen) {
-                    if (event.key.scancode == sf::Keyboard::Scan::Space)
+                    if (event.key.scancode == sf::Keyboard::Scan::Enter)
                         gameState = StartLevel;
                     else if (event.key.scancode == sf::Keyboard::Scan::Escape)
                         gameState = GameOver;
@@ -193,7 +188,7 @@ void Game::pause(bool p)
     gameIsPaused = p;
     if (p) {
         SoundPlayer::instance().stopAllSounds();
-        SoundPlayer::instance().playPauseSound();
+        SoundPlayer::instance().playSound(SoundPlayer::SoundType::pause);
         globalChronometer.pause();
         globalFreezeChronometer.pause();
     } else {
@@ -205,7 +200,8 @@ void Game::pause(bool p)
 int Game::processStateChange()
 {
     if (gameState == TitleScreen) {
-        drawTitleScreen();
+        //drawTitleScreen();
+        gameState = static_cast<GameState>(TitleScreen::instance().draw());
         return 0;
     } else if (gameState == LoadNextLevel) {
         if (currentLevel >= levelMaps.size()) {
@@ -222,6 +218,8 @@ int Game::processStateChange()
 
         Logger::instance() << "Building map..." << levelMaps[currentLevel] << "\n";
         if (!buildLevelMap(levelMaps[currentLevel])) {
+            PlayerUpgrade::deletePerks();
+            PersistentGameData::instance().saveDataToDisk();
             Utils::window.close();
             Logger::instance() << "Failed to build map\n";
             return -1;
@@ -249,6 +247,10 @@ int Game::processStateChange()
     } else if (gameState == BonusShop) {
         BonusShopWindow::instance().draw();
         return 0;
+    } else if (gameState == ExitGame) {
+        PlayerUpgrade::deletePerks();
+        PersistentGameData::instance().saveDataToDisk();
+        Utils::window.close();
     }
 
     return 1;
@@ -446,7 +448,7 @@ void Game::checkStatePostFrame()
 
     if (framesToWin > -1) {
         if (--framesToWin <= 0) {
-            gameState =  (++currentLevel < levelMaps.size()) ? LoadNextLevel : GameOver;
+            gameState =  /*(++currentLevel < levelMaps.size()) ? LoadNextLevel :*/ GameOver;
         }
     }
 
@@ -461,7 +463,7 @@ void Game::checkStatePostFrame()
         framesToWin = globalConst::MaxFramesToWin;
         SoundPlayer::instance().stopAllSounds();
         SoundPlayer::instance().gameOver = true;
-        SoundPlayer::instance().playWinJingle();
+        SoundPlayer::instance().playSound(SoundPlayer::SoundType::win);
         HUD::instance().showWin(true);
     }
 
@@ -469,7 +471,7 @@ void Game::checkStatePostFrame()
         framesToDie = globalConst::MaxFramesToDie;
         SoundPlayer::instance().stopAllSounds();
         SoundPlayer::instance().gameOver = true;
-        SoundPlayer::instance().playFailJingle();
+        SoundPlayer::instance().playSound(SoundPlayer::SoundType::fail);
         HUD::instance().showFail(true);
     }
 }
@@ -504,35 +506,6 @@ bool Game::failConditionsMet() const
     }
 
     return false;
-}
-
-void Game::drawTitleScreen()
-{
-    using namespace globalConst;
-
-    constexpr int screenCenterX = screen_w / 2;
-    constexpr int screenCenterY = screen_h / 2;
-
-    // draw black rect
-    UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(0, 0, 0));
-
-    // game title
-    constexpr int titleFontSize = 96;
-    UiUtils::instance().drawText( "RETRO TANK MASSACRE", titleFontSize, screenCenterX, screenCenterY - titleFontSize);
-
-    // game version
-    constexpr int versionFontSize = titleFontSize / 6;
-    static std::string version = std::format("version {}.{}.{}", GameMajorVersion, GameMinorVersion, GameReleaseVersion);
-    UiUtils::instance().drawText(version, versionFontSize, screenCenterX, screenCenterY + versionFontSize);
-
-    // prompt
-    constexpr int promptFontSize = titleFontSize / 4;
-    UiUtils::instance().drawText( "Press [space] to start the game", promptFontSize,
-        screenCenterX, screenCenterY + versionFontSize + titleFontSize + promptFontSize,
-        false, sf::Color::Yellow );
-
-
-    Utils::window.display();
 }
 
 void Game::drawStartLevelScreen()
@@ -601,7 +574,7 @@ void Game::drawStartLevelScreen()
     // prompt
     currentStringY += 150;
     UiUtils::instance().drawText(
-        "Press [space] to start", 24,
+        "Press [enter] to start", 24,
         screenCenterX, currentStringY, false,
         sf::Color::Yellow);
     Utils::window.display();
