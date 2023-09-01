@@ -1,4 +1,5 @@
 #include "AssetManager.h"
+#include "BaseUpgrade.h"
 #include "Damageable.h"
 #include "EagleController.h"
 #include "GameObject.h"
@@ -18,6 +19,17 @@ std::vector<PlayerUpgrade *> PlayerUpgrade::currentRandomUpgrades = {};
 std::vector<PlayerUpgrade *> PlayerUpgrade::availablePerkObjects = {};
 std::unordered_set<UpgradeType> PlayerUpgrade::playerOwnedPerks = {};
 
+std::map<UpgradeType, int> PlayerUpgrade::perkPrices = {
+    {UpgradeType::SacrificeLifeForBase, 20000},
+    {UpgradeType::PlusLifeOnStart, 10000},
+    {UpgradeType::XpIncreaser, 12000},
+    {UpgradeType::KillAllOnDeath, 30000},
+    {UpgradeType::FavoriteTank, 9000},
+    {UpgradeType::FavoriteBase, 9000}
+};
+
+int PlayerUpgrade::minPerkPrice = 9000;
+// ::Perk
 
 std::vector<UpgradeType> PlayerUpgrade::availableTypes = {
         FastBullets,
@@ -48,12 +60,13 @@ const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     UpgradeType::TankSpeed,
     UpgradeType::PowerBullets,
     UpgradeType::TankArmor,
-    UpgradeType::XpAttractor,
     PlayerUpgrade::BonusEffectiveness,
     PlayerUpgrade::Rocket,
     PlayerUpgrade::PiercingBullets,
     PlayerUpgrade::BulletTank,
-    PlayerUpgrade::FourDirectionBullets
+    PlayerUpgrade::FourDirectionBullets,
+    PlayerUpgrade::Rocket,
+    PlayerUpgrade::MachineGun
 };
 
 const std::unordered_set<UpgradeType> baseUpgradeTypes = {
@@ -63,6 +76,7 @@ const std::unordered_set<UpgradeType> baseUpgradeTypes = {
     UpgradeType::BaseRestoreHP,
     UpgradeType::ReflectBullets,
     UpgradeType::PhoenixBase,
+    UpgradeType::BaseRestoreOnDamage
 };
 
 const std::unordered_set<UpgradeType> oneTimeBonusTypes = {
@@ -81,10 +95,23 @@ const std::unordered_set<UpgradeType> perkTypes = {
     PlayerUpgrade::KillAllOnDeath,
     PlayerUpgrade::SacrificeLifeForBase,
     PlayerUpgrade::PlusLifeOnStart,
-    PlayerUpgrade::XpIncreaser
+    PlayerUpgrade::XpIncreaser,
+    PlayerUpgrade::FavoriteTank,
+    PlayerUpgrade::FavoriteBase
 };
 
 const std::map<UpgradeType, std::pair<UpgradeType, int>> upgradeDepencies = {};
+
+const std::map<UpgradeType, std::unordered_set<UpgradeType>> upgradeNegations = {
+    {UpgradeType::FastBullets, {UpgradeType::PiercingBullets, UpgradeType::MachineGun}},
+    {UpgradeType::PowerBullets, {UpgradeType::PiercingBullets, UpgradeType::Rocket, UpgradeType::FourDirectionBullets}},
+    {UpgradeType::TankArmor, {UpgradeType::BulletTank}},
+    {UpgradeType::TankSpeed, {UpgradeType::BulletTank}},
+    {UpgradeType::MoreBullets, {UpgradeType::FourDirectionBullets, UpgradeType::MachineGun}},
+    {UpgradeType::BonusEffectiveness, {UpgradeType::Rocket}},
+    {UpgradeType::RepairWalls, {UpgradeType::BaseRestoreOnDamage}},
+    {UpgradeType::BaseInvincibility, {UpgradeType::BaseRestoreOnDamage}}
+};
 
 const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::BonusEffectiveness, 3},
@@ -99,8 +126,13 @@ const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::XpIncreaser,  1},
     {UpgradeType::PiercingBullets,  1},
     {UpgradeType::KillAllOnDeath,  1},
+    {UpgradeType::FavoriteTank,  1},
+    {UpgradeType::FavoriteBase,  1},
     {UpgradeType::BulletTank,  1},
-    {UpgradeType::FourDirectionBullets,  1}
+    {UpgradeType::FourDirectionBullets,  1},
+    {UpgradeType::Rocket,  1},
+    {UpgradeType::MachineGun,  1},
+    {UpgradeType::BaseRestoreOnDamage,  1}
 };
 
 
@@ -157,6 +189,71 @@ static bool isUpgradedToMax(EagleController *controller, PlayerUpgrade::UpgradeT
     return controller->hasLevelOfUpgrade(t) >= (cap - 1);
 }
 
+static bool isNotHavingUpgrade(PlayerController *pController, EagleController *eController, PlayerUpgrade::UpgradeType t)
+{
+    return pController->hasLevelOfUpgrade(t) == -1 && eController->hasLevelOfUpgrade(t) == -1;
+}
+
+std::vector<UpgradeType> PlayerUpgrade::fillLocalTypesList(PlayerController *pContr, EagleController *eContr)
+{
+    assert( pContr != nullptr);
+    assert( eContr != nullptr);
+
+    std::vector<UpgradeType> availableTypesLocal;
+
+    bool upgradeLimitReached = pContr->numberOfUpgrades() + eContr->numberOfUpgrades() >= globalConst::PlayerUpgradesLimit;
+
+    for (auto it = availableTypes.begin(); it != availableTypes.end(); ++it) {
+        PlayerUpgrade::UpgradeType t = *it;
+
+        // do not generate new upgrades if limit is reached
+        if (upgradeLimitReached && !oneTimeBonusTypes.contains(t) && isNotHavingUpgrade(pContr, eContr, t))
+                continue;
+
+        // check for super upgrades which negate this upgrade
+        if (upgradeNegations.contains(t)) {
+            bool hasNegatingSuperUpgrade = false;
+            for (PlayerUpgrade::UpgradeType superUp : upgradeNegations.at(t)) {
+                if (isUpgradedToMax(pContr, superUp) || isUpgradedToMax(eContr, superUp)) {
+                    hasNegatingSuperUpgrade = true;
+                    break; // for
+                }
+            }
+            if (hasNegatingSuperUpgrade) continue;
+        }
+
+        // increase chances based on perks
+        if (tankUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteTank))
+            availableTypesLocal.push_back(t); // add once more
+        if (baseUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteBase))
+            availableTypesLocal.push_back(t); // add once more
+
+        // nullify or increase chances of appearing based on owned upgrades
+        if (tankUpgradeTypes.contains(t)) {
+            int maxLevel = upgradeCap.contains(t) ? upgradeCap.at(t)-1 : 3;
+            int level = pContr->hasLevelOfUpgrade(t);
+            if (level>-1 && level < maxLevel)
+                availableTypesLocal.push_back(t); // increase chance by adding to the list once more
+            else if (level == maxLevel)
+                continue; // do not add to list
+        } else if (baseUpgradeTypes.contains(t)) {
+            int maxLevel = upgradeCap.contains(t) ? upgradeCap.at(t)-1 : 3;
+            int level = eContr->hasLevelOfUpgrade(t);
+            if (level>-1 && level < maxLevel)
+                availableTypesLocal.push_back(t); // increase chance by adding to the list once more
+            else if (level == maxLevel)
+                continue; // do not add to list
+        }
+
+        // specific cases
+        if (t == RebuildEagleWalls && ObjectsPool::getEagleWalls().size() >= globalTypes::EagleWallDirection::MaxDirection-1)
+            continue;
+        availableTypesLocal.push_back(t);
+    }
+
+    return availableTypesLocal;
+}
+
 void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
 {
     Logger::instance() << "generate four random upgrades\n";
@@ -175,26 +272,8 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
 
     currentRandomUpgrades.clear();
 
-    std::unordered_set<UpgradeType> alreadyGenerated;
-
-    std::vector<UpgradeType> availableTypesLocal = availableTypes;
-
-    // remove not needed upgrades
-    // TODO: find better solution
-    if (isUpgradedToMax(controller, PiercingBullets)) {
-        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), FastBullets);
-        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), PowerBullets);
-    }
-
-    if (isUpgradedToMax(controller, BulletTank)) {
-        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), TankSpeed);
-        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), TankArmor);
-    }
-
-    if (isUpgradedToMax(controller, FourDirectionBullets)) {
-        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), MoreBullets);
-        std::remove(availableTypesLocal.begin(), availableTypesLocal.end(), PowerBullets);
-    }
+    std::vector<UpgradeType> availableTypesLocal = fillLocalTypesList(controller, eagleController);
+    assert(availableTypesLocal.empty() == false);
 
     std::uniform_int_distribution<int> distr(0, availableTypesLocal.size()-1);
 
@@ -206,13 +285,18 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
         mandatoryUpgrades.push(BulletTank);
     if (isUpgradedToMax(controller, MoreBullets) && isUpgradedToMax(controller, PowerBullets))
         mandatoryUpgrades.push(FourDirectionBullets);
+    if (isUpgradedToMax(controller, PowerBullets) && isUpgradedToMax(controller, BonusEffectiveness))
+        mandatoryUpgrades.push(Rocket);
+    if (isUpgradedToMax(controller, MoreBullets) && isUpgradedToMax(controller, FastBullets))
+        mandatoryUpgrades.push(MachineGun);
+    if (isUpgradedToMax(eagleController, RepairWalls) && isUpgradedToMax(eagleController, BaseInvincibility))
+        mandatoryUpgrades.push(BaseRestoreOnDamage);
 
-    // TEMP
-    //mandatoryUpgrades.push(FourDirectionBullets);
+    std::unordered_set<UpgradeType> alreadyGenerated;
 
     for (int i = 0; i < globalConst::NumOfUpgradesOnLevelup; i++) {
         UpgradeType newType = None;
-        int count = 200;
+        int count = 100;
         do {
             int index = distr(Utils::generator);
 
@@ -224,35 +308,13 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
                 mandatoryUpgrades.pop();
             }
 
-            if (alreadyGenerated.find(t) != alreadyGenerated.end())
-                continue;
-
-            // check if player reached the limit of this upgrade
-            if (tankUpgradeTypes.contains(t) && isUpgradedToMax(controller, t))
-                continue;
-            if (baseUpgradeTypes.contains(t) && isUpgradedToMax(eagleController, t))
-                continue;
-
-            // check dependencies
-            if (upgradeDepencies.contains(t)) {
-                if (tankUpgradeTypes.contains(t) && controller->hasLevelOfUpgrade(upgradeDepencies.at(t).first) < upgradeDepencies.at(t).second)
-                    continue;
-                else if (baseUpgradeTypes.contains(t) && eagleController->hasLevelOfUpgrade(upgradeDepencies.at(t).first) < upgradeDepencies.at(t).second)
-                    continue;
-            }
-
-            // if this is not an instant bonus + player already have max number of upgrades -> generate another one
-            if (!oneTimeBonusTypes.contains(newType) && controller->hasLevelOfUpgrade(t) == -1 && eagleController->hasLevelOfUpgrade(t) == -1
-                    && controller->numberOfUpgrades() + eagleController->numberOfUpgrades() >= globalConst::PlayerUpgradesLimit)
-                continue;
-
-             if (t == RebuildEagleWalls && ObjectsPool::getEagleWalls().size() == globalTypes::EagleWallDirection::MaxDirection)
+            if (alreadyGenerated.contains(t))
                 continue;
 
             newType = t;
-            alreadyGenerated.insert(t);
-
         } while (newType == None && --count);
+
+        alreadyGenerated.insert(newType);
 
         if (count == 0) {
             Logger::instance() << "[ERROR] Could not generate upgrade!\n";
@@ -356,13 +418,29 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
         case FourDirectionBullets:
             newUpgrade = new FourDirectionTurretUpgrade(level);
             break;
+        case Rocket:
+            newUpgrade = new RocketUpgrade(level);
+            break;
         case BulletTank:
             newUpgrade = new BulletTankUpgrade(level);
+            break;
+        case MachineGun:
+            newUpgrade = new MachineGunUpgrade(level);
+            break;
         case SacrificeLifeForBase:
             newUpgrade = new SacrificeLifeForBaseUpgrade(level);
             break;
         case PlusLifeOnStart:
             newUpgrade = new TankAdditionalLifePerk();
+            break;
+        case FavoriteTank:
+            newUpgrade = new FavoriteTankPerk();
+            break;
+        case FavoriteBase:
+            newUpgrade = new FavoriteBasePerk();
+            break;
+        case BaseRestoreOnDamage:
+            newUpgrade = new BaseRepairAfterDamageUpgrade();
             break;
     }
 
@@ -432,7 +510,7 @@ KillEnemiesBonus::KillEnemiesBonus(int level)
     _type = InstantKillEnemies;
     _name = "Airstrike";
 
-    _percentBasedOnLevel = { 33, 50, 75, 100 };
+    _percentBasedOnLevel = { 40, 60, 80, 100 };
     for (auto percent : _percentBasedOnLevel)
         _effects.push_back("Every enemy tank\nwill be destroyed\nwith " + std::to_string(percent) + "\% chance");
 
@@ -444,7 +522,7 @@ void KillEnemiesBonus::onCollect(GameObject *)
     assert(_currentLevel < _percentBasedOnLevel.size());
     // kill all enemy tanks (with probability)in a moment
 
-    std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank"});
+    std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcDoubleCannonArmorTank"});
     std::for_each(objectsToKill.cbegin(), objectsToKill.cend(), [&](GameObject *obj) {
         int rnd = distribution(Utils::generator);
         if (rnd <= _percentBasedOnLevel[_currentLevel])
@@ -501,31 +579,17 @@ void TankAdditionalLifeBonus::onCollect(GameObject *collector)
 {
     if (!firstApplication()) return;
 
-    globalVars::player1Lives++;
-
-    /*GameObject *playerSpawnerObject;
-    if (collector->isFlagSet(GameObject::Player))
-        playerSpawnerObject = collector->getParentObject();
-    else if (collector->isFlagSet(GameObject::PlayerSpawner))
-        playerSpawnerObject = collector;
-    else
-        playerSpawnerObject = ObjectsPool::playerSpawnerObject;
-
-    assert(playerSpawnerObject != nullptr);
-    assert(playerSpawnerObject->isFlagSet(GameObject::PlayerSpawner));
-
-    auto spawnerController = playerSpawnerObject->getComponent<PlayerSpawnController>();
-    assert(spawnerController != nullptr);
-
-    spawnerController->appendLife();*/
+    for (int i = 0; i < _numberBasedOnLevel[_currentLevel]; i++)
+        globalVars::player1Lives++;
 }
 
 TankAdditionalLifePerk::TankAdditionalLifePerk()
+: TankAdditionalLifeBonus(0)
 {
     _currentLevel = 0;
     _category = PlayerUpgrade::Perk;
-    _price = 8000;
     _type = PlayerUpgrade::PlusLifeOnStart;
+    _price = perkPrices.at(_type);
     _name = "Spare tank";
 
     _effects.push_back("Start with +1 life");
@@ -587,65 +651,7 @@ void DepositXpBonus::onCollect(GameObject *collector)
 
 ///////////////
 
-RebuildEagleWallsOnLevelup::RebuildEagleWallsOnLevelup(int level)
-: PlayerUpgrade(level)
-{
-    _category = PlayerUpgrade::BaseUpgrade;
-    _type = PlayerUpgrade::RepairWalls;
-    _name = "Inspired builders";
 
-    _numberBasedOnLevel = { 4, 2, 1 };
-    std::vector<std::string> suffix = {"4th ", "2nd ", ""};
-    std::string prefix = level == 0 ? "now and " : "";
-    int i=0;
-    for (auto num : _numberBasedOnLevel) {
-        _effects.push_back("Base walls will be rebuilt\n" + prefix + "on every " + suffix[i] + "level up");
-        i++;
-    }
-
-    _iconRect = AssetManager::instance().getAnimationFrame("shovelCollectable", "default", 0).rect;
-}
-
-void RebuildEagleWallsOnLevelup::onCollect(GameObject *)
-{
-
-    if (levelupCounter % _numberBasedOnLevel[_currentLevel] == 0) {
-        auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
-        assert(eagleController != nullptr);
-        eagleController->fastRepairWalls(100);
-    }
-
-    levelupCounter++;
-}
-
-///////////////
-
-EagleInvincibilityAfterDamage::EagleInvincibilityAfterDamage(int level)
-: PlayerUpgrade(level)
-{
-    _category = PlayerUpgrade::BaseUpgrade;
-    _type = PlayerUpgrade::BaseInvincibility;
-    _name = "Emergency cupola";
-
-    // requires any level of armor
-    _dependencies[BaseArmor] = 0;
-
-    _timeBasedOnLevel = { 5, 10, 15, 20 };
-    //std::vector<std::string> suffix = {"th", "rd", "nd", "st"};
-    for (auto time : _timeBasedOnLevel) {
-        _effects.push_back("After getting damaged,\nthe base will become\ninvincible for " + std::to_string(time) + " sec");
-    }
-
-    _iconRect = AssetManager::instance().getAnimationFrame("eagleCloudCollectable", "default", 0).rect;
-
-}
-
-void EagleInvincibilityAfterDamage::onCollect(GameObject *)
-{
-    auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
-    assert(eagleController != nullptr);
-    eagleController->setTempInvincibilityAfterDamage(_timeBasedOnLevel[_currentLevel] * 1000);
-}
 ///////////////
 
 FasterBulletUpgrade::FasterBulletUpgrade(int level)
@@ -665,7 +671,7 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
 void FasterBulletUpgrade::onCollect(GameObject *collector)
 {
     assert(collector != nullptr);
-    auto shootable = collector->getComponent<PlayerShootable>();
+    auto shootable = collector->getComponent<Shootable>();
     assert(shootable != nullptr);
 
     assert(_currentLevel < _percentBasedOnLevel.size());
@@ -694,7 +700,7 @@ MoreBulletsUpgrade::MoreBulletsUpgrade(int level)
 void MoreBulletsUpgrade::onCollect(GameObject *collector)
 {
     assert(collector != nullptr);
-    auto shootable = collector->getComponent<PlayerShootable>();
+    auto shootable = collector->getComponent<Shootable>();
     assert(shootable != nullptr);
     assert(_currentLevel < _numberBasedOnLevel.size());
 
@@ -786,34 +792,6 @@ void PowerBulletUpgrade::onCollect(GameObject *collector)
 }
 
 
-///////////////
-
-BaseArmorUpgrade::BaseArmorUpgrade(int level)
-: PlayerUpgrade(level)
-{
-    _category = PlayerUpgrade::BaseUpgrade;
-    _type = BaseArmor;
-    _name = "Thicker feathers";
-
-    _numberBasedOnLevel = { 1, 2, 3, 4 };
-    for (auto number : _numberBasedOnLevel)
-        _effects.push_back("Base protection +" + std::to_string(number));
-
-    _iconRect = AssetManager::instance().getAnimationFrame("eagleCollectable", "default", 0).rect;
-}
-
-void BaseArmorUpgrade::onCollect(GameObject *target)
-{
-    assert(target != nullptr);
-    assert(target->isFlagSet(GameObject::Eagle));
-
-    auto damageable = target->getComponent<Damageable>();
-    assert(damageable != nullptr);
-    assert(_currentLevel < _numberBasedOnLevel.size());
-    int newProtection = globalConst::DefaultBaseProtection + _numberBasedOnLevel[_currentLevel];
-    damageable->setDefence(newProtection);
-}
-
 
 /////////////
 
@@ -896,13 +874,71 @@ void FourDirectionTurretUpgrade::onCollect(GameObject *target)
 
 /////////////
 
+RocketUpgrade::RocketUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _synergic = true;
+    _category = PlayerUpgrade::TankUpgrade;
+    _type  = Rocket;
+    _name = "Rocket launcher";
+
+    _effects.push_back("Replaces [Power Bullets] and\n[Effective Electronics] upgrades\nNew turret shoots rockets,\nwhich explode and affect damage");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("redRocketCollectable", "default", 0).rect;
+}
+
+void RocketUpgrade::onCollect(GameObject *target)
+{
+    // nothing is needed except the fact of presense of this effect
+    assert(target != nullptr);
+    assert(target->isFlagSet(GameObject::Player));
+    auto controller = target->getComponent<PlayerController>();
+    controller->setRocketLauncher();
+}
+/////////////
+
+MachineGunUpgrade::MachineGunUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _synergic = true;
+    _category = PlayerUpgrade::TankUpgrade;
+    _type  = MachineGun;
+    _name = "Machine gun";
+
+    _effects.push_back("Replaces [Productive turret] and\n[Fast delivery] upgrades\nNew turret shoots limitless,\nfast bullets at rapid speed");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("machineGunCollectable", "default", 0).rect;
+}
+
+void MachineGunUpgrade::onCollect(GameObject *target)
+{
+    // nothing is needed except the fact of presense of this effect
+    assert(target != nullptr);
+    assert(target->isFlagSet(GameObject::Player));
+
+    auto shootable = target->getComponent<Shootable>();
+    assert(shootable != nullptr);
+
+    // bullet speed
+    const int newBulletSpeed = globalConst::DefaultPlayerBulletSpeed + (globalConst::DefaultPlayerBulletSpeed * 80 / 100);
+    shootable->setBulletSpeed(newBulletSpeed);
+
+    // shoot speed
+    shootable->setActionTimeoutMs(globalConst::PlayerShootTimeoutMs * 2 / 3);
+
+    // number of bullets
+    shootable->setLevel(32);
+}
+
+
+//////////
 
 XpModifierUpgrade::XpModifierUpgrade(int level)
 : PlayerUpgrade(level)
 {
     _category = PlayerUpgrade::Perk;
-    _price = 9000;
     _type = XpIncreaser;
+    _price = perkPrices.at(_type);
     _name = "War machine learning";
 
     _numberBasedOnLevel = { 25 };
@@ -917,20 +953,18 @@ void XpModifierUpgrade::onCollect(GameObject *target)
     assert(target != nullptr);
     assert(target->isFlagSet(GameObject::Player));
     auto controller = target->getComponent<PlayerController>();
+    assert(controller != nullptr);
     controller->setXpModifier(_numberBasedOnLevel[_currentLevel]);
 }
 
 //////////
 
-
-
-
 KillAllOnTankDeathUpgrade::KillAllOnTankDeathUpgrade(int level)
 : PlayerUpgrade(level)
 {
     _category = PlayerUpgrade::Perk;
-    _price = 10000;
     _type = KillAllOnDeath;
+    _price = perkPrices.at(_type);
     _name = "Atomic Core";
 
     _effects.push_back("When your tank dies,\nall the enemies will perish");
@@ -943,13 +977,15 @@ void KillAllOnTankDeathUpgrade::onCollect(GameObject *)
      // nothing is needed except the fact of presense of this effect
 }
 
+/// @brief ////////////////
+/// @param level /
 
 SacrificeLifeForBaseUpgrade::SacrificeLifeForBaseUpgrade(int level)
 : PlayerUpgrade(level)
 {
     _category = PlayerUpgrade::Perk;
-    _price = 2000;
     _type = SacrificeLifeForBase;
+    _price = perkPrices.at(_type);
     _name = "Sacrifice";
 
     _effects.push_back("Sacrifice 1 life once to revive\nthe base and repair its walls");
@@ -958,6 +994,47 @@ SacrificeLifeForBaseUpgrade::SacrificeLifeForBaseUpgrade(int level)
 }
 
 void SacrificeLifeForBaseUpgrade::onCollect(GameObject *)
+{
+     // nothing is needed except the fact of presense of this effect
+}
+
+
+/////////
+
+FavoriteTankPerk::FavoriteTankPerk()
+: PlayerUpgrade(0)
+{
+    _category = PlayerUpgrade::Perk;
+    _type = FavoriteTank;
+    _price = perkPrices.at(_type);
+    _name = "Selfish";
+
+    _effects.push_back("More chance to obtain\ntank upgrades");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("tankCollectable", "default", 0).rect;
+}
+
+void FavoriteTankPerk::onCollect(GameObject *)
+{
+     // nothing is needed except the fact of presense of this effect
+}
+
+/////////
+
+FavoriteBasePerk::FavoriteBasePerk()
+: PlayerUpgrade(0)
+{
+    _category = PlayerUpgrade::Perk;
+    _type = FavoriteBase;
+    _price = perkPrices.at(_type);
+    _name = "Duty above all!";
+
+    _effects.push_back("More chance to obtain\nbase upgrades");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("eagleCollectable", "default", 0).rect;
+}
+
+void FavoriteBasePerk::onCollect(GameObject *)
 {
      // nothing is needed except the fact of presense of this effect
 }

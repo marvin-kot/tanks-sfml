@@ -7,6 +7,7 @@
 GameObject *ObjectsPool::playerObject = nullptr;
 GameObject *ObjectsPool::eagleObject = nullptr;
 GameObject *ObjectsPool::playerSpawnerObject = nullptr;
+GameObject *ObjectsPool::bossObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
 std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
 std::map<globalTypes::EagleWallDirection, GameObject *> ObjectsPool::eagleWalls = {};

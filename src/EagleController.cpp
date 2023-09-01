@@ -115,6 +115,16 @@ void EagleController::setSlowRepairMode(int timeout)
     _isSlowRepairMode = true;
 }
 
+void EagleController::removeUpgrade(PlayerUpgrade::UpgradeType t)
+{
+    auto it2 = _collectedUpgrades.find(t);
+    if (it2 != _collectedUpgrades.end()) {
+        PlayerUpgrade *obj = (*it2).second;
+        _collectedUpgrades.erase(it2);
+        delete obj;
+    }
+}
+
 void EagleController::upgrade(PlayerUpgrade *upgrade)
 {
     assert(upgrade != nullptr);
@@ -126,6 +136,11 @@ void EagleController::upgrade(PlayerUpgrade *upgrade)
         _collectedUpgrades[tp]->increaseLevel();
     } else {
         _collectedUpgrades[tp] = upgrade;
+    }
+
+    if (tp == PlayerUpgrade::BaseRestoreOnDamage) {
+        removeUpgrade(PlayerUpgrade::RepairWalls);
+        removeUpgrade(PlayerUpgrade::BaseInvincibility);
     }
 }
 
@@ -233,12 +248,10 @@ void EagleController::onDamaged()
         }
     }
 
-
     if (ObjectsPool::playerObject == nullptr)
         return;
 
     PlayerController *controller = ObjectsPool::playerObject->getComponent<PlayerController>();
-
 
     if (dmg->isDestroyed()) {
         if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::SacrificeLifeForBase)) {
@@ -251,7 +264,8 @@ void EagleController::onDamaged()
             PlayerUpgrade::playerOwnedPerks.erase(PlayerUpgrade::SacrificeLifeForBase);
         } else {
             // eagle is dead - run is finished
-            //PersistentGameData::instance().addToXpDeposit(controller->xp());
         }
+    } else if (hasLevelOfUpgrade(PlayerUpgrade::BaseRestoreOnDamage) > -1) {
+        fastRepairWalls(100);
     }
 }

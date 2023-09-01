@@ -245,8 +245,8 @@ int MapCreator::parseMapFile(std::string fileName)
         assert(sd.type.empty() == false);
         assert(sd.row >= 0 && sd.row < globalConst::maxFieldWidth);
         assert(sd.col >= 0 && sd.col < globalConst::maxFieldHeight);
-        assert(sd.delay >= 0 && sd.delay < 600);
-        assert(sd.timeout >= 0 && sd.timeout < 60);
+        assert(sd.delay >= 0 && sd.delay < 1000);
+        assert(sd.timeout >= 0 && sd.timeout < 120);
         assert(sd.quantity > 0 && sd.quantity < 100);
 
         _spawners.push_back(sd);

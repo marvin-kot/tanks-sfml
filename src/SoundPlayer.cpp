@@ -21,7 +21,10 @@ static std::unordered_map<SoundType, std::string> soundPaths = {
     {SoundType::fail, string("assets/audio/game_over.wav")},
     {SoundType::debuff, string("assets/audio/debuff.wav")},
     {SoundType::moveCursor, string("assets/new_sounds/Coin Pickup 48.wav")},
-    {SoundType::startGame, string("assets/new_sounds/Coin Pickup 42.wav")}
+    {SoundType::startGame, string("assets/new_sounds/Coin Pickup 42.wav")},
+    {SoundType::briefingTheme, string("assets/audio/march-massacre.wav")},
+    {SoundType::BossTheme, string("assets/audio/bossTankLoop.wav")},
+    {SoundType::ShopTheme, string("assets/audio/shop-theme.wav")}
 };
 
 
@@ -59,6 +62,16 @@ void SoundPlayer::stopAllSounds()
 {
     stopSound(TankStand);
     stopSound(TankMove);
+    stopSound(BossTheme);
+    stopSound(ShopTheme);
+}
+
+void SoundPlayer::pauseAllSounds()
+{
+    pauseSound(TankStand);
+    pauseSound(TankMove);
+    pauseSound(BossTheme);
+    pauseSound(ShopTheme);
 }
 
 void SoundPlayer::playSound(SoundPlayer::SoundType type)
@@ -76,6 +89,13 @@ void SoundPlayer::playSound(SoundPlayer::SoundType type)
             break;
         case iceSkid:
             playIceSkidSound();
+            break;
+        case BossTheme:
+            playBossTheme();
+            break;
+        case ShopTheme:
+            playShopTheme();
+            break;
         default:
             loadedSounds.at(type).second.play();
             break;
@@ -84,17 +104,12 @@ void SoundPlayer::playSound(SoundPlayer::SoundType type)
 
 void SoundPlayer::stopSound(SoundPlayer::SoundType type)
 {
-    switch (type)
-    {
-        case TankStand:
-            loadedSounds.at(TankStand).second.stop();
-            break;
-        case TankMove:
-            loadedSounds.at(TankMove).second.stop();
-            break;
-        default:
-            break;
-    }
+    loadedSounds.at(type).second.stop();
+}
+
+void SoundPlayer::pauseSound(SoundPlayer::SoundType type)
+{
+    loadedSounds.at(type).second.pause();
 }
 
 
@@ -109,7 +124,7 @@ void SoundPlayer::playTankStandSound()
     if (moveStatus == sf::SoundSource::Status::Playing)
         tankMoveSound.pause();
 
-    if (gameOver) {
+    if (gameOver || bossAlive) {
         tankStandSound.stop();
         return;
     }
@@ -131,9 +146,36 @@ void SoundPlayer::playTankMoveSound()
     if (standStatus == sf::SoundSource::Status::Playing)
         tankStandSound.pause();
 
+    if (bossAlive) {
+        tankMoveSound.stop();
+        return;
+    }
+
+
     if (moveStatus != sf::SoundSource::Status::Playing) {
         tankMoveSound.setLoop(true);
         tankMoveSound.play();
+    }
+}
+
+void SoundPlayer::playBossTheme()
+{
+    bossAlive = true;
+    auto& bossMusic = loadedSounds.at(BossTheme).second;
+    sf::SoundSource::Status moveStatus = bossMusic.getStatus();
+    if (moveStatus != sf::SoundSource::Status::Playing) {
+        bossMusic.setLoop(true);
+        bossMusic.play();
+    }
+}
+
+void SoundPlayer::playShopTheme()
+{
+    auto& shopMusic = loadedSounds.at(ShopTheme).second;
+    sf::SoundSource::Status moveStatus = shopMusic.getStatus();
+    if (moveStatus != sf::SoundSource::Status::Playing) {
+        shopMusic.setLoop(true);
+        shopMusic.play();
     }
 }
 

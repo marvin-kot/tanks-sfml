@@ -35,6 +35,8 @@ class EagleController : public Controller
     int _invincibilityAfterDamageTimeout;
     bool _invincible;
     sftools::Chronometer _invincibilityTimer;
+    void removeUpgrade(PlayerUpgrade::UpgradeType t);
+
 public:
     EagleController(GameObject *parent);
     ~EagleController();

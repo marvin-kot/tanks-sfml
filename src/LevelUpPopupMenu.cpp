@@ -22,7 +22,7 @@ LevelUpPopupMenu& LevelUpPopupMenu::instance()
 void LevelUpPopupMenu::open()
 {
     _isOpen = true;
-    SoundPlayer::instance().stopAllSounds();
+    SoundPlayer::instance().pauseAllSounds();
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::bonusCollect);
     globalVars::gameIsPaused = true;
     globalVars::globalChronometer.pause();

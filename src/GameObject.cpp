@@ -51,6 +51,12 @@ GameObject::~GameObject()
 
     if (_dropGenerator)
         delete _dropGenerator;
+
+    if (visualEffect)
+        delete visualEffect;
+
+    if (turret)
+        delete turret;
 }
 
 void GameObject::setFlags(GameObject::ObjectFlags flags)
@@ -109,7 +115,13 @@ void GameObject::draw()
     else
         Logger::instance() << _type << "no renderer\n";
 
+    if (turret) {
+        turret->copyParentPosition(this);
+        turret->draw();
+    }
+
     if (visualEffect) {
+        visualEffect->copyParentPosition(this);
         visualEffect->draw();
     }
 }
@@ -244,6 +256,9 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
 
     assert(other != nullptr);
 
+    if (_parentId != -1 && (_parentId == other->_id || other->_parentId == _id))
+        return;
+
     if (isBullet) {
         // to handle 1-turre-4-bullets situation
         if (other->isFlagSet(Bullet) && _parentId == other->_parentId)
@@ -260,7 +275,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
             }
         }
 
-        if (!isFlagSet(PiercingBullet) && other->isFlagSet(Bullet) && _parentId != other->_parentId)
+        if (!isFlagSet(PiercingBullet) && other->isFlagSet(Bullet))// && _parentId != other->_parentId)
             _deleteme = true;
 
         return;
@@ -307,14 +322,15 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         other->getCollectedBy(this);
     }
 
-    if (isFlagSet(Player) && damage>0 && other->isFlagSet(BulletKillable)) {
+    if (damage>0 && other->isFlagSet(BulletKillable)/* && _parentId != other->_id*/) {
         other->_damageable->takeDamage(damage);
         if (other->_damageable->isDestroyed()) {
             other->markForDeletion();
             cancelMovement = false;
         } else {
-            // if goal is not killed, stop the sequence
-            dynamic_cast<PlayerController *>(_controller)->resetMoveStartTimer();
+            if (isFlagSet(Player))
+                // if goal is not killed, stop the sequence
+                dynamic_cast<PlayerController *>(_controller)->resetMoveStartTimer();
         }
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
     }
@@ -328,8 +344,8 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         if (thatXp == nullptr)
             return;
         int sum = thisXp->value() + thatXp->value();
-        if (sum > 500 || (sum % 100 != 0))
-            return; // 500 is maximum xp collectable...
+        if (sum > 1000 || (sum % 100 != 0))
+            return; // 900 is maximum xp collectable...
 
         // update value
         thisXp->setValue(sum);
@@ -339,6 +355,11 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
             case 300: newType = "300xp"; break;
             case 400: newType = "400xp"; break;
             case 500: newType = "500xp"; break;
+            case 600: newType = "600xp"; break;
+            case 700: newType = "700xp"; break;
+            case 800: newType = "800xp"; break;
+            case 900: newType = "900xp"; break;
+            case 1000: newType = "1000xp"; break;
             default:
                 return;
         }
@@ -415,7 +436,7 @@ std::vector<GameObject *> GameObject::allCollisions() const
     return result;
 }
 
-GameObject * GameObject::objectContainingPoint(int id, int x, int y) const
+GameObject * GameObject::objectContainingPoint(int id, int x, int y)
 {
     if (ObjectsPool::playerObject!=nullptr && ObjectsPool::playerObject->boundingBox().contains(x, y))
         return ObjectsPool::playerObject;
@@ -437,41 +458,46 @@ GameObject * GameObject::objectContainingPoint(int id, int x, int y) const
     return nullptr;
 }
 
-GameObject *GameObject::linecastInCurrentDirection() const
+GameObject *GameObject::linecastInDirection(int id, int startX, int startY, globalTypes::Direction direction, int minRange, int maxRange)
 {
     using namespace globalTypes;
     using namespace globalVars;
 
     const int step = 4;
-    const int maxRange = 128;
-    switch (_direction) {
+    switch (direction) {
         case Direction::Right:
-            for (int x = _x; x < std::min(mapSize.x, _x + maxRange); x += step) {
-                GameObject *obj = objectContainingPoint(_id, x, _y);
+            for (int x = startX + minRange; x < std::min(mapSize.x, startX + maxRange); x += step) {
+                GameObject *obj = objectContainingPoint(id, x, startY);
                 if (obj != nullptr)
                     return obj;
             } break;
         case Direction::Left:
-            for (int x = _x; x > std::max(0, _x - maxRange) ; x -= step) {
-                GameObject *obj = objectContainingPoint(_id, x, _y);
+            for (int x = startX - minRange; x > std::max(0, startX - maxRange) ; x -= step) {
+                GameObject *obj = objectContainingPoint(id, x, startY);
                 if (obj != nullptr)
                     return obj;
             } break;
         case Direction::Up:
-            for (int y = _y; y > std::max(0, _y - maxRange) ; y -= step) {
-                GameObject *obj = objectContainingPoint(_id, _x, y);
+            for (int y = startY - minRange; y > std::max(0, startY - maxRange) ; y -= step) {
+                GameObject *obj = objectContainingPoint(id, startX, y);
                 if (obj != nullptr)
                     return obj;
             } break;
         case Direction::Down:
-            for (int y = _y; y < std::min(mapSize.y, _y + maxRange) ; y += step) {
-                GameObject *obj = objectContainingPoint(_id, _x, y);
+            for (int y = startY + minRange; y < std::min(mapSize.y, startY + maxRange) ; y += step) {
+                GameObject *obj = objectContainingPoint(id, startX, y);
                 if (obj != nullptr)
                     return obj;
             } break;
     }
 
     return nullptr;
+}
+
+GameObject *GameObject::linecastInCurrentDirection(int minRange, int maxRange) const
+{
+
+    return linecastInDirection(_id, _x, _y, _direction, minRange, maxRange);
 }
 
 
@@ -528,6 +554,10 @@ void GameObject::generateDrop()
 
 void GameObject::dropXp()
 {
+    // self exploded objects don't drop xp
+    if (isFlagSet(Explosive))
+        return;
+
     if (_dropGenerator && !_dropGenerator->isUsedOnce())
         _dropGenerator->dropXp();
 }
@@ -575,6 +605,15 @@ net::ThinGameObject GameObject::update()
     return thin;
 }
 
+int GameObject::distanceTo(GameObject *other)
+{
+    using namespace std;
+    const long distX = abs(_x - other->_x);
+    const long distY = abs(_y - other->_y);
+
+    return static_cast<int>(sqrt(distX*distX + distY*distY));
+}
+
 template<typename T>
 T *GameObject::getComponent()
 {
@@ -590,11 +629,11 @@ template<> Shootable *GameObject::getComponent<Shootable>()
 {
     return _shootable;
 }
-
+/*
 template<> PlayerShootable *GameObject::getComponent<PlayerShootable>()
 {
     return dynamic_cast<PlayerShootable *>(_shootable);
-}
+}*/
 
 
 template<> Damageable *GameObject::getComponent<Damageable>()

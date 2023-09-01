@@ -3,6 +3,7 @@
 #include "AssetManager.h"
 #include "BonusShopWindow.h"
 #include "GameObject.h"
+#include "GameOverScreen.h"
 #include "GlobalConst.h"
 #include "HUD.h"
 #include "LevelUpPopupMenu.h"
@@ -60,6 +61,7 @@ void Game::initializeVariables()
     currentLevel = 0;
     framesToDie = -1;
     framesToWin = -1;
+    _killsCount = 0;
     PersistentGameData::instance().loadDataFromDisk();
     PlayerUpgrade::generatePerks();
     gameState = TitleScreen;
@@ -83,6 +85,8 @@ bool Game::update()
         processDeletedObjects();
     }
 
+    if (ObjectsPool::bossObject && !globalVars::gameIsPaused)
+        SoundPlayer::instance().playBossTheme();
     // play sounds
     SoundPlayer::instance().processQueuedSounds();
 
@@ -95,7 +99,7 @@ bool Game::update()
 
 
     if (LevelUpPopupMenu::instance().isOpen()) {
-        SoundPlayer::instance().stopAllSounds();
+        SoundPlayer::instance().pauseAllSounds();
         LevelUpPopupMenu::instance().draw();
     }
 
@@ -135,8 +139,10 @@ void Game::processWindowEvents()
                 } else if (gameState == StartLevelScreen) {
                     if (event.key.scancode == sf::Keyboard::Scan::Enter)
                         gameState = StartLevel;
-                    else if (event.key.scancode == sf::Keyboard::Scan::Escape)
-                        gameState = GameOver;
+                    else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
+                        SoundPlayer::instance().stopSound(SoundPlayer::briefingTheme);
+                        gameState = TitleScreen;
+                    }
                 } else if (gameState == PlayingLevel) {
                     if (LevelUpPopupMenu::instance().isOpen()) {
                         if (event.key.scancode == sf::Keyboard::Scan::Enter) {
@@ -152,7 +158,7 @@ void Game::processWindowEvents()
                     if (event.key.scancode == sf::Keyboard::Scan::Escape) {
                         // TODO: ask player confirmation
                         gameState = GameOver;
-                    } else if (event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::P) {
+                    } else if (event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::Enter) {
                         pause(!globalVars::gameIsPaused);
                     }
                 } else if (gameState == BonusShop) {
@@ -166,10 +172,17 @@ void Game::processWindowEvents()
                         BonusShopWindow::instance().moveCursorUp();
                     else if (event.key.scancode == sf::Keyboard::Scan::Enter)
                         BonusShopWindow::instance().getSelectedUpgrade();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Escape)
+                    else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
+                        SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
                         gameState = TitleScreen;
-                    else if (event.key.scancode == sf::Keyboard::Scan::Space)
+                    }
+                    else if (event.key.scancode == sf::Keyboard::Scan::Space) {
+                        SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
                         gameState = LoadNextLevel;
+                    }
+                } else if (gameState == GameOverScreen) {
+                    if (event.key.scancode == sf::Keyboard::Scan::Enter || event.key.scancode == sf::Keyboard::Scan::Enter || event.key.scancode == sf::Keyboard::Scan::Escape)
+                        GameOverScreen::instance().increaseCountSpeed();
                 }
                 break;
             case sf::Event::Resized:
@@ -187,7 +200,7 @@ void Game::pause(bool p)
     using namespace globalVars;
     gameIsPaused = p;
     if (p) {
-        SoundPlayer::instance().stopAllSounds();
+        SoundPlayer::instance().pauseAllSounds();
         SoundPlayer::instance().playSound(SoundPlayer::SoundType::pause);
         globalChronometer.pause();
         globalFreezeChronometer.pause();
@@ -226,25 +239,38 @@ int Game::processStateChange()
         }
         Logger::instance() << "Level map is built\n";
         gameState = StartLevelScreen;
+        SoundPlayer::instance().playSound(SoundPlayer::briefingTheme);
+        _killsCount = 0;
         return 0;
     } else if (gameState == StartLevelScreen) {
         drawStartLevelScreen();
         return 0;
     }
     else if (gameState == StartLevel) {
+        SoundPlayer::instance().stopSound(SoundPlayer::briefingTheme);
         SoundPlayer::instance().gameOver = false;
         HUD::instance().showFail(false);
         HUD::instance().showWin(false);
         globalVars::globalChronometer.reset(true);
+        _killsCount = 0;
         gameState = PlayingLevel;
     }
     else if (gameState == GameOver) {
         SoundPlayer::instance().stopAllSounds();
         ObjectsPool::clearEverything();
-        gameState = BonusShop;
-        PlayerUpgrade::generatePerks();
+        gameState = GameOverScreen;
+        GameOverScreen::instance().setMissionOutcome(_killsCount, (int)_finishTime.asSeconds());
+        PlayerUpgrade::playerOwnedPerks.clear();
+        return 0;
+    } else if (gameState == GameOverScreen) {
+        gameState = static_cast<GameState>(GameOverScreen::instance().draw());
+        if (gameState == BonusShop) {
+            BonusShopWindow::instance().afterGameOver = true;
+            PlayerUpgrade::generatePerks();
+        }
         return 0;
     } else if (gameState == BonusShop) {
+        SoundPlayer::instance().playShopTheme();
         BonusShopWindow::instance().draw();
         return 0;
     } else if (gameState == ExitGame) {
@@ -271,8 +297,6 @@ bool Game::buildLevelMap(std::string fileName)
 
     mapBuilder.placeSpawnerObjects();
 
-    _surviveTimeoutSec = 60 * 5;
-
     return true;
 }
 
@@ -295,7 +319,7 @@ void Game::processDeletedObjects()
             GameObject *obj = *it;
             if (obj->mustBeDeleted()) {
                 if (obj->isFlagSet(GameObject::Player)) {
-                    //globalVars::player1Lives--;
+                    globalVars::player1Lives--;
                     ObjectsPool::playerObject = nullptr;
                 }
 
@@ -308,12 +332,22 @@ void Game::processDeletedObjects()
                     ObjectsPool::playerSpawnerObject = nullptr;
 
                 if (obj->isFlagSet(GameObject::Bullet)) {
-                    GameObject *explosion = new GameObject("smallExplosion");
-                    explosion->setRenderer(new OneShotAnimationRenderer(explosion));
-                    explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                    explosion->copyParentPosition(obj);
+                    if (obj->isFlagSet(GameObject::Explosive)) {
+                        GameObject *explosion = new GameObject("bigExplosion");
+                        explosion->setRenderer(new OneShotAnimationRenderer(explosion));
+                        explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+                        explosion->copyParentPosition(obj);
+                        explosion->damage = 1;
+                        objectsToAdd.push_back(explosion);
+                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+                    } else {
+                        GameObject *explosion = new GameObject("smallExplosion");
+                        explosion->setRenderer(new OneShotAnimationRenderer(explosion));
+                        explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+                        explosion->copyParentPosition(obj);
 
-                    objectsToAdd.push_back(explosion);
+                        objectsToAdd.push_back(explosion);
+                    }
 
                     if (obj->getParentObject()->isFlagSet(GameObject::Player))
                         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
@@ -323,14 +357,21 @@ void Game::processDeletedObjects()
                     GameObject *explosion = new GameObject("bigExplosion");
                     explosion->setRenderer(new OneShotAnimationRenderer(explosion));
                     explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+                    if (obj->isFlagSet(GameObject::Explosive)) {
+                        explosion->damage = 1;
+                    }
                     explosion->copyParentPosition(obj);
 
                     objectsToAdd.push_back(explosion);
 
-                    if (obj->isFlagSet(GameObject::Player | GameObject::Eagle))
+                    if (obj->isFlagSet(GameObject::Player | GameObject::Eagle | GameObject::Boss))
                         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
                     else
                         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+                }
+
+                if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive)) {
+                    _killsCount++;
                 }
 
                 if (obj->isFlagSet(GameObject::BonusOnHit)) {
@@ -412,7 +453,10 @@ void Game::drawObjects()
     std::for_each(objectsToDrawFirst.cbegin(), objectsToDrawFirst.cend(), [](GameObject *obj) { obj->draw(); });
 
     // 2. draw tanks and bullets
-    std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({"player", "eagle", "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "bullet"});
+    std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({
+                "player", "eagle",
+                "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcGiantTank", "npcDoubleCannonArmorTank", "npcKamikazeTank",
+                "bullet", "rocket"});
     std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(); });
 
     // 3. draw walls and trees
@@ -423,9 +467,9 @@ void Game::drawObjects()
 
     // 4. visual effects
     auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({
-        "spawner_player", "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank",
+        "spawner_player", "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank", "spawner_npcGiantTank", "spawner_npcKamikazeTank"
         "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable",
-        "100xp", "200xp", "300xp", "400xp", "500xp",
+        "100xp", "200xp", "300xp", "400xp", "500xp", "600xp", "700xp", "800xp", "900xp", "1000xp", 
         "smallExplosion", "bigExplosion"
         });
     std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(); });
@@ -456,8 +500,8 @@ void Game::checkStatePostFrame()
     if (framesToWin == -1 && framesToDie == -1 && winConditionsMet()) {
         // instant kill all enemies
         auto enemiesAlive = ObjectsPool::getObjectsByTypes({
-            "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank",
-            "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank"});
+            "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcDoubleCannonArmorTank", "npcKamikazeTank",
+            "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank", "spawner_npcGiantTank", "spawner_npcDoubleCannonArmorTank", "spawner_npcKamikazeTank"});
         for (auto enemy : enemiesAlive) enemy->markForDeletion();
 
         framesToWin = globalConst::MaxFramesToWin;
@@ -465,6 +509,7 @@ void Game::checkStatePostFrame()
         SoundPlayer::instance().gameOver = true;
         SoundPlayer::instance().playSound(SoundPlayer::SoundType::win);
         HUD::instance().showWin(true);
+        _finishTime = globalVars::globalChronometer.getElapsedTime();
     }
 
     if (framesToWin == -1 && framesToDie == -1 && failConditionsMet()) {
@@ -473,6 +518,7 @@ void Game::checkStatePostFrame()
         SoundPlayer::instance().gameOver = true;
         SoundPlayer::instance().playSound(SoundPlayer::SoundType::fail);
         HUD::instance().showFail(true);
+        _finishTime = globalVars::globalChronometer.getElapsedTime();
     }
 }
 
@@ -480,13 +526,16 @@ bool Game::winConditionsMet() const
 {
     if (_currentLevelProperties.win == Level::KillEmAll) {
         int countEnemiesAlive = ObjectsPool::countObjectsByTypes({
-            "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank",
-            "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank"});
+            "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcGiantTank", "npcKamikazeTank",
+            "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank", "spawner_npcGiantTank"});
         if (countEnemiesAlive < 1)
             return true;
 
     } else if (_currentLevelProperties.win == Level::SurviveTime) {
         const int secondsToWin = _currentLevelProperties.winParam * 60;
+
+        if (ObjectsPool::bossObject != nullptr)
+            return false;
         if (globalVars::globalChronometer.getElapsedTime() >= sf::seconds(secondsToWin))
             return true;
     }

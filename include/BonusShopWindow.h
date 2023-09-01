@@ -16,7 +16,10 @@ class BonusShopWindow
     void drawCursor(int x, int y);
     void drawEdging(int x, int y);
 
+
 public:
+    bool afterGameOver = false;
+
     static BonusShopWindow& instance();
 
     void open();

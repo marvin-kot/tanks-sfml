@@ -38,23 +38,9 @@ public:
     virtual void onDamaged() {};
 };
 
-class TankRandomController : public Controller
-{
-    const sf::Time _actionTimeout;
-
-    int trySqueeze();
-    bool decideIfToShoot(globalTypes::Direction oldDir) const;
-public:
-    TankRandomController(GameObject *parent, int spd, float timeoutSec);
-    void update() override;
-    void onDamaged() override;
-};
-
-
-
-
 class BulletController : public Controller
 {
+protected:
     int _damage;
     globalTypes::Direction _direction;
     bool _piercing;
@@ -66,6 +52,16 @@ public:
     int speed() const { return _moveSpeed; }
     int damage() const { return _damage; }
     int loseDamage() { return --_damage; }
+};
+
+class RocketController : public BulletController
+{
+    int _startSpeed;
+    int _currSpeed;
+    int _maxSpeed;
+public:
+    RocketController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg);
+    void update() override;
 };
 
 class SpawnController : public Controller

@@ -49,11 +49,14 @@ class PlayerController : public Controller
     int _xpModifier = 0;
 
     bool _4dirSet = false;
+    bool _rocketSet = false;
 
 public:
     PlayerController(GameObject *obj);
     ~PlayerController();
     void update() override;
+    void applyPerks();
+    void removePerks();
     void applyUpgrades();
     void updateAppearance();
     void updateMoveSpeed(int speed) { _moveSpeed = speed; }
@@ -75,6 +78,7 @@ public:
     void resetMoveStartTimer();
 
     void setFourDirectionTurret();
+    void setRocketLauncher();
 };
 
 struct PlayerSignal

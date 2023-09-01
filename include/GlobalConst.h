@@ -8,7 +8,7 @@ namespace globalConst
 {
     constexpr int GameMajorVersion = 0;
     constexpr int GameMinorVersion = 2;
-    constexpr int GameReleaseVersion = 1;
+    constexpr int GameReleaseVersion = 2;
 
     constexpr int screen_w = 1920;
     constexpr int screen_h = 1080;
@@ -51,6 +51,10 @@ namespace globalConst
     constexpr int HalvedTimeoutMs = 500;
     constexpr int PlayerShootTimeoutMs = 200;
     constexpr int EnemyShootTimeoutMs = 500;
+    constexpr int RocketShootTimeoutMs = 500;
+    constexpr int DefaultRocketSpeed = 170;
+
+    constexpr int MinDamageTimeoutMs = 100;
 
     constexpr int DefaultBulletLifetimeMs = 2000;
 

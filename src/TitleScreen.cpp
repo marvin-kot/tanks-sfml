@@ -1,4 +1,6 @@
+#include "BonusShopWindow.h"
 #include "GlobalConst.h"
+#include "PersistentGameData.h"
 #include "SoundPlayer.h"
 #include "TitleScreen.h"
 #include "UiUtils.h"
@@ -46,7 +48,7 @@ int TitleScreen::draw()
     // Draw options
     // start the game
     const sf::Color startGameColor = _cursorPos == 0 ? sf::Color::Yellow : sf::Color::White;
-    constexpr int promptFontSize = titleFontSize / 4;
+    constexpr int promptFontSize = titleFontSize / 3;
     currentY += titleFontSize + promptFontSize;
 
     if (_selected && _clock.getElapsedTime() > sf::milliseconds(200)) {
@@ -58,13 +60,16 @@ int TitleScreen::draw()
         UiUtils::instance().drawText( "start the game", promptFontSize, screenCenterX, currentY, false, startGameColor );
 
     // perk shop
-    const sf::Color shopColor = _cursorPos == 1 ? sf::Color::Yellow : sf::Color::White;
+    /*sf::Color shopColor = _cursorPos == 1 ? sf::Color::Yellow : sf::Color::White;
+
+    if (!PersistentGameData::instance().isShopUnlocked())
+        shopColor = sf::Color(102, 102, 102);
     currentY += promptFontSize+10;
-    UiUtils::instance().drawText( "perk shop", promptFontSize, screenCenterX, currentY, false, shopColor );
+    UiUtils::instance().drawText( "perk shop", promptFontSize, screenCenterX, currentY, false, shopColor );*/
 
     // exit to desktop
-    const sf::Color exitColor = _cursorPos == 2 ? sf::Color::Yellow : sf::Color::White;
-    currentY += promptFontSize+10;
+    const sf::Color exitColor = _cursorPos == 1 ? sf::Color::Yellow : sf::Color::White;
+    currentY += promptFontSize+24;
     UiUtils::instance().drawText( "exit to desktop", promptFontSize, screenCenterX, currentY, false, exitColor );
 
     Utils::window.display();
@@ -77,14 +82,20 @@ int TitleScreen::draw()
 
     if (_cursorPos == 0) {
         _selected = false; _blink = false;
-        return 1; // LoadNextLevel
+        if (PersistentGameData::instance().isShopUnlocked()) {
+            BonusShopWindow::instance().afterGameOver = false;
+            return 7; // BonusShop
+        }
+        else
+            return 1; // LoadNextLevel
     }
     else if (_cursorPos == 1) {
-        _selected = false; _blink = false;
-        return 6; // BonusShop
+        return 8; // ExitGame
+        //_selected = false; _blink = false;
+        //return 7; // BonusShop
     }
     else {
-        return 7; // ExitGame
+        return 8; // ExitGame
     }
 }
 
@@ -117,15 +128,21 @@ void TitleScreen::moveCursorUp()
     if (_selected) return;
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::moveCursor);
     if (--_cursorPos < 0)
-        _cursorPos = 2;
+        _cursorPos = 1;
+
+    //if (_cursorPos == 1 && !PersistentGameData::instance().isShopUnlocked())
+    //    --_cursorPos;
 }
 
 void TitleScreen::moveCursorDown()
 {
     if (_selected) return;
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::moveCursor);
-    if (++_cursorPos > 2)
+    if (++_cursorPos > 1)
         _cursorPos = 0;
+
+    //if (_cursorPos == 1 && !PersistentGameData::instance().isShopUnlocked())
+    //    ++_cursorPos;
 }
 
 void TitleScreen::selectOption()

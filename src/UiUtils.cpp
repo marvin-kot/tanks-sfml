@@ -62,3 +62,13 @@ void UiUtils::drawIcon(const sf::IntRect& iconRect, int x, int y)
 
     Utils::window.draw(_sprite);
 }
+
+void UiUtils::drawHorizontalLine(int x, int y, int width, sf::Color color)
+{
+    sf::RectangleShape line(sf::Vector2f(width, 4));
+    line.setOrigin(line.getSize().x/2, line.getSize().y/2);
+    line.setPosition(sf::Vector2f(x, y));
+    line.setFillColor(color);
+
+    Utils::window.draw(line);
+}

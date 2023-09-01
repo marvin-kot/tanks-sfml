@@ -39,7 +39,9 @@ public:
         CollectableBonus = 0x800,
         PlayerSpawner = 0x1000,
         PiercingBullet = 0x2000,
-        Delete = 0x4000
+        Delete = 0x4000,
+        Boss = 0x8000,
+        Explosive = 0x10000
     };
 
 private:
@@ -69,6 +71,8 @@ private:
 public:
     SpriteRenderer *spriteRenderer = nullptr;
     GameObject *visualEffect = nullptr;
+    GameObject *turret = nullptr;
+
     bool moving = false;
     int damage = 0;
 public:
@@ -100,8 +104,9 @@ public:
     sf::IntRect boundingBox() const;
     bool collides(const GameObject& go) const;
     bool collidesWithAnyObject() const;
-    GameObject *objectContainingPoint(int id, int x, int y) const;
-    GameObject *linecastInCurrentDirection() const;
+    static GameObject *objectContainingPoint(int id, int x, int y);
+    static GameObject *linecastInDirection(int id, int x, int y, globalTypes::Direction dir, int minRange, int maxRange);
+    GameObject *linecastInCurrentDirection(int minRange = 0, int maxRange = 512) const;
     std::vector<GameObject *> allCollisions() const;
     void updateOnCollision(GameObject *, bool& cancelMovement);
     void updateOnCollision(GameObject *);
@@ -127,6 +132,8 @@ public:
     void setCurrentAnimation(std::string animName);
     void stopAnimation();
     void restartAnimation();
+
+    int distanceTo(GameObject *);
 
     net::ThinGameObject update();
     bool shoot();

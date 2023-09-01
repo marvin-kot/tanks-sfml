@@ -19,9 +19,14 @@ static std::vector<int> xpNeededForLevelUp;
 
  void initXpLevelupNumbers()
  {
-    std::vector<int> limits = {400, 600, };
+    std::vector<int> limits = {400, 600 };
     for (int i = 2; i < 40 ; i++) {
-        float coeff = i<6 ? 1.4 : i<10 ? 1.3 : 1.2;
+        float coeff = 1;
+        if (i<6)        coeff = 1.4;
+        else if (i<8)   coeff = 1.3;
+        else if (i<10)  coeff = 1.2;
+        else            coeff = 1.1;
+
         int val = ((int)(limits[i-1] * coeff) / 100) * 100;
         limits.push_back(val);
     }
@@ -44,25 +49,33 @@ PlayerController::PlayerController(GameObject *obj)
     _clock.reset(true);
     resetXP();
     initXpLevelupNumbers();
-
-    for (auto obj : PlayerUpgrade::availablePerkObjects) {
-        if (PlayerUpgrade::playerOwnedPerks.contains(obj->type()))
-            obj->onCollect(_gameObject);
-    }
 }
 
 PlayerController::~PlayerController()
 {
     // if player has "atomic core" trait, kill all enemies instantly
 
-    if (hasLevelOfUpgrade(PlayerUpgrade::KillAllOnDeath) > -1) {
-        std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank"});
+    if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::KillAllOnDeath)) {
+        std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcDoubleCannonArmorTank"});
         std::for_each(objectsToKill.cbegin(), objectsToKill.cend(), [](GameObject *obj) {
             obj->markForDeletion();
         });
     }
 
     resetXP();
+}
+
+void PlayerController::applyPerks()
+{
+    for (auto obj : PlayerUpgrade::availablePerkObjects) {
+        if (PlayerUpgrade::playerOwnedPerks.contains(obj->type()))
+            obj->onCollect(_gameObject);
+    }
+}
+
+void PlayerController::removePerks()
+{
+    PlayerUpgrade::playerOwnedPerks.clear();
 }
 
 void PlayerController::setPressedFlag(KeysPressed flag, bool state)
@@ -84,10 +97,12 @@ void PlayerController::update()
     if (_pause) return;
 
     assert(_gameObject != nullptr);
+
+
     if (_invincible) {
-        if (_invincibilityTimer.getElapsedTime() < sf::milliseconds(_invincibilityTimeout))
-            _gameObject->visualEffect->copyParentPosition(_gameObject);
-        else {
+        if (_invincibilityTimer.getElapsedTime() < sf::milliseconds(_invincibilityTimeout)) {
+            //_gameObject->visualEffect->copyParentPosition(_gameObject);
+        } else {
             _invincible = false;
             delete _gameObject->visualEffect;
             _gameObject->visualEffect = nullptr;
@@ -193,33 +208,55 @@ int PlayerController::trySqueeze()
 
 void PlayerController::updateAppearance()
 {
-    SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
-    assert(renderer != nullptr);
+    assert(_gameObject != nullptr);
+    assert(_gameObject->turret != nullptr);
+
+    SpriteRenderer *baseRenderer = _gameObject->getComponent<SpriteRenderer>();
+    SpriteRenderer *turretRenderer = _gameObject->turret->getComponent<SpriteRenderer>();
+    assert(baseRenderer != nullptr);
+    assert(turretRenderer != nullptr);
+
     Damageable *damageable = _gameObject->getComponent<Damageable>();
     assert(damageable != nullptr);
 
+    int turretOffsetX = 0;
+    int turretOffsetY = 0;
+
     switch (damageable->defence()) {
         case 0:
-            renderer->setSpriteSheetOffset(0, 256);
+            baseRenderer->setSpriteSheetOffset(0, -16);
+            turretOffsetX = 16;
             break;
         case 1:
-            renderer->setSpriteSheetOffset(0, 0);
+            baseRenderer->setSpriteSheetOffset(0, 0);
             break;
         case 2:
-            renderer->setSpriteSheetOffset(0, 16);
+            baseRenderer->setSpriteSheetOffset(0, 16);
             break;
         case 3:
-            renderer->setSpriteSheetOffset(0, 32);
+            baseRenderer->setSpriteSheetOffset(0, 32);
             break;
         case 4:
-            renderer->setSpriteSheetOffset(0, 48);
+            baseRenderer->setSpriteSheetOffset(0, 48);
             break;
         case 5:
-            renderer->setSpriteSheetOffset(0, 48);
+            baseRenderer->setSpriteSheetOffset(0, 48);
             break;
     }
 
-    renderer->showAnimationFrame(0);
+    Shootable *shootable = _gameObject->getComponent<Shootable>();
+    if (shootable->bulletSpeed() > globalConst::DefaultPlayerBulletSpeed)
+        turretOffsetY = 16;
+
+    if (shootable->damage() > 1)
+        turretOffsetY = 32;
+
+    if (_4dirSet)
+        turretOffsetY = 64;
+
+    turretRenderer->setSpriteSheetOffset(turretOffsetX, turretOffsetY);
+
+    baseRenderer->showAnimationFrame(0);
 }
 
 void PlayerController::onDamaged()
@@ -281,16 +318,18 @@ void PlayerController::resetXP()
     globalVars::player1Level = 1;
 
     using namespace globalConst;
-    PlayerShootable *shootable = _gameObject->getComponent<PlayerShootable>();
+    Shootable *shootable = _gameObject->getComponent<Shootable>();
     assert(shootable != nullptr);
-    shootable->resetLevel(); // 1 bullet
-    shootable->setDamage(DefaultDamage); // 1 dmg
-    shootable->setBulletSpeed(DefaultPlayerBulletSpeed);
+    delete shootable;
+    _gameObject->setShootable(Shootable::createDefaultPlayerShootable(_gameObject));
+    _4dirSet = false;
 
     Damageable *damageable = _gameObject->getComponent<Damageable>();
     damageable->setDefence(DefaultPlayerProtection);
 
     updateMoveSpeed(DefaultPlayerSpeed);
+
+    updateAppearance();
 }
 
 void PlayerController::levelUp()
@@ -309,8 +348,8 @@ void PlayerController::levelUp()
 
 void PlayerController::chooseUpgrade(int index)
 {
-    assert(index>=0 && index <= globalConst::NumOfUpgradesOnLevelup);
-    assert(PlayerUpgrade::currentRandomUpgrades.size() == globalConst::NumOfUpgradesOnLevelup);
+    assert(index>=0 && index < PlayerUpgrade::currentRandomUpgrades.size());
+
     auto upgrade = PlayerUpgrade::currentRandomUpgrades[index];
     assert(upgrade != nullptr);
 
@@ -343,6 +382,18 @@ void PlayerController::chooseUpgrade(int index)
             if (tp == PlayerUpgrade::BulletTank) {
                 removeUpgrade(PlayerUpgrade::TankArmor);
                 removeUpgrade(PlayerUpgrade::TankSpeed);
+            }
+            if (tp == PlayerUpgrade::Rocket) {
+                removeUpgrade(PlayerUpgrade::BonusEffectiveness);
+                removeUpgrade(PlayerUpgrade::PowerBullets);
+            }
+            if (tp == PlayerUpgrade::MachineGun) {
+                removeUpgrade(PlayerUpgrade::MoreBullets);
+                removeUpgrade(PlayerUpgrade::FastBullets);
+            }
+            if (tp == PlayerUpgrade::FourDirectionBullets) {
+                removeUpgrade(PlayerUpgrade::MoreBullets);
+                removeUpgrade(PlayerUpgrade::PowerBullets);
             }
             break;
         }
@@ -424,7 +475,31 @@ void PlayerController::setFourDirectionTurret()
     delete oldShootable;
 
     // set new turret
-    auto newShootable = new FourDirectionShootable(_gameObject);
+    auto newShootable = new FourDirectionShootable(_gameObject, bulletSpeed);
+    //newShootable->setActionTimeoutMs(actionTimeout);
+    newShootable->setDamage(damage);
+    //newShootable->setBulletSpeed(bulletSpeed);
+
+    _gameObject->setShootable(newShootable);
+    updateAppearance();
+}
+
+void PlayerController::setRocketLauncher()
+{
+    if (_rocketSet) return;
+    _rocketSet = true;
+
+    // take old turret values
+    auto oldShootable = _gameObject->getComponent<Shootable>();
+    int actionTimeout = oldShootable->actionTimeoutMs();
+    int damage = oldShootable->damage();
+    int bulletSpeed = std::max(oldShootable->bulletSpeed(), globalConst::DefaultRocketSpeed);
+
+    // delete old turret
+    delete oldShootable;
+
+    // set new turret
+    auto newShootable = new RocketShootable(_gameObject);
     newShootable->setActionTimeoutMs(actionTimeout);
     newShootable->setDamage(damage);
     newShootable->setBulletSpeed(bulletSpeed);

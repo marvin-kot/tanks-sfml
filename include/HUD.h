@@ -14,6 +14,7 @@ class HUD
     void drawTankUpgrades(int baseY);
     void drawBaseLives(int baseY);
     void drawBaseUpgrades(int baseY);
+    void drawPerks(int baseY);
     void drawGlobalTimer();
     void drawWinScreen();
     void drawFailScreen();

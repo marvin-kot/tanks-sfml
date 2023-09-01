@@ -26,7 +26,7 @@ GrenadeCollectable::GrenadeCollectable(GameObject *parent)
 void GrenadeCollectable::onCollected(GameObject *collector)
 {
     // kill all enemy tanks in a moment
-    std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank"});
+    std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcKamikazeTank", "npc4DirTank", "npc4DirArmorTank", "npcDoubleCannonArmorTank"});
     std::for_each(objectsToKill.cbegin(), objectsToKill.cend(), [](GameObject *obj) { obj->markForDeletion(); });
 
     Collectable::onCollected(collector);

@@ -50,6 +50,11 @@ void DropGenerator::dropXp()
         {300, "300xp"},
         {400, "400xp"},
         {500, "500xp"},
+        {600, "600xp"},
+        {700, "700xp"},
+        {800, "800xp"},
+        {900, "900xp"},
+        {1000, "1000xp"},
     };
     GameObject *collectable = createObject(xpTypes.at(_xp));
     if (collectable) {
@@ -84,6 +89,16 @@ GameObject * DropGenerator::createObject(std::string type)
             component = new XpCollectable(collectable, 400);
         else if (type == "500xp")
             component = new XpCollectable(collectable, 500);
+        else if (type == "600xp")
+            component = new XpCollectable(collectable, 600);
+        else if (type == "700xp")
+            component = new XpCollectable(collectable, 700);
+        else if (type == "800xp")
+            component = new XpCollectable(collectable, 800);
+        else if (type == "900xp")
+            component = new XpCollectable(collectable, 900);
+        else if (type == "1000xp")
+            component = new XpCollectable(collectable, 1000);
         else
             component = new Collectable(collectable); // default collectable (useless)
 

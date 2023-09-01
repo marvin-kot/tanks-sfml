@@ -127,7 +127,7 @@
                     {
                         "id" : 0,
                         "x"  : 0,
-                        "y"  : 0,
+                        "y"  : 272,
                         "w"  : 16,
                         "h"  : 16,
                         "dur": 200
@@ -135,10 +135,61 @@
                     {
                         "id" : 1,
                         "x"  : 16,
-                        "y"  : 0,
+                        "y"  : 272,
                         "w"  : 16,
                         "h"  : 16,
                         "dur" : 200
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "playerTurret",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 0,
+                        "y"  : 336,
+                        "w"  : 16,
+                        "h"  : 16
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "npcGiantTank",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 192,
+                        "y"  : 128,
+                        "w"  : 32,
+                        "h"  : 32,
+                        "dur" : 150
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 224,
+                        "y"  : 128,
+                        "w"  : 32,
+                        "h"  : 32,
+                        "dur" : 150
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 160,
+                        "y"  : 128,
+                        "w"  : 32,
+                        "h"  : 32,
+                        "dur" : 150
                     }
                 ]
             }
@@ -249,6 +300,110 @@
         ]
     },
     {
+        "type" : "npcKamikazeTank",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 160,
+                        "y"  : 80,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur" : 200
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 176,
+                        "y"  : 80,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur" : 200
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "npc4DirTank",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 160,
+                        "y"  : 96,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur" : 200
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 176,
+                        "y"  : 96,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur" : 200
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "npc4DirArmorTank",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 160,
+                        "y"  : 112,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur" : 200
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 176,
+                        "y"  : 112,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur" : 200
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "npcDoubleCannonArmorTank",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 192,
+                        "y"  : 112,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur" : 200
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 208,
+                        "y"  : 112,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur" : 200
+                    }
+                ]
+            }
+        ]
+    },
+    {
         "type" : "bullet",
         "animations" : [
             {
@@ -261,6 +416,32 @@
                         "w"  : 5,
                         "h"  : 5,
                         "dur": 0
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "rocket",
+        "animations" : [
+            {
+                "name" : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 286,
+                        "y"  : 200,
+                        "w"  : 12,
+                        "h"  : 12,
+                        "dur": 150
+                    },
+                    {
+                        "id" : 0,
+                        "x"  : 299,
+                        "y"  : 200,
+                        "w"  : 12,
+                        "h"  : 12,
+                        "dur": 150
                     }
                 ]
             }
@@ -739,6 +920,58 @@
         ]
     },
     {
+        "type" : "eagleBrickCollectable",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 320,
+                        "y"  : 16,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "machineGunCollectable",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 304,
+                        "y"  : 16,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    }
+                ]
+            }
+        ]
+    },
+    {
         "type" : "bulletCollectable",
         "animations": [
             {
@@ -999,6 +1232,32 @@
         ]
     },
     {
+        "type" : "redRocketCollectable",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 352,
+                        "y"  : 32,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 16,
+                        "h"  : 16,
+                        "dur": 300
+                    }
+                ]
+            }
+        ]
+    },
+    {
         "type" : "depositXpCollectable",
         "animations": [
             {
@@ -1173,6 +1432,136 @@
                         "x"  : 352,
                         "y"  : 0,
                         "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "600xp",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 305,
+                        "y"  : 174,
+                        "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "700xp",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 321,
+                        "y"  : 174,
+                        "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "800xp",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 337,
+                        "y"  : 174,
+                        "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "900xp",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 353,
+                        "y"  : 174,
+                        "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 352,
+                        "y"  : 0,
+                        "w"  : 14,
+                        "h"  : 7,
+                        "dur": 100
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type" : "1000xp",
+        "animations": [
+            {
+                "name"   : "default",
+                "frames" : [
+                    {
+                        "id" : 0,
+                        "x"  : 349,
+                        "y"  : 184,
+                        "w"  : 18,
+                        "h"  : 7,
+                        "dur": 100
+                    },
+                    {
+                        "id" : 1,
+                        "x"  : 350,
+                        "y"  : 0,
+                        "w"  : 18,
                         "h"  : 7,
                         "dur": 100
                     }

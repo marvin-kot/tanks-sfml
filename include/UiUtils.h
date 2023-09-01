@@ -18,4 +18,5 @@ public:
     void drawText(std::string str, int fontSize, int x, int y, bool leftOrientation = false, sf::Color color = sf::Color::White);
     void drawMiniIcon(const sf::IntRect& iconRect, int x, int y);
     void drawIcon(const sf::IntRect& iconRect, int x, int y);
+    void drawHorizontalLine(int x, int y, int width, sf::Color color);
 };

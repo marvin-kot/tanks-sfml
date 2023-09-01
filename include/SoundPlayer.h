@@ -31,8 +31,12 @@ public:
         fail,
         debuff,
         moveCursor,
-        startGame
+        startGame,
+        briefingTheme,
+        BossTheme,
+        ShopTheme
     };
+
 private:
     std::unordered_map<SoundType, std::pair<sf::SoundBuffer, sf::Sound>> loadedSounds;
 
@@ -41,6 +45,7 @@ private:
 
 public:
     bool gameOver = false;
+    bool bossAlive = false;
 private:
     SoundPlayer();
 
@@ -54,11 +59,15 @@ public:
 
     void playSound(SoundType);
     void stopSound(SoundType);
+    void pauseSound(SoundType);
+    void pauseAllSounds();
 
     int loadSounds();
     void stopAllSounds();
     void playTankStandSound();
     void playTankMoveSound();
+    void playBossTheme();
+    void playShopTheme();
 
     void playIceSkidSound();
 

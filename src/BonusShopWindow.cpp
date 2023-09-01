@@ -57,6 +57,12 @@ void BonusShopWindow::draw()
     greyRect.setFillColor(sf::Color(102, 102, 102));
     Utils::window.draw(greyRect);
 
+    sf::RectangleShape darkRect(sf::Vector2f(screen_w - 256, screen_h - 128));
+    darkRect.setOrigin(darkRect.getSize().x/2, darkRect.getSize().y/2);
+    darkRect.setPosition(sf::Vector2f(screenCenterX, screenCenterY));
+    darkRect.setFillColor(sf::Color(82, 82, 82));
+    Utils::window.draw(darkRect);
+
     const int centerX = greyRect.getPosition().x;
     const int menuWidth = greyRect.getSize().x;
     const int menuHeight = greyRect.getSize().y;
@@ -66,7 +72,7 @@ void BonusShopWindow::draw()
 
     // draw title
     const int titleFontSize = 48;
-    std::string title = "Once more?";
+    std::string title = afterGameOver ? "Once more?" : "Welcome!";
 
     currentStringY += titleFontSize * 2;
     UiUtils::instance().drawText( title, titleFontSize, centerX, currentStringY);
@@ -85,9 +91,7 @@ void BonusShopWindow::draw()
     UiUtils::instance().drawText( amount, amountSize, menuWidth/5-64, currentStringY, true) ;
 
     currentStringY += amountSize;
-    std::string line = "---------------------------------------------------------------------------";
-    UiUtils::instance().drawText( line, promptSize, menuWidth/5-64, currentStringY, true) ;
-
+    UiUtils::instance().drawHorizontalLine(centerX, currentStringY, darkRect.getSize().x - 64, sf::Color::White);
 
     // draw cursor
     currentStringY += 96;

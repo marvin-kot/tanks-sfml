@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SFML/System/Clock.hpp>
+
 class GameObject;
 
 class Damageable
@@ -9,6 +11,7 @@ private:
     int _def;
     bool _invincible;
 
+    sf::Clock _clock;
 public:
     Damageable(GameObject *parent, int def);
     void takeDamage(int dmg);

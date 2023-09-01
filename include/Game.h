@@ -3,7 +3,7 @@
 #include "MapCreator.h"
 #include "NetGameTypes.h"
 
-
+#include <SFML/System/Time.hpp>
 #include <string>
 
 namespace allinone
@@ -20,6 +20,7 @@ private:
         StartLevel,
         PlayingLevel,
         GameOver = 5,
+        GameOverScreen,
         BonusShop,
         ExitGame
     };
@@ -27,9 +28,12 @@ private:
     GameState gameState;
     int currentLevel;
     Level::Properties _currentLevelProperties;
-    int _surviveTimeoutSec;
 
     int framesToDie, framesToWin;
+
+    int _killsCount;
+
+    sf::Time _finishTime;
 
 public:
     Game();

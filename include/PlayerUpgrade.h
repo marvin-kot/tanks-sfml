@@ -11,6 +11,9 @@
 
 
 class GameObject;
+class PlayerController;
+class EagleController;
+
 class PlayerUpgrade
 {
 public:
@@ -29,6 +32,7 @@ public:
         PiercingBullets,
         Rocket,
         BulletTank,
+        MachineGun,
         // base upgrades
         BaseArmor,
         RepairWalls,
@@ -37,6 +41,8 @@ public:
         PhoenixBase,
         BaseInvincibility,
         BaseRevengeOnDamage,
+        // base super upgrades
+        BaseRestoreOnDamage,
         // one time bonuses
         FreezeEnemies,
         InstantKillEnemies,
@@ -53,6 +59,9 @@ public:
         XpIncreaser,
         KillAllOnDeath,
         SacrificeLifeForBase,
+        FavoriteTank,
+        FavoriteBase,
+
     };
 
     enum UpgradeCategory
@@ -66,6 +75,10 @@ public:
     // TODO: incapsulate
     static std::vector<UpgradeType> availableTypes;
     static void removeFromAvailable(UpgradeType);
+    static std::vector<UpgradeType> fillLocalTypesList(PlayerController *pContr, EagleController *eContr);
+
+    static std::map<UpgradeType, int> perkPrices;
+    static int minPerkPrice;
 protected:
     GameObject *_parent;
 
@@ -82,6 +95,7 @@ protected:
 
     bool _applied = false;
     int _price = 0; // for perks only
+
 public:
     PlayerUpgrade(int level);
 
@@ -181,31 +195,7 @@ public:
 };
 
 
-class RebuildEagleWallsOnLevelup : public PlayerUpgrade
-{
-    std::vector<int> _numberBasedOnLevel;
-    int levelupCounter = 0;
 
-public:
-    RebuildEagleWallsOnLevelup(int level);
-    void onCollect(GameObject *collector) override;
-};
-
-class BaseArmorUpgrade : public PlayerUpgrade
-{
-    std::vector<int> _numberBasedOnLevel;
-public:
-    BaseArmorUpgrade(int level);
-    void onCollect(GameObject *collector) override;
-};
-
-class EagleInvincibilityAfterDamage : public PlayerUpgrade
-{
-    std::vector<int> _timeBasedOnLevel;
-public:
-    EagleInvincibilityAfterDamage(int level);
-    void onCollect(GameObject *collector) override;
-};
 
 class FasterBulletUpgrade : public PlayerUpgrade
 {
@@ -276,6 +266,20 @@ public:
     void onCollect(GameObject *collector) override;
 };
 
+class RocketUpgrade : public PlayerUpgrade
+{
+public:
+    RocketUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class MachineGunUpgrade : public PlayerUpgrade
+{
+public:
+    MachineGunUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
 class KillAllOnTankDeathUpgrade : public PlayerUpgrade
 {
 public:
@@ -287,6 +291,20 @@ class SacrificeLifeForBaseUpgrade : public PlayerUpgrade
 {
 public:
     SacrificeLifeForBaseUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class FavoriteTankPerk : public PlayerUpgrade
+{
+public:
+    FavoriteTankPerk();
+    void onCollect(GameObject *collector) override;
+};
+
+class FavoriteBasePerk : public PlayerUpgrade
+{
+public:
+    FavoriteBasePerk();
     void onCollect(GameObject *collector) override;
 };
 

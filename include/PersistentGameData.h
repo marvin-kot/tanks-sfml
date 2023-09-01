@@ -13,6 +13,7 @@ private:
     std::string _filePath;
 
     long int _xpDeposit;
+    bool _shopUnlocked;
 public:
     static PersistentGameData& instance();
 
@@ -23,4 +24,7 @@ public:
     int xpDeposit() const { return _xpDeposit; }
     void addToXpDeposit(int val) { _xpDeposit += val; }
     void subtractFromDeposit(int val) { _xpDeposit -= val; }
+
+    bool isShopUnlocked() const { return _shopUnlocked; }
+    void unlockShop() { _shopUnlocked = true; }
 };

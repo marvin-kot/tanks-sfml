@@ -10,6 +10,10 @@ void Damageable::takeDamage(int dmg)
 {
     if (_invincible) return;
 
+    if (_clock.getElapsedTime() < sf::milliseconds(globalConst::MinDamageTimeoutMs))
+        return;
+    _clock.restart();
+
     _def = _def - dmg;
 
     auto controller = _gameObject->getComponent<Controller>();

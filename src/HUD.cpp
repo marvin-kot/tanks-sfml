@@ -52,6 +52,7 @@ void HUD::draw()
     drawTankUpgrades(112);
     drawBaseLives(112+64);
     drawBaseUpgrades(112+64+48);
+    drawPerks(28);
 
     drawGlobalTimer();
 
@@ -150,6 +151,18 @@ void HUD::drawBaseUpgrades(int baseY)
             baseX + i * (32 + 16),
             baseY + 24
         );
+    }
+}
+
+void HUD::drawPerks(int baseY)
+{
+    int baseX = globalConst::screen_w - 48;
+
+    for (auto obj : PlayerUpgrade::availablePerkObjects) {
+        if (PlayerUpgrade::playerOwnedPerks.contains(obj->type())) {
+            UiUtils::instance().drawMiniIcon( obj->iconRect(), baseX, baseY );
+            baseX -= 48;
+        }
     }
 }
 
