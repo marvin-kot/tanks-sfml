@@ -14,7 +14,7 @@ private:
 
     long int _xpDeposit;
     bool _shopUnlocked;
-    int _unlockedLevels;
+    int _levelsUnlocked;
 public:
     static PersistentGameData& instance();
 
@@ -29,6 +29,6 @@ public:
     bool isShopUnlocked() const { return _shopUnlocked; }
     void unlockShop() { _shopUnlocked = true; }
 
-    void unlockNewLevel() { _unlockedLevels++;}
-    int unlockedLevels() { return _unlockedLevels; }
+    void unlockNewLevel() { _levelsUnlocked++;}
+    int unlockedLevels() { return _levelsUnlocked; }
 };

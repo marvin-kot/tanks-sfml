@@ -15,6 +15,7 @@ private:
         AddingToDeposit,
         DelayAfterAdding,
         UnlockShop,
+        UnlockNewMission,
         Exit
     };
 
@@ -31,8 +32,11 @@ private:
     int _countMoney;
 
     bool _shopJustUnlocked = false;
+    bool _newMissionJustUnlocked = false;
 
     bool _faster = false;
+
+    bool _won = false;
 
     GameOverScreen(GameOverScreen&) = delete;
     void operator=(const GameOverScreen&) = delete;
@@ -41,7 +45,7 @@ private:
 public:
     static GameOverScreen& instance();
 
-    void setMissionOutcome(int kills, int time);
+    void setMissionOutcome(bool won, int kills, int time);
     int draw();
     void increaseCountSpeed() { _faster = true; }
 };

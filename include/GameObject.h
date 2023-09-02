@@ -53,7 +53,6 @@ private:
     ObjectFlags _flags = None;
     bool _deleteme = false;
 
-    Controller *_controller = nullptr;
     Shootable *_shootable = nullptr;
     Damageable *_damageable = nullptr;
     DropGenerator *_dropGenerator = nullptr;
@@ -61,7 +60,7 @@ private:
 
     globalTypes::Direction _direction;
 
-    GameObject *_parentObject;
+    GameObject *_parentObject = nullptr;
     int _x, _y;
     int _w, _h;
 
@@ -77,6 +76,8 @@ public:
 
     bool moving = false;
     int damage = 0;
+private:
+    Controller *_controller = nullptr; // order matters
 public:
     GameObject(std::string name);
     GameObject(GameObject *, std::string name);

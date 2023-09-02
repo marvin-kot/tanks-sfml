@@ -1,18 +1,18 @@
-Strategically Important Lake
-SURVIVE 10
+Ruined hamlet
+KILLEMALL
 LOSE_BASE 0
 2
-This is a swamp where our ancestors lived for ages!
-You must protect it! You are our only hope!
+This time situation looks totally hopeless
+That's why we need you!
 map 19 16
 *****....&....*****
 ****...&.#.&...****
 ***..*&#.#.#&*..***
 **.~#&~......&...**
 *..&~...~@~~.~&&..*
-..&*..~~~*~~~..#...
-.&&*.~~~~!~~#~.#*#&
-&&&~.##~~~~~....&&&
+.##*..~~#*#~~..#...
+.&&*.~~~#!#~#~.#*#&
+&&&~.##~###~....&&&
 &&&..*...~...*..&&&
 .&.#..~.....~..#.&.
 ..###.##.#.##.###..

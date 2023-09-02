@@ -34,22 +34,23 @@ int PersistentGameData::loadDataFromDisk()
             _shopUnlocked = data["shopUnlocked"];
         else
             _shopUnlocked = false;
+
+        if (data.contains("levelsUnlocked"))
+            _levelsUnlocked = data["levelsUnlocked"];
+        else
+            _levelsUnlocked = 0;
     }
     catch (json::parse_error& ex) {
         Logger::instance() << "file not found\n";
         _xpDeposit = 0;
         _shopUnlocked = false;
+        _levelsUnlocked = 0;
     } catch (...) {
         Logger::instance() << "unknown exception\n";
         _xpDeposit = 0;
         _shopUnlocked = false;
+        _levelsUnlocked = 0;
     }
-
-
-    /*for (json::iterator it = data.begin(); it != data.end(); ++it) {
-        json mmap = *it;
-
-    }*/
 
     return 0;
 }
@@ -60,6 +61,7 @@ int PersistentGameData::saveDataToDisk()
 
     data["deposit"] = _xpDeposit;
     data["shopUnlocked"] = _shopUnlocked;
+    data["levelsUnlocked"] = _levelsUnlocked;
     Logger::instance() << "save to file: " << _filePath;
     std::ofstream file(_filePath);
     file << data;

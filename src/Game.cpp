@@ -179,7 +179,6 @@ void Game::processWindowEvents()
                     }
                     else if (event.key.scancode == sf::Keyboard::Scan::Space) {
                         SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
-                        MissionSelectScreen::instance().open();
                         gameState = SelectLevel;
                     }
                 } else if (gameState == SelectLevel) {
@@ -190,6 +189,11 @@ void Game::processWindowEvents()
                     else if (event.key.scancode == sf::Keyboard::Scan::Enter) {
                         MissionSelectScreen::instance().selectLevel();
                         gameState = LoadNextLevel;
+                    } else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
+                        if (PersistentGameData::instance().isShopUnlocked())
+                            gameState = BonusShop;
+                        else
+                            gameState = TitleScreen;
                     }
                 }
                 else if (gameState == GameOverScreen) {
@@ -233,7 +237,7 @@ int Game::processStateChange()
         return 0;
     }
     else if (gameState == LoadNextLevel) {
-        framesToWin = -1; framesToDie = -1;
+        _won = false; framesToWin = -1; framesToDie = -1;
         SoundPlayer::instance().stopAllSounds();
         ObjectsPool::clearEverything();
 
@@ -272,7 +276,7 @@ int Game::processStateChange()
         SoundPlayer::instance().stopAllSounds();
         ObjectsPool::clearEverything();
         gameState = GameOverScreen;
-        GameOverScreen::instance().setMissionOutcome(_killsCount, (int)_finishTime.asSeconds());
+        GameOverScreen::instance().setMissionOutcome(_won, _killsCount, (int)_finishTime.asSeconds());
         PlayerUpgrade::playerOwnedPerks.clear();
         return 0;
     } else if (gameState == GameOverScreen) {
@@ -362,7 +366,7 @@ void Game::processDeletedObjects()
                     objectsToAdd.push_back(explosion);
                 }
 
-                if (obj->getParentObject()->isFlagSet(GameObject::Player))
+                if (obj->getParentObject() && obj->getParentObject()->isFlagSet(GameObject::Player))
                     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
             }
 
@@ -488,13 +492,16 @@ void Game::checkStatePostFrame()
         return;
 
     if (framesToDie > -1) {
-        if (--framesToDie <= 0)
+        if (--framesToDie <= 0) {
             gameState = GameOver;
+            _won = false;
+        }
     }
 
     if (framesToWin > -1) {
         if (--framesToWin <= 0) {
-            gameState =  /*(++currentLevel < levelMaps.size()) ? LoadNextLevel :*/ GameOver;
+            gameState = GameOver;
+            _won = true;
         }
     }
 

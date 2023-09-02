@@ -36,6 +36,8 @@ private:
 
     sf::Time _finishTime;
 
+    bool _won = false;
+
 public:
     Game();
 

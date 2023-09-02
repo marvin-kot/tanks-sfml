@@ -87,15 +87,15 @@ int TitleScreen::draw()
             return 7; // BonusShop
         }
         else
-            return 1; // LoadNextLevel
+            return 8; // LoadNextLevel
     }
     else if (_cursorPos == 1) {
-        return 8; // ExitGame
+        return 9; // ExitGame
         //_selected = false; _blink = false;
         //return 7; // BonusShop
     }
     else {
-        return 8; // ExitGame
+        return 9; // ExitGame
     }
 }
 

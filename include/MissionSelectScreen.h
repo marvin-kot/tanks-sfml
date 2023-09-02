@@ -40,4 +40,6 @@ public:
     int cursorPosition();
 
     std::string getSelectedFilename() const { return _missions[_cursorPos].filename; }
+
+    int totalMissions() const { return _missions.size(); }
 };

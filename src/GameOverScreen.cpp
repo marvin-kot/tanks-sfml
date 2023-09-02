@@ -1,5 +1,6 @@
 #include "GameOverScreen.h"
 
+#include "MissionSelectScreen.h"
 #include "PlayerUpgrade.h"
 #include "PersistentGameData.h"
 #include "SoundPlayer.h"
@@ -20,8 +21,9 @@ GameOverScreen& GameOverScreen::instance()
 GameOverScreen::GameOverScreen() : _state(Start) {}
 
 
-void GameOverScreen::setMissionOutcome(int ek, int ss)
+void GameOverScreen::setMissionOutcome(bool won, int ek, int ss)
 {
+    _won = won;
     _enemiesKilled = ek;
     _secondsSurvived = ss;
 }
@@ -134,17 +136,30 @@ int GameOverScreen::draw()
                     _shopJustUnlocked = true;
                 }
 
-            if (_delayClock.getElapsedTime() > sf::seconds(_faster ? 2 : 3))
+            if (_delayClock.getElapsedTime() > sf::seconds(_faster ? 1.5 : 3)) {
+                _delayClock.restart();
+                _state = UnlockNewMission;
+            }
+            break;
+        case UnlockNewMission:
+            if (_won && !_newMissionJustUnlocked && PersistentGameData::instance().unlockedLevels()+1 < MissionSelectScreen::instance().totalMissions()) {
+                PersistentGameData::instance().unlockNewLevel();
+                SoundPlayer::instance().playSound(SoundPlayer::bonusCollect);
+                _delayClock.restart();
+                _newMissionJustUnlocked = true;
+            }
+            if (_delayClock.getElapsedTime() > sf::seconds(_faster ? 1.5 : 3))
                 _state = Exit;
             break;
         case Exit:
             _state = Start; // for the next time
             _shopJustUnlocked = false;
+            _newMissionJustUnlocked = false;
             _faster = false;
             if (PersistentGameData::instance().isShopUnlocked())
                 return 7; // BonusShop
             else
-                return 0; // TitleScreen
+                return 8; // SelectLevel
     }
 
     // Draw rest
@@ -181,16 +196,33 @@ int GameOverScreen::draw()
         UiUtils::instance().drawText( line, lineSize, menuWidth/5-64, currentStringY, true, sf::Color::White);
     }
 
-    if (_state == UnlockShop && _shopJustUnlocked) {
+    currentStringY += lineSize*2 + titleFontSize;
+
+    if (_state >= UnlockShop && _shopJustUnlocked) {
+        static bool blink = false;
+        if (_state == UnlockShop && _clock.getElapsedTime() > sf::seconds(0.3)) {
+            // blink only when appeared
+            _clock.restart();
+            blink = !blink;
+        }
+
+        if (blink || _state > UnlockShop) {
+
+            std::string line = std::format("Perk shop unlocked!");
+            UiUtils::instance().drawText( line, titleFontSize, screenCenterX, currentStringY, false, _state > UnlockShop ? greyColor : sf::Color::Green);
+        }
+    }
+
+    currentStringY += lineSize*2 + titleFontSize;
+
+    if (_state >= UnlockNewMission && _newMissionJustUnlocked) {
         static bool blink = false;
         if (_clock.getElapsedTime() > sf::seconds(0.3)) {
             _clock.restart();
             blink = !blink;
         }
-
         if (blink) {
-            currentStringY += lineSize + lineSize/2 + titleFontSize*2;
-            std::string line = std::format("Perk shop unlocked!");
+            std::string line = std::format("New Mission unlocked!");
             UiUtils::instance().drawText( line, titleFontSize, screenCenterX, currentStringY, false, sf::Color::Green);
         }
     }

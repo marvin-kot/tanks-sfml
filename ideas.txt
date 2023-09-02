@@ -90,3 +90,4 @@ box, when opened, provides one random upgrade
 BOSS ideas
 
 - super armor tank - takes 4 tiles, slow speed, 2 muzzles, shots 2 parallel bullets, which can destroy concrete. A lot of HP (10-20?)
+// 25%, 120mb

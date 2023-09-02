@@ -19,6 +19,7 @@
 GameObject::GameObject(std::string type)
 : _type(type)
 , _direction(globalTypes::Direction::Up)
+, _parentObject(nullptr)
 {
     assignUniqueId();
 }
@@ -79,7 +80,7 @@ void GameObject::unsetFlags(GameObject::ObjectFlags flags)
 
 bool GameObject::isFlagSet(GameObject::ObjectFlags f) const
 {
-    return (_flags & f) != 0;
+    return ((int)_flags & (int)f) != 0;
 }
 
 //bool isAnyOfFlagsSet(std::vector<ObjectFlags>) const;

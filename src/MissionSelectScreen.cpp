@@ -1,6 +1,7 @@
 #include "GlobalConst.h"
 #include "MissionSelectScreen.h"
 #include "MapCreator.h"
+#include "PersistentGameData.h"
 #include "SoundPlayer.h"
 #include "UiUtils.h"
 #include "Utils.h"
@@ -11,7 +12,9 @@
 #include <filesystem>
 
 
-MissionSelectScreen::MissionSelectScreen() {}
+MissionSelectScreen::MissionSelectScreen() {
+    open();
+}
 
 MissionSelectScreen& MissionSelectScreen::instance()
 {
@@ -97,12 +100,31 @@ int MissionSelectScreen::draw()
     currentStringY += titleFontSize*2;
 
     for (int i = 0; i < _missions.size(); i++) {
-        std::string line = std::to_string(i+1) + ". " + _missions[i].title;
-        UiUtils::instance().drawText( line, lineSize, menuWidth/5-64, currentStringY, true, _cursorPos == i ? sf::Color::Yellow : sf::Color::White) ;
-        currentStringY += lineSize ;
-        UiUtils::instance().drawText("     " + _missions[i].briefDescription, lineSize*2/3, menuWidth/5-64, currentStringY, true, _cursorPos == i ? sf::Color::Yellow : sf::Color::White) ;
-        currentStringY += lineSize * 2;
+
+        if (i <= PersistentGameData::instance().unlockedLevels()) {
+            std::string line = std::to_string(i+1) + ". " + _missions[i].title;
+            UiUtils::instance().drawText( line, lineSize, menuWidth/5-64, currentStringY, true, _cursorPos == i ? sf::Color::Yellow : sf::Color::White) ;
+            currentStringY += lineSize ;
+            UiUtils::instance().drawText("     " + _missions[i].briefDescription, lineSize*2/3, menuWidth/5-64, currentStringY, true, _cursorPos == i ? sf::Color::Yellow : sf::Color::White) ;
+
+            // status
+            bool completed = i<PersistentGameData::instance().unlockedLevels();
+            std::string status = completed ? "completed" : "new";
+            UiUtils::instance().drawText(status, lineSize*2/3, menuWidth-196, currentStringY, true, completed ? sf::Color::Green : sf::Color::Red);
+            currentStringY += lineSize * 2;
+        } else {
+            std::string line = std::to_string(i+1) + ". [locked]";
+            UiUtils::instance().drawText( line, lineSize, menuWidth/5-64, currentStringY, true, greyColor) ;
+            currentStringY += lineSize ;
+            UiUtils::instance().drawText("     ------", lineSize*2/3, menuWidth/5-64, currentStringY, true, greyColor);
+            currentStringY += lineSize * 2;
+        }
     }
+
+    UiUtils::instance().drawText( "press [enter] to start", lineSize, screenCenterX, screen_h - 128 - lineSize, false, sf::Color::Yellow);
+
+    UiUtils::instance().drawHorizontalLine(screenCenterX, screen_h - 128, globalConst::screen_w-64, greyColor);
+    UiUtils::instance().drawText( "complete existing missions to unlock new ones!", lineSize, screenCenterX, screen_h - 128 + lineSize);
 
     Utils::window.display();
 
@@ -112,7 +134,7 @@ int MissionSelectScreen::draw()
 void MissionSelectScreen::moveCursorDown()
 {
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::moveCursor);
-    if (++_cursorPos >= maxUnlockedMissions)
+    if (++_cursorPos > PersistentGameData::instance().unlockedLevels())
         _cursorPos = 0;
 }
 
@@ -120,7 +142,7 @@ void MissionSelectScreen::moveCursorUp()
 {
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::moveCursor);
     if (--_cursorPos < 0)
-        _cursorPos = maxUnlockedMissions-1;
+        _cursorPos = PersistentGameData::instance().unlockedLevels();
 }
 
 void MissionSelectScreen::selectLevel()
