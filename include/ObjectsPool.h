@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
+#include <queue>
 
 #include "GlobalTypes.h"
 
@@ -17,9 +18,14 @@ private:
     static std::unordered_set<GameObject *> allGameObjects;
     static std::unordered_map<std::string, std::unordered_set<GameObject *>> objectsByType;
     static std::map<globalTypes::EagleWallDirection, GameObject *> eagleWalls;
+    static std::unordered_map<int, std::unordered_set<GameObject *> > objectsByDrawOrder;
 
 
+    static void cleanupOtherContainers(GameObject *);
 public:
+
+    static std::queue<GameObject *> objectsToDelete;
+
     static std::unordered_map<int, net::ThinGameObject> thinGameObjects;
 
     static GameObject *playerObject;
@@ -46,6 +52,8 @@ public:
 
     static std::unordered_set<GameObject *> getObjectsByTypes(std::vector<std::string> types);
     static int countObjectsByTypes(std::vector<std::string> types);
+
+    static std::unordered_set<GameObject *> &getObjectsByDrawOrder(int order);
 
     static GameObject *findNpcById(int id);
 

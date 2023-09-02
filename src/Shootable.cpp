@@ -22,7 +22,7 @@ bool Shootable::shoot(globalTypes::Direction dir)
         bullet->appendFlags(GameObject::PiercingBullet);
     }
     bullet->setController(new BulletController(bullet, dir, _bulletSpeed, _damage, _piercing));
-    bullet->setRenderer(new SpriteRenderer(bullet));
+    bullet->setRenderer(new SpriteRenderer(bullet), 2);
     bullet->copyParentPosition(_gameObject);
 
     // add to bullet pool
@@ -90,7 +90,7 @@ bool FourDirectionShootable::shoot(globalTypes::Direction)
             bullet->appendFlags(GameObject::PiercingBullet);
 
         bullet->setController(new BulletController(bullet, dir, _bulletSpeed, _damage, _piercing));
-        bullet->setRenderer(new SpriteRenderer(bullet));
+        bullet->setRenderer(new SpriteRenderer(bullet), 2);
         bullet->copyParentPosition(_gameObject);
 
         // add to bullet pool
@@ -115,7 +115,7 @@ bool RocketShootable::shoot(globalTypes::Direction dir)
     bullet->setParentId(_gameObject->id());
     bullet->setFlags(GameObject::Bullet | GameObject::Explosive);
     bullet->setController(new RocketController(bullet, dir, _bulletSpeed, _damage));
-    bullet->setRenderer(new SpriteRenderer(bullet));
+    bullet->setRenderer(new SpriteRenderer(bullet), 2);
     bullet->copyParentPosition(_gameObject);
 
     // add to bullet pool
@@ -162,7 +162,7 @@ bool DoubleShootable::shoot(globalTypes::Direction dir)
         bullet->setParentId(_gameObject->id());
         bullet->setFlags(GameObject::Bullet);
         bullet->setController(new BulletController(bullet, dir, _bulletSpeed, _damage));
-        bullet->setRenderer(new SpriteRenderer(bullet));
+        bullet->setRenderer(new SpriteRenderer(bullet), 2);
         bullet->setPosition(pos.x - offsetX, pos.y - offsetY);
         ObjectsPool::addObject(bullet);
     }
@@ -171,7 +171,7 @@ bool DoubleShootable::shoot(globalTypes::Direction dir)
         bullet->setParentId(_gameObject->id());
         bullet->setFlags(GameObject::Bullet);
         bullet->setController(new BulletController(bullet, dir, _bulletSpeed, _damage));
-        bullet->setRenderer(new SpriteRenderer(bullet));
+        bullet->setRenderer(new SpriteRenderer(bullet), 2);
         bullet->setPosition(pos.x + offsetX, pos.y + offsetY);
         ObjectsPool::addObject(bullet);
     }
@@ -219,7 +219,7 @@ bool DoubleRocketShootable::shoot(globalTypes::Direction dir)
         bullet->setParentId(_gameObject->id());
         bullet->setFlags(GameObject::Bullet | GameObject::Explosive);
         bullet->setController(new RocketController(bullet, dir, _bulletSpeed, _damage));
-        bullet->setRenderer(new SpriteRenderer(bullet));
+        bullet->setRenderer(new SpriteRenderer(bullet), 2);
         bullet->setPosition(pos.x - offsetX, pos.y - offsetY);
         ObjectsPool::addObject(bullet);
     }
@@ -228,7 +228,7 @@ bool DoubleRocketShootable::shoot(globalTypes::Direction dir)
         bullet->setParentId(_gameObject->id());
         bullet->setFlags(GameObject::Bullet | GameObject::Explosive);
         bullet->setController(new RocketController(bullet, dir, _bulletSpeed, _damage));
-        bullet->setRenderer(new SpriteRenderer(bullet));
+        bullet->setRenderer(new SpriteRenderer(bullet), 2);
         bullet->setPosition(pos.x + offsetX, pos.y + offsetY);
         ObjectsPool::addObject(bullet);
     }

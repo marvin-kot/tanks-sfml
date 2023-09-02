@@ -8,6 +8,7 @@
 #include "HUD.h"
 #include "LevelUpPopupMenu.h"
 #include "Logger.h"
+#include "MissionSelectScreen.h"
 #include "ObjectsPool.h"
 #include "PersistentGameData.h"
 #include "PlayerController.h"
@@ -178,9 +179,20 @@ void Game::processWindowEvents()
                     }
                     else if (event.key.scancode == sf::Keyboard::Scan::Space) {
                         SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
+                        MissionSelectScreen::instance().open();
+                        gameState = SelectLevel;
+                    }
+                } else if (gameState == SelectLevel) {
+                    if (event.key.scancode == sf::Keyboard::Scan::Down)
+                        MissionSelectScreen::instance().moveCursorDown();
+                    else if (event.key.scancode == sf::Keyboard::Scan::Up)
+                        MissionSelectScreen::instance().moveCursorUp();
+                    else if (event.key.scancode == sf::Keyboard::Scan::Enter) {
+                        MissionSelectScreen::instance().selectLevel();
                         gameState = LoadNextLevel;
                     }
-                } else if (gameState == GameOverScreen) {
+                }
+                else if (gameState == GameOverScreen) {
                     if (event.key.scancode == sf::Keyboard::Scan::Enter || event.key.scancode == sf::Keyboard::Scan::Enter || event.key.scancode == sf::Keyboard::Scan::Escape)
                         GameOverScreen::instance().increaseCountSpeed();
                 }
@@ -216,12 +228,11 @@ int Game::processStateChange()
         //drawTitleScreen();
         gameState = static_cast<GameState>(TitleScreen::instance().draw());
         return 0;
-    } else if (gameState == LoadNextLevel) {
-        if (currentLevel >= levelMaps.size()) {
-            gameState = TitleScreen;
-            return 0;
-        }
-
+    } else if (gameState == SelectLevel) {
+        MissionSelectScreen::instance().draw();
+        return 0;
+    }
+    else if (gameState == LoadNextLevel) {
         framesToWin = -1; framesToDie = -1;
         SoundPlayer::instance().stopAllSounds();
         ObjectsPool::clearEverything();
@@ -229,8 +240,10 @@ int Game::processStateChange()
         globalVars::player1Lives = globalConst::InitialLives;
         globalVars::player1PowerLevel = globalConst::InitialPowerLevel;
 
-        Logger::instance() << "Building map..." << levelMaps[currentLevel] << "\n";
-        if (!buildLevelMap(levelMaps[currentLevel])) {
+        std::string filename = MissionSelectScreen::instance().getSelectedFilename();
+
+        Logger::instance() << "Building map..." << filename << "\n";
+        if (!buildLevelMap(filename)) {
             PlayerUpgrade::deletePerks();
             PersistentGameData::instance().saveDataToDisk();
             Utils::window.close();
@@ -315,74 +328,73 @@ void Game::processDeletedObjects()
     std::vector<GameObject *> objectsToAdd;
 
         // delete objects marked for deletion on previous step
-        for (auto it = allObjects.begin(); it != allObjects.end(); ) {
-            GameObject *obj = *it;
-            if (obj->mustBeDeleted()) {
-                if (obj->isFlagSet(GameObject::Player)) {
-                    globalVars::player1Lives--;
-                    ObjectsPool::playerObject = nullptr;
-                }
+        while (!ObjectsPool::objectsToDelete.empty()) {
+            GameObject *obj = ObjectsPool::objectsToDelete.front();
 
-                if (obj->isFlagSet(GameObject::Eagle)) {
-                    ObjectsPool::eagleObject = nullptr;
-                    // do not break here - we still need to create explosion few lines later!
-                }
+            if (obj->isFlagSet(GameObject::Player)) {
+                globalVars::player1Lives--;
+                ObjectsPool::playerObject = nullptr;
+            }
 
-                if (obj->isFlagSet(GameObject::PlayerSpawner))
-                    ObjectsPool::playerSpawnerObject = nullptr;
+            if (obj->isFlagSet(GameObject::Eagle)) {
+                ObjectsPool::eagleObject = nullptr;
+                // do not break here - we still need to create explosion few lines later!
+            }
 
-                if (obj->isFlagSet(GameObject::Bullet)) {
-                    if (obj->isFlagSet(GameObject::Explosive)) {
-                        GameObject *explosion = new GameObject("bigExplosion");
-                        explosion->setRenderer(new OneShotAnimationRenderer(explosion));
-                        explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                        explosion->copyParentPosition(obj);
-                        explosion->damage = 1;
-                        objectsToAdd.push_back(explosion);
-                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
-                    } else {
-                        GameObject *explosion = new GameObject("smallExplosion");
-                        explosion->setRenderer(new OneShotAnimationRenderer(explosion));
-                        explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                        explosion->copyParentPosition(obj);
+            if (obj->isFlagSet(GameObject::PlayerSpawner))
+                ObjectsPool::playerSpawnerObject = nullptr;
 
-                        objectsToAdd.push_back(explosion);
-                    }
-
-                    if (obj->getParentObject()->isFlagSet(GameObject::Player))
-                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
-                }
-
-                if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle)) {
+            if (obj->isFlagSet(GameObject::Bullet)) {
+                if (obj->isFlagSet(GameObject::Explosive)) {
                     GameObject *explosion = new GameObject("bigExplosion");
-                    explosion->setRenderer(new OneShotAnimationRenderer(explosion));
+                    explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
                     explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                    if (obj->isFlagSet(GameObject::Explosive)) {
-                        explosion->damage = 1;
-                    }
+                    explosion->copyParentPosition(obj);
+                    explosion->damage = 1;
+                    objectsToAdd.push_back(explosion);
+                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+                } else {
+                    GameObject *explosion = new GameObject("smallExplosion");
+                    explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
+                    explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
                     explosion->copyParentPosition(obj);
 
                     objectsToAdd.push_back(explosion);
-
-                    if (obj->isFlagSet(GameObject::Player | GameObject::Eagle | GameObject::Boss))
-                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
-                    else
-                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
                 }
 
-                if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive)) {
-                    _killsCount++;
+                if (obj->getParentObject()->isFlagSet(GameObject::Player))
+                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
+            }
+
+            if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle)) {
+                GameObject *explosion = new GameObject("bigExplosion");
+                explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
+                explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+                if (obj->isFlagSet(GameObject::Explosive)) {
+                    explosion->damage = 1;
                 }
+                explosion->copyParentPosition(obj);
 
-                if (obj->isFlagSet(GameObject::BonusOnHit)) {
-                    obj->generateDrop();
-                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
-                } else
-                    obj->dropXp();
+                objectsToAdd.push_back(explosion);
 
-                it = ObjectsPool::kill(it);
-                delete obj;
-            } else ++it;
+                if (obj->isFlagSet(GameObject::Player | GameObject::Eagle | GameObject::Boss))
+                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
+                else
+                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+            }
+
+            if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive)) {
+                _killsCount++;
+            }
+
+            if (obj->isFlagSet(GameObject::BonusOnHit)) {
+                obj->generateDrop();
+                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
+            } else
+                obj->dropXp();
+
+            ObjectsPool::kill(obj);
+            ObjectsPool::objectsToDelete.pop();
         }
 
         // temporary explosion effects
@@ -449,29 +461,19 @@ void Game::recalculateViewPort()
 void Game::drawObjects()
 {
     // 1. draw ice and water
-    auto objectsToDrawFirst = ObjectsPool::getObjectsByTypes({"ice", "water"});
+    auto objectsToDrawFirst = ObjectsPool::getObjectsByDrawOrder(1);
     std::for_each(objectsToDrawFirst.cbegin(), objectsToDrawFirst.cend(), [](GameObject *obj) { obj->draw(); });
 
     // 2. draw tanks and bullets
-    std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByTypes({
-                "player", "eagle",
-                "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcGiantTank", "npcDoubleCannonArmorTank", "npcKamikazeTank",
-                "bullet", "rocket"});
+    std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByDrawOrder(2);
     std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(); });
 
     // 3. draw walls and trees
-    auto objectsToDrawThird = ObjectsPool::getObjectsByTypes({
-                "brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2",
-                "concreteWall", "tree"});
+    auto objectsToDrawThird = ObjectsPool::getObjectsByDrawOrder(3);
     std::for_each(objectsToDrawThird.cbegin(), objectsToDrawThird.cend(), [](GameObject *obj) { obj->draw(); });
 
     // 4. visual effects
-    auto objectsToDrawFourth = ObjectsPool::getObjectsByTypes({
-        "spawner_player", "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank", "spawner_npcGiantTank", "spawner_npcKamikazeTank"
-        "helmetCollectable", "timerCollectable", "shovelCollectable", "starCollectable", "grenadeCollectable", "tankCollectable",
-        "100xp", "200xp", "300xp", "400xp", "500xp", "600xp", "700xp", "800xp", "900xp", "1000xp", 
-        "smallExplosion", "bigExplosion"
-        });
+    auto objectsToDrawFourth = ObjectsPool::getObjectsByDrawOrder(4);
     std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(); });
 }
 

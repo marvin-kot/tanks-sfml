@@ -19,12 +19,12 @@ static std::vector<int> xpNeededForLevelUp;
 
  void initXpLevelupNumbers()
  {
-    std::vector<int> limits = {400, 600 };
-    for (int i = 2; i < 40 ; i++) {
+    std::vector<int> limits = { 300, 400 };
+    for (int i = 2; i < 50 ; i++) {
         float coeff = 1;
-        if (i<6)        coeff = 1.4;
-        else if (i<8)   coeff = 1.3;
-        else if (i<10)  coeff = 1.2;
+        if (i<5)        coeff = 1.3;
+        else if (i<8)   coeff = 1.2;
+        //else if (i<9)  coeff = 1.1;
         else            coeff = 1.1;
 
         int val = ((int)(limits[i-1] * coeff) / 100) * 100;
@@ -280,7 +280,7 @@ void PlayerController::setTemporaryInvincibility(int msec)
     if (_gameObject->visualEffect == nullptr) {
         GameObject *cloud = new GameObject(_gameObject, "cloud");
         cloud->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-        cloud->setRenderer(new LoopAnimationSpriteRenderer(cloud, "cloud"));
+        cloud->setRenderer(new LoopAnimationSpriteRenderer(cloud, "cloud"), 4);
         _gameObject->visualEffect = cloud;
     }
 

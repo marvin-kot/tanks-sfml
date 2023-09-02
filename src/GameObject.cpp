@@ -99,7 +99,7 @@ void GameObject::draw()
         if (mappedX < mapViewPort.left || mappedX > (mapViewPort.left+mapViewPort.width)
                 || mappedY < mapViewPort.top || mappedY > (mapViewPort.top+mapViewPort.height)) {
             if (_type == "smallExplosion" || _type == "bigExplosion")
-                _deleteme = true;
+                markForDeletion();
             return;
         }
 
@@ -139,7 +139,7 @@ bool GameObject::networkDraw(net::ThinGameObject& thin)
     if (mappedX < mapViewPort.left || mappedX > (mapViewPort.left+mapViewPort.width)
             || mappedY < mapViewPort.top || mappedY > (mapViewPort.top+mapViewPort.height)) {
         if (_type == "smallExplosion" || _type == "bigExplosion")
-            _deleteme = true;
+            markForDeletion();
         return false;
     }
 
@@ -249,7 +249,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
     if (other == nullptr) {
         // bullet just fled out of bounds
         if (isBullet)
-            _deleteme = true;
+            markForDeletion();
         cancelMovement = true;
         return;
     }
@@ -269,14 +269,14 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
             if (isFlagSet(PiercingBullet) && other->isFlagSet(BulletKillable)) {
                 auto bullet = dynamic_cast<BulletController *>(_controller);
                 if (bullet->loseDamage() < 1)
-                    _deleteme = true;
+                    markForDeletion();
             } else {
-                _deleteme = true;
+                markForDeletion();
             }
         }
 
         if (!isFlagSet(PiercingBullet) && other->isFlagSet(Bullet))// && _parentId != other->_parentId)
-            _deleteme = true;
+            markForDeletion();
 
         return;
     }
@@ -304,7 +304,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
 
                 _damageable->takeDamage(bullet->damage());
                 if (_damageable->isDestroyed()) {
-                    _deleteme = true;
+                    markForDeletion();
                     cancelMovement = true;
                 }
             }
@@ -381,6 +381,12 @@ bool GameObject::isOnIce() const
     return false;
 }
 
+void GameObject::markForDeletion() {
+    _deleteme = true;
+    appendFlags(Delete);
+    ObjectsPool::objectsToDelete.push(this);
+}
+
 void GameObject::updateOnCollision(GameObject *other)
 {
     bool _;
@@ -436,7 +442,7 @@ std::vector<GameObject *> GameObject::allCollisions() const
     return result;
 }
 
-GameObject * GameObject::objectContainingPoint(int id, int x, int y)
+GameObject * GameObject::objectContainingPoint(std::unordered_set<GameObject *>& objectList, int id, int x, int y)
 {
     if (ObjectsPool::playerObject!=nullptr && ObjectsPool::playerObject->boundingBox().contains(x, y))
         return ObjectsPool::playerObject;
@@ -444,7 +450,7 @@ GameObject * GameObject::objectContainingPoint(int id, int x, int y)
     if (ObjectsPool::eagleObject!=nullptr && ObjectsPool::eagleObject->boundingBox().contains(x, y))
         return ObjectsPool::eagleObject;
 
-    for (GameObject *o : ObjectsPool::getObjectsByTypes({ "brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2", "concreteWall" })) {
+    for (GameObject *o : objectList) {
         assert( o != nullptr );
         if (id == o->id())
             continue;
@@ -463,29 +469,31 @@ GameObject *GameObject::linecastInDirection(int id, int startX, int startY, glob
     using namespace globalTypes;
     using namespace globalVars;
 
+    auto objectList = ObjectsPool::getObjectsByTypes({ "brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2", "concreteWall" });
+
     const int step = 4;
     switch (direction) {
         case Direction::Right:
             for (int x = startX + minRange; x < std::min(mapSize.x, startX + maxRange); x += step) {
-                GameObject *obj = objectContainingPoint(id, x, startY);
+                GameObject *obj = objectContainingPoint(objectList, id, x, startY);
                 if (obj != nullptr)
                     return obj;
             } break;
         case Direction::Left:
             for (int x = startX - minRange; x > std::max(0, startX - maxRange) ; x -= step) {
-                GameObject *obj = objectContainingPoint(id, x, startY);
+                GameObject *obj = objectContainingPoint(objectList, id, x, startY);
                 if (obj != nullptr)
                     return obj;
             } break;
         case Direction::Up:
             for (int y = startY - minRange; y > std::max(0, startY - maxRange) ; y -= step) {
-                GameObject *obj = objectContainingPoint(id, startX, y);
+                GameObject *obj = objectContainingPoint(objectList, id, startX, y);
                 if (obj != nullptr)
                     return obj;
             } break;
         case Direction::Down:
             for (int y = startY + minRange; y < std::min(mapSize.y, startY + maxRange) ; y += step) {
-                GameObject *obj = objectContainingPoint(id, startX, y);
+                GameObject *obj = objectContainingPoint(objectList, id, startX, y);
                 if (obj != nullptr)
                     return obj;
             } break;
@@ -532,9 +540,10 @@ void GameObject::setShootable(Shootable * shtbl)
     _shootable = shtbl;
 }
 
-void GameObject::setRenderer(SpriteRenderer *rndr)
+void GameObject::setRenderer(SpriteRenderer *rndr, int order)
 {
     spriteRenderer = rndr;
+    _drawOrder = order;
 }
 void GameObject::setDamageable(Damageable *dmgbl)
 {
@@ -572,7 +581,7 @@ void GameObject::getCollectedBy(GameObject *collector)
     if (_collectable)
         _collectable->onCollected(collector);
 
-    _deleteme = true;
+    markForDeletion();
 }
 
 void GameObject::setCurrentDirection(globalTypes::Direction dir)

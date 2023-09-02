@@ -90,7 +90,7 @@ GameObject *SpawnController::createObject(std::string type)
         GameObject *enemy = new GameObject("npcBaseTank");
         enemy->setShootable(Shootable::createDefaultEnemyShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 0));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 1));
         enemy->setDropGenerator(new DropGenerator(enemy, 100));
@@ -103,7 +103,7 @@ GameObject *SpawnController::createObject(std::string type)
         //enemy->setShootable(new Shootable(enemy, globalConst::HalvedTimeoutMs));
         enemy->setShootable(Shootable::createDefaultEnemyShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 0));
         enemy->setController(new TankRandomController(enemy, globalConst::FastEnemySpeed, 0.75));
         enemy->setDropGenerator(new DropGenerator(enemy, 200));
@@ -116,7 +116,7 @@ GameObject *SpawnController::createObject(std::string type)
         //enemy->setShootable(new Shootable(enemy, globalConst::DefaultTimeoutMs));
         enemy->setShootable(Shootable::createDefaultEnemyShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 3));
         enemy->setController(new TankRandomController(enemy, globalConst::SlowEnemySpeed, 1.5));
         enemy->setDropGenerator(new DropGenerator(enemy, 400));
@@ -132,7 +132,7 @@ GameObject *SpawnController::createObject(std::string type)
         shootable->setBulletSpeed(globalConst::DoubleEnemyBulletSpeed);
         enemy->setShootable(shootable);
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 1));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 1.5));
         enemy->setDropGenerator(new DropGenerator(enemy, 500));
@@ -148,7 +148,7 @@ GameObject *SpawnController::createObject(std::string type)
         enemy->damage = 1; // has contact damage
         enemy->setShootable(shootable);
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable | GameObject::Boss);
-        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 80));
         enemy->setController(new TankBossController(enemy, globalConst::SlowEnemySpeed*3/4, 2));
         enemy->setDropGenerator(new DropGenerator(enemy, 1000));
@@ -164,7 +164,7 @@ GameObject *SpawnController::createObject(std::string type)
 
         enemy->setShootable(shootable);
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 5));
         enemy->setController(new TankRandomController(enemy, globalConst::SlowEnemySpeed, 1.7));
         enemy->setDropGenerator(new DropGenerator(enemy, 600));
@@ -177,7 +177,7 @@ GameObject *SpawnController::createObject(std::string type)
 
         enemy->setShootable(new KamikazeShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        enemy->setRenderer(new SpriteRenderer(enemy));
+        enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 0));
         enemy->setController(new TankKamikazeController(enemy, globalConst::FastEnemySpeed, 0.7));
         enemy->setDropGenerator(new DropGenerator(enemy, 300));

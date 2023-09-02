@@ -10,26 +10,29 @@ GameObject *ObjectsPool::playerSpawnerObject = nullptr;
 GameObject *ObjectsPool::bossObject = nullptr;
 std::unordered_set<GameObject *> ObjectsPool::allGameObjects = {};
 std::unordered_map<std::string, std::unordered_set<GameObject *>> ObjectsPool::objectsByType = {};
+std::unordered_map<int, std::unordered_set<GameObject *>> ObjectsPool::objectsByDrawOrder = {};
 std::map<globalTypes::EagleWallDirection, GameObject *> ObjectsPool::eagleWalls = {};
 std::unordered_map<int, net::ThinGameObject> ObjectsPool::thinGameObjects = {};
+std::queue<GameObject *> ObjectsPool::objectsToDelete;
 
 ObjectsPool::~ObjectsPool()
 {
     clearEverything();
 }
 
-void ObjectsPool::clearEverything()
+void ObjectsPool::cleanupOtherContainers(GameObject *obj)
 {
-    for (auto it = allGameObjects.begin(); it != allGameObjects.end(); ) {
-        GameObject *obj = *it;
-        it = allGameObjects.erase(it);
+    {
         if (obj->isFlagSet(GameObject::Player))
             ObjectsPool::playerObject = nullptr;
         if (obj->isFlagSet(GameObject::PlayerSpawner))
             ObjectsPool::playerSpawnerObject = nullptr;
         if (obj->isFlagSet(GameObject::Eagle))
             ObjectsPool::eagleObject = nullptr;
-
+        if (obj->isFlagSet(GameObject::Boss))
+            ObjectsPool::bossObject = nullptr;
+    }
+    {
         auto& objByType = objectsByType.at(obj->type());
         auto it2 = objByType.find(obj);
         assert(it2 != objByType.end());
@@ -38,6 +41,25 @@ void ObjectsPool::clearEverything()
         auto dir = determineEagleWall(obj);
         if (dir != globalTypes::NotAnEagleWall)
             eagleWalls.erase(dir);
+    }
+    {
+        auto& objByOrder = objectsByDrawOrder.at(obj->drawOrder());
+        auto it3 = objByOrder.find(obj);
+        assert(it3 != objByOrder.end());
+
+        objByOrder.erase(it3);
+        auto dir = determineEagleWall(obj);
+        if (dir != globalTypes::NotAnEagleWall)
+            eagleWalls.erase(dir);
+    }
+}
+
+void ObjectsPool::clearEverything()
+{
+    for (auto it = allGameObjects.begin(); it != allGameObjects.end(); ) {
+        GameObject *obj = *it;
+        it = allGameObjects.erase(it);
+        cleanupOtherContainers(obj);
 
         delete obj;
     }
@@ -48,17 +70,7 @@ void ObjectsPool::kill(GameObject * obj)
     auto it = allGameObjects.find(obj);
     if (it != allGameObjects.end()) {
         allGameObjects.erase(it);
-        Logger::instance() << "Killing an object: " << obj->type() << " " << obj->id() << "\n";
-
-        auto& objByType = objectsByType.at(obj->type());
-        auto it2 = objByType.find(obj);
-        assert(it2 != objByType.end());
-
-        objByType.erase(it2);
-
-        auto dir = determineEagleWall(obj);
-        if (dir != globalTypes::NotAnEagleWall)
-            eagleWalls.erase(dir);
+        cleanupOtherContainers(obj);
 
         delete obj;
         return;
@@ -72,16 +84,7 @@ decltype(ObjectsPool::allGameObjects)::iterator ObjectsPool::kill(decltype(allGa
     GameObject *obj = *it;
 
     auto result = allGameObjects.erase(it);
-
-    auto& objByType = objectsByType.at(obj->type());
-    auto it2 = objByType.find(obj);
-    assert(it2 != objByType.end());
-
-    objByType.erase(it2);
-
-    auto dir = determineEagleWall(obj);
-    if (dir != globalTypes::NotAnEagleWall)
-        eagleWalls.erase(dir);
+    cleanupOtherContainers(obj);
 
     return result;
 }
@@ -99,6 +102,7 @@ void ObjectsPool::addObject(GameObject *obj)
 
     allGameObjects.insert(obj);
     objectsByType[obj->type()].insert(obj);
+    objectsByDrawOrder[obj->drawOrder()].insert(obj);
 }
 
 void ObjectsPool::addEagleWall(globalTypes::EagleWallDirection dir, GameObject *obj)
@@ -122,7 +126,7 @@ void ObjectsPool::iterateObjectAndCleanDeleted(std::function<void(GameObject *)>
     for (auto it = allGameObjects.begin(); it != allGameObjects.end(); ) {
         GameObject *obj = *it;
         if (obj->mustBeDeleted()) {
-            it = ObjectsPool::allGameObjects.erase(it);
+            it = allGameObjects.erase(it);
             delete obj;
         } else {
             func(obj);
@@ -154,6 +158,11 @@ std::unordered_set<GameObject *> ObjectsPool::getObjectsByTypes(std::vector<std:
     return result;
 }
 
+
+std::unordered_set<GameObject *>& ObjectsPool::getObjectsByDrawOrder(int order)
+{
+    return objectsByDrawOrder[order];
+}
 
 
 /*std::unordered_set<GameObject *> ObjectsPool::getObjectsByTypes(std::vector<std::string> types)

@@ -3,6 +3,9 @@
 #include "Game.h"
 #include "Logger.h"
 
+#include <SFML/System.hpp>
+#include <SFML/System/Time.hpp>
+
 
 int main()
 {
@@ -26,6 +29,8 @@ int main()
             Logger::instance() << "[ERROR] during update";
             return -1;
         }
+
+        sf::sleep(sf::milliseconds(16));
     }
 
     Logger::instance() << "Game window is closed";

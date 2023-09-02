@@ -24,13 +24,13 @@ GameObject * PlayerSpawnController::createObject()
     GameObject *pc = new GameObject("player");
     pc->setShootable(Shootable::createDefaultPlayerShootable(pc));
     pc->setFlags(GameObject::Player | GameObject::BulletKillable);
-    pc->setRenderer(new SpriteRenderer(pc));
+    pc->setRenderer(new SpriteRenderer(pc), 2);
     pc->setDamageable(new Damageable(pc, globalConst::DefaultPlayerProtection));
 
     pc->turret = new GameObject("playerTurret");
     pc->turret->setParent(pc);
     pc->turret->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-    pc->turret->setRenderer(new SpriteRenderer(pc->turret));
+    pc->turret->setRenderer(new SpriteRenderer(pc->turret), 3);
 
     // must be done after creating Damageable and turret
     auto controller = new PlayerController(pc);

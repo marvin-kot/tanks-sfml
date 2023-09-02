@@ -22,6 +22,7 @@ private:
         GameOver = 5,
         GameOverScreen,
         BonusShop,
+        SelectLevel,
         ExitGame
     };
 

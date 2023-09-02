@@ -144,8 +144,8 @@ void BonusShopWindow::drawEdging(int x,  int y)
 
 void BonusShopWindow::drawUpgrade(int index, int x, int y)
 {
-    //assert(index >=0 && index < PlayerUpgrade::currentRandomUpgrades.size());
-    //auto upgrade = PlayerUpgrade::currentRandomUpgrades[index];
+    // assert(index >=0 && index < PlayerUpgrade::currentRandomUpgrades.size());
+    // auto upgrade = PlayerUpgrade::currentRandomUpgrades[index];
 
 
     assert(index < PlayerUpgrade::availablePerkObjects.size());
@@ -159,7 +159,7 @@ void BonusShopWindow::drawUpgrade(int index, int x, int y)
     if (index == _currentUpgradeCursor)
         drawCursor(x, y);
 
-    sf::IntRect iconRect = upgrade->iconRect();//sf::IntRect(272, 16, 16, 16);
+    sf::IntRect iconRect = upgrade->iconRect(); // sf::IntRect(272, 16, 16, 16);
     UiUtils::instance().drawIcon(iconRect, x, y);
 
     std::string caption = upgrade->name();
@@ -174,7 +174,7 @@ void BonusShopWindow::drawUpgrade(int index, int x, int y)
     sf::Color priceColor = (PersistentGameData::instance().xpDeposit() > upgrade->price()) ? sf::Color::Green : sf::Color::Red;
     UiUtils::instance().drawText(price, priceSize, x, offsetY, false, priceColor);
 
-    std::string description = upgrade->currentEffectDescription();// "start with lvl.1 armor upgrade\npreserve it upon death";
+    std::string description = upgrade->currentEffectDescription(); // "start with lvl.1 armor upgrade\npreserve it upon death";
     const int descriptionFontSize = 14;
     offsetY += captionFontSize + descriptionFontSize;
     UiUtils::instance().drawText(description, descriptionFontSize, x, offsetY);

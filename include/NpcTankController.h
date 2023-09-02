@@ -13,7 +13,7 @@ protected:
     virtual bool tryToMove() = 0;
     int trySqueeze();
 
-    bool tryMoveToOneOfDirections(std::vector<globalTypes::Direction>);
+    bool tryMoveToOneOfDirections(std::vector<globalTypes::Direction>&);
 public:
     NpcTankController(GameObject *parent, int spd, float timeoutSec);
     void update() override;

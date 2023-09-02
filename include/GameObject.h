@@ -2,6 +2,7 @@
 
 #include "SpriteRenderer.h"
 #include "GlobalTypes.h"
+#include <unordered_set>
 
 class Controller;
 class Shootable;
@@ -68,6 +69,7 @@ private:
 
     int _lastUpdateFrame = 0;
 
+    int _drawOrder = 0;
 public:
     SpriteRenderer *spriteRenderer = nullptr;
     GameObject *visualEffect = nullptr;
@@ -104,7 +106,7 @@ public:
     sf::IntRect boundingBox() const;
     bool collides(const GameObject& go) const;
     bool collidesWithAnyObject() const;
-    static GameObject *objectContainingPoint(int id, int x, int y);
+    static GameObject *objectContainingPoint(std::unordered_set<GameObject *>& objectList, int id, int x, int y);
     static GameObject *linecastInDirection(int id, int x, int y, globalTypes::Direction dir, int minRange, int maxRange);
     GameObject *linecastInCurrentDirection(int minRange = 0, int maxRange = 512) const;
     std::vector<GameObject *> allCollisions() const;
@@ -114,11 +116,12 @@ public:
     inline std::string type() const { return _type; }
     inline int id() const { return _id; }
     inline bool mustBeDeleted() const { return _deleteme; }
-    inline void markForDeletion() { _deleteme = true; appendFlags(Delete); }
+    void markForDeletion();
+    inline int drawOrder() const { return _drawOrder; }
 
     void setController(Controller *);
     void setShootable(Shootable *);
-    void setRenderer(SpriteRenderer *);
+    void setRenderer(SpriteRenderer *, int order);
     void setDamageable(Damageable *);
     void setDropGenerator(DropGenerator *);
     void generateDrop();

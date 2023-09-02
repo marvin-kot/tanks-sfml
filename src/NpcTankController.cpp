@@ -80,7 +80,7 @@ void NpcTankController::onDamaged()
     renderer->setOneFrameTintColor(sf::Color::Red);
 }
 
-bool NpcTankController::tryMoveToOneOfDirections(std::vector<globalTypes::Direction> directions)
+bool NpcTankController::tryMoveToOneOfDirections(std::vector<globalTypes::Direction>& directions)
 {
     bool resetTimeout = false;
     int moved = -1; // TODO remove magic numbers

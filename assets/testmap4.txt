@@ -1,5 +1,5 @@
 Surviving the Battle Town
-SURVIVE 10
+SURVIVE 5
 LOSE_BASE 0
 3
 Brave commander! You are the only survivor of your tank regiment. And now you have an order:
@@ -70,12 +70,12 @@ npcArmorTank 10 15 240 14 3
 npcFastTank 1 15 240 15 3
 npcFastTank 17 15 240 15 3
 # wave 6
-npcKamikazeTank 0 8 300 15 3
-npcKamikazeTank 18 8 300 15 3
-npcPowerTank 0 0 300 30 2
-npcPowerTank 18 0 300 30 2
-npcPowerTank 0 18 300 30 2
-npcPowerTank 18 18 300 30 2
+npcKamikazeTank 0 8 300 15 4
+npcKamikazeTank 18 8 300 15 4
+npcPowerTank 0 0 300 20 3
+npcPowerTank 18 0 300 20 3
+npcPowerTank 0 18 300 20 3
+npcPowerTank 18 18 300 20 3
 # wave 7
 npcFastTank 0 7 362 30 2
 npcFastTank 0 8 360 30 2

@@ -68,7 +68,7 @@ GameObject * DropGenerator::createObject(std::string type)
     if (!type.empty()) {
         GameObject *collectable = new GameObject(type);
         collectable->setFlags(GameObject::CollectableBonus | GameObject::TankPassable | GameObject::BulletPassable | GameObject::Static);
-        collectable->setRenderer(new SpriteRenderer(collectable));
+        collectable->setRenderer(new SpriteRenderer(collectable), 4);
 
         Collectable *component = nullptr;
         if (type == "helmetCollectable")

@@ -243,7 +243,7 @@ void EagleController::onDamaged()
         if (_gameObject->visualEffect == nullptr) {
             GameObject *cloud = new GameObject(_gameObject, "cloud");
             cloud->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-            cloud->setRenderer(new LoopAnimationSpriteRenderer(cloud, "cloud"));
+            cloud->setRenderer(new LoopAnimationSpriteRenderer(cloud, "cloud"), 4);
             _gameObject->visualEffect = cloud;
         }
     }

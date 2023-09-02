@@ -222,12 +222,6 @@ std::vector<UpgradeType> PlayerUpgrade::fillLocalTypesList(PlayerController *pCo
             if (hasNegatingSuperUpgrade) continue;
         }
 
-        // increase chances based on perks
-        if (tankUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteTank))
-            availableTypesLocal.push_back(t); // add once more
-        if (baseUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteBase))
-            availableTypesLocal.push_back(t); // add once more
-
         // nullify or increase chances of appearing based on owned upgrades
         if (tankUpgradeTypes.contains(t)) {
             int maxLevel = upgradeCap.contains(t) ? upgradeCap.at(t)-1 : 3;
@@ -244,6 +238,12 @@ std::vector<UpgradeType> PlayerUpgrade::fillLocalTypesList(PlayerController *pCo
             else if (level == maxLevel)
                 continue; // do not add to list
         }
+
+        // increase chances based on perks
+        if (tankUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteTank))
+            availableTypesLocal.push_back(t); // add once more
+        if (baseUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteBase))
+            availableTypesLocal.push_back(t); // add once more
 
         // specific cases
         if (t == RebuildEagleWalls && ObjectsPool::getEagleWalls().size() >= globalTypes::EagleWallDirection::MaxDirection-1)

@@ -40,10 +40,10 @@ npcBaseTank 18 5 130 20 2
 # wave 4 (+5)
 npcBaseTank 0 9 180 13 8
 npcBaseTank 18 9 180 13 8
-npcArmorTank 3 3 180 13 4
-npcArmorTank 15 3 180 13 4
+npcArmorTank 2 3 180 13 4
+npcArmorTank 16 3 180 13 4
 # wave 5
 npcFastTank 1 4 240 12 4
 npcFastTank 17 4 240 12 4
-npcArmorTank 8 5 240 12 4
-npcArmorTank 10 5 240 12 4
+npcArmorTank 0 5 240 12 4
+npcArmorTank 18 5 240 12 4

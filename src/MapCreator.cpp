@@ -48,7 +48,7 @@ GameObject *MapCreator::createSpawnerObject(const SpawnerData& data)
 
     GameObject *object = new GameObject(std::string("spawner_") + data.type);
     object->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
-    object->setRenderer(new LoopAnimationSpriteRenderer(object, "spark"));
+    object->setRenderer(new LoopAnimationSpriteRenderer(object, "spark"), 4);
 
     SpawnController *controller = new SpawnController(object, data.type, data.delay, data.timeout, data.quantity);
     object->setController(controller);
@@ -61,7 +61,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "spawner_player") {
         GameObject *spawner = new GameObject("spawner_player");
         spawner->setFlags(GameObject::PlayerSpawner | GameObject::TankPassable | GameObject::BulletPassable);
-        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"));
+        spawner->setRenderer(new LoopAnimationSpriteRenderer(spawner, "spark"), 4);
         spawner->setController(new PlayerSpawnController(spawner, globalVars::player1Lives, globalVars::player1PowerLevel));
 
         return spawner;
@@ -70,7 +70,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "eagle") {
         GameObject *eagle = new GameObject("eagle");
         eagle->setFlags(GameObject::Eagle | GameObject::BulletKillable);
-        eagle->setRenderer(new SpriteRenderer(eagle));
+        eagle->setRenderer(new SpriteRenderer(eagle), 2);
         eagle->setDamageable(new Damageable(eagle, globalConst::DefaultBaseProtection));
         eagle->setController(new EagleController(eagle));
 
@@ -80,7 +80,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "brickWall") {
         GameObject *wall = new GameObject("brickWall");
         wall->setFlags(GameObject::BulletKillable | GameObject::Static);
-        wall->setRenderer(new SpriteRenderer(wall));
+        wall->setRenderer(new SpriteRenderer(wall), 3);
         wall->setDamageable(new Damageable(wall, 1));
 
         return wall;
@@ -89,7 +89,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "brickWall1x1" || type == "brickWall2x1" || type == "brickWall1x2" || type == "brickWall2x2") {
         GameObject *wall = new GameObject(type);
         wall->setFlags(GameObject::BulletKillable | GameObject::Static);
-        wall->setRenderer(new SpriteRenderer(wall));
+        wall->setRenderer(new SpriteRenderer(wall), 3);
         wall->setDamageable(new Damageable(wall, 1));
 
         return wall;
@@ -99,7 +99,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "concreteWall") {
         GameObject *wall = new GameObject("concreteWall");
         wall->setFlags(GameObject::Static);
-        wall->setRenderer(new SpriteRenderer(wall));
+        wall->setRenderer(new SpriteRenderer(wall), 3);
         auto damageable = new Damageable(wall, 0);
         damageable->makeInvincible(true);
         wall->setDamageable(damageable);
@@ -110,7 +110,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "tree") {
         GameObject *tree = new GameObject("tree");
         tree->setFlags(GameObject::TankPassable | GameObject::BulletPassable | GameObject::Static);
-        tree->setRenderer(new SpriteRenderer(tree));
+        tree->setRenderer(new SpriteRenderer(tree), 3);
 
         return tree;
     }
@@ -118,7 +118,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "water") {
         GameObject *water = new GameObject("water");
         water->setFlags(GameObject::BulletPassable | GameObject::Static);
-        water->setRenderer(new SpriteRenderer(water));
+        water->setRenderer(new SpriteRenderer(water), 1);
         water->setCurrentAnimation("default");
 
         return water;
@@ -127,7 +127,7 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "ice") {
         GameObject *water = new GameObject("ice");
         water->setFlags(GameObject::BulletPassable | GameObject::TankPassable | GameObject::Static | GameObject::Ice);
-        water->setRenderer(new SpriteRenderer(water));
+        water->setRenderer(new SpriteRenderer(water), 1);
         water->setCurrentAnimation("default");
 
         return water;
@@ -169,6 +169,9 @@ int MapCreator::parseMapFile(std::string fileName)
     // next lines: map
 
     std::ifstream f(fileName);
+    char cstr[256];
+
+    strcpy(cstr, fileName.c_str());
     std::string line;
     // line 0: map name
     {

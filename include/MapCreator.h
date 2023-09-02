@@ -80,6 +80,7 @@ public:
     MapCreator();
     int parseMapFile(std::string fileName);
     Level::Properties buildMapFromData();
+    Level::Properties levelProperties() const { return _currLevelProperies; };
     int placeSpawnerObjects();
     int mapWidth() const { return map_w; }
     int mapHeight() const { return map_h; }
