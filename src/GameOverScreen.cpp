@@ -21,17 +21,19 @@ GameOverScreen& GameOverScreen::instance()
 GameOverScreen::GameOverScreen() : _state(Start) {}
 
 
-void GameOverScreen::setMissionOutcome(bool won, int ek, int ss)
+void GameOverScreen::setMissionOutcome(bool won, int index, int ek, int ss)
 {
     _won = won;
+    _missionIndex = index;
     _enemiesKilled = ek;
     _secondsSurvived = ss;
 }
 
-int GameOverScreen::draw()
+globalTypes::GameState GameOverScreen::draw()
 {
     using namespace globalConst;
     using namespace globalVars;
+    using namespace globalTypes;
 
     constexpr int screenCenterX = screen_w / 2;
     constexpr int screenCenterY = screen_h / 2;
@@ -141,8 +143,9 @@ int GameOverScreen::draw()
                 _state = UnlockNewMission;
             }
             break;
-        case UnlockNewMission:
-            if (_won && !_newMissionJustUnlocked && PersistentGameData::instance().unlockedLevels()+1 < MissionSelectScreen::instance().totalMissions()) {
+        case UnlockNewMission: {
+            const int unlockedMissions = PersistentGameData::instance().unlockedLevels();
+            if (_won && !_newMissionJustUnlocked && _missionIndex==unlockedMissions && unlockedMissions+1 < MissionSelectScreen::instance().totalMissions()) {
                 PersistentGameData::instance().unlockNewLevel();
                 SoundPlayer::instance().playSound(SoundPlayer::bonusCollect);
                 _delayClock.restart();
@@ -150,6 +153,7 @@ int GameOverScreen::draw()
             }
             if (_delayClock.getElapsedTime() > sf::seconds(_faster ? 1.5 : 3))
                 _state = Exit;
+        }
             break;
         case Exit:
             _state = Start; // for the next time
@@ -157,9 +161,9 @@ int GameOverScreen::draw()
             _newMissionJustUnlocked = false;
             _faster = false;
             if (PersistentGameData::instance().isShopUnlocked())
-                return 7; // BonusShop
+                return GameState::BonusShop; // BonusShop
             else
-                return 8; // SelectLevel
+                return GameState::SelectLevel; // SelectLevel
     }
 
     // Draw rest
@@ -228,5 +232,5 @@ int GameOverScreen::draw()
     }
 
     Utils::window.display();
-    return 6; // GameOverScreen
+    return GameState::GameOverScreen;
 }

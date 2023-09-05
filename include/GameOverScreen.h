@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GlobalTypes.h"
+
 #include <SFML/System/Clock.hpp>
 
 class GameOverScreen
@@ -37,6 +39,7 @@ private:
     bool _faster = false;
 
     bool _won = false;
+    int _missionIndex = 0;
 
     GameOverScreen(GameOverScreen&) = delete;
     void operator=(const GameOverScreen&) = delete;
@@ -45,7 +48,7 @@ private:
 public:
     static GameOverScreen& instance();
 
-    void setMissionOutcome(bool won, int kills, int time);
-    int draw();
+    void setMissionOutcome(bool won, int missionNum, int kills, int time);
+    globalTypes::GameState draw();
     void increaseCountSpeed() { _faster = true; }
 };

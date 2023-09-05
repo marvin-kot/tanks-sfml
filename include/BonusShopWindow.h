@@ -19,6 +19,7 @@ class BonusShopWindow
 
 public:
     bool afterGameOver = false;
+    bool afterWin = false;
 
     static BonusShopWindow& instance();
 

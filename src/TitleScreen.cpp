@@ -24,8 +24,9 @@ TitleScreen& TitleScreen::instance()
 //void TitlwScreen::drawCursor()
 
 
-int TitleScreen::draw()
+globalTypes::GameState TitleScreen::draw()
 {
+    using namespace globalTypes;
     using namespace globalConst;
 
     constexpr int screenCenterX = screen_w / 2;
@@ -75,27 +76,21 @@ int TitleScreen::draw()
     Utils::window.display();
 
     if (!_selected)
-        return 0; // TitleScreen
+        return GameState::TitleScreen;
 
     if (--_blinkCount > 0)
-        return 0;
+        return GameState::TitleScreen;
 
     if (_cursorPos == 0) {
         _selected = false; _blink = false;
         if (PersistentGameData::instance().isShopUnlocked()) {
             BonusShopWindow::instance().afterGameOver = false;
-            return 7; // BonusShop
+            return GameState::BonusShop;
         }
         else
-            return 8; // LoadNextLevel
-    }
-    else if (_cursorPos == 1) {
-        return 9; // ExitGame
-        //_selected = false; _blink = false;
-        //return 7; // BonusShop
-    }
-    else {
-        return 9; // ExitGame
+            return GameState::LoadNextLevel;
+    } else {
+        return GameState::ExitGame;
     }
 }
 

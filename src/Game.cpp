@@ -29,8 +29,10 @@ std::vector<std::string> levelMaps = {
     //"assets/testmap2.txt"
 };
 
+using namespace globalTypes;
 
-Game::Game() : gameState(TitleScreen) {}
+
+Game::Game() : gameState(GameState::TitleScreen) {}
 
 bool Game::loadAssets()
 {
@@ -65,7 +67,7 @@ void Game::initializeVariables()
     _killsCount = 0;
     PersistentGameData::instance().loadDataFromDisk();
     PlayerUpgrade::generatePerks();
-    gameState = TitleScreen;
+    gameState = GameState::TitleScreen;
 }
 
 bool Game::update()
@@ -135,14 +137,14 @@ void Game::processWindowEvents()
                 Utils::window.close();
                 break;
             case sf::Event::KeyPressed:
-                if (gameState == TitleScreen) {
+                if (gameState == GameState::TitleScreen) {
                     TitleScreen::instance().processKeyboardPress(event.key.scancode);
-                } else if (gameState == StartLevelScreen) {
+                } else if (gameState == GameState::StartLevelScreen) {
                     if (event.key.scancode == sf::Keyboard::Scan::Enter)
-                        gameState = StartLevel;
+                        gameState = GameState::StartLevel;
                     else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
                         SoundPlayer::instance().stopSound(SoundPlayer::briefingTheme);
-                        gameState = TitleScreen;
+                        gameState = GameState::TitleScreen;
                     }
                 } else if (gameState == PlayingLevel) {
                     if (LevelUpPopupMenu::instance().isOpen()) {
@@ -158,7 +160,7 @@ void Game::processWindowEvents()
 
                     if (event.key.scancode == sf::Keyboard::Scan::Escape) {
                         // TODO: ask player confirmation
-                        gameState = GameOver;
+                        gameState = GameState::GameOver;
                     } else if (event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::Enter) {
                         pause(!globalVars::gameIsPaused);
                     }
@@ -175,28 +177,28 @@ void Game::processWindowEvents()
                         BonusShopWindow::instance().getSelectedUpgrade();
                     else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
                         SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
-                        gameState = TitleScreen;
+                        gameState = GameState::TitleScreen;
                     }
                     else if (event.key.scancode == sf::Keyboard::Scan::Space) {
                         SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
-                        gameState = SelectLevel;
+                        gameState = GameState::SelectLevel;
                     }
-                } else if (gameState == SelectLevel) {
+                } else if (gameState == GameState::SelectLevel) {
                     if (event.key.scancode == sf::Keyboard::Scan::Down)
                         MissionSelectScreen::instance().moveCursorDown();
                     else if (event.key.scancode == sf::Keyboard::Scan::Up)
                         MissionSelectScreen::instance().moveCursorUp();
                     else if (event.key.scancode == sf::Keyboard::Scan::Enter) {
                         MissionSelectScreen::instance().selectLevel();
-                        gameState = LoadNextLevel;
+                        gameState = GameState::LoadNextLevel;
                     } else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
                         if (PersistentGameData::instance().isShopUnlocked())
-                            gameState = BonusShop;
+                            gameState = GameState::BonusShop;
                         else
-                            gameState = TitleScreen;
+                            gameState = GameState::TitleScreen;
                     }
                 }
-                else if (gameState == GameOverScreen) {
+                else if (gameState == GameState::GameOverScreen) {
                     if (event.key.scancode == sf::Keyboard::Scan::Enter || event.key.scancode == sf::Keyboard::Scan::Enter || event.key.scancode == sf::Keyboard::Scan::Escape)
                         GameOverScreen::instance().increaseCountSpeed();
                 }
@@ -228,9 +230,8 @@ void Game::pause(bool p)
 
 int Game::processStateChange()
 {
-    if (gameState == TitleScreen) {
-        //drawTitleScreen();
-        gameState = static_cast<GameState>(TitleScreen::instance().draw());
+    if (gameState == GameState::TitleScreen) {
+        gameState = TitleScreen::instance().draw();
         return 0;
     } else if (gameState == SelectLevel) {
         MissionSelectScreen::instance().draw();
@@ -255,42 +256,46 @@ int Game::processStateChange()
             return -1;
         }
         Logger::instance() << "Level map is built\n";
-        gameState = StartLevelScreen;
+        gameState = GameState::StartLevelScreen;
         SoundPlayer::instance().playSound(SoundPlayer::briefingTheme);
         _killsCount = 0;
         return 0;
-    } else if (gameState == StartLevelScreen) {
+    } else if (gameState == GameState::StartLevelScreen) {
         drawStartLevelScreen();
         return 0;
     }
-    else if (gameState == StartLevel) {
+    else if (gameState == GameState::StartLevel) {
         SoundPlayer::instance().stopSound(SoundPlayer::briefingTheme);
         SoundPlayer::instance().gameOver = false;
         HUD::instance().showFail(false);
         HUD::instance().showWin(false);
         globalVars::globalChronometer.reset(true);
         _killsCount = 0;
-        gameState = PlayingLevel;
+        gameState = GameState::PlayingLevel;
     }
-    else if (gameState == GameOver) {
+    else if (gameState == GameState::GameOver) {
         SoundPlayer::instance().stopAllSounds();
         ObjectsPool::clearEverything();
-        gameState = GameOverScreen;
-        GameOverScreen::instance().setMissionOutcome(_won, _killsCount, (int)_finishTime.asSeconds());
+        gameState = GameState::GameOverScreen;
+        const int missionIndex = MissionSelectScreen::instance().getSelectedIndex();
+        GameOverScreen::instance().setMissionOutcome(_won, missionIndex, _killsCount, (int)_finishTime.asSeconds());
         PlayerUpgrade::playerOwnedPerks.clear();
         return 0;
-    } else if (gameState == GameOverScreen) {
-        gameState = static_cast<GameState>(GameOverScreen::instance().draw());
-        if (gameState == BonusShop) {
-            BonusShopWindow::instance().afterGameOver = true;
+    } else if (gameState == GameState::GameOverScreen) {
+        gameState = GameOverScreen::instance().draw();
+        if (gameState == GameState::BonusShop) {
+            if (_won)
+                BonusShopWindow::instance().afterWin = true;
+            else
+                BonusShopWindow::instance().afterGameOver = true;
             PlayerUpgrade::generatePerks();
         }
         return 0;
-    } else if (gameState == BonusShop) {
+    } else if (gameState == GameState::BonusShop) {
         SoundPlayer::instance().playShopTheme();
         BonusShopWindow::instance().draw();
         return 0;
-    } else if (gameState == ExitGame) {
+    } else if (gameState == GameState::ExitGame) {
         PlayerUpgrade::deletePerks();
         PersistentGameData::instance().saveDataToDisk();
         Utils::window.close();
@@ -488,19 +493,19 @@ void Game::updateDisplay()
 
 void Game::checkStatePostFrame()
 {
-    if (gameState != PlayingLevel)
+    if (gameState != GameState::PlayingLevel)
         return;
 
     if (framesToDie > -1) {
         if (--framesToDie <= 0) {
-            gameState = GameOver;
+            gameState = GameState::GameOver;
             _won = false;
         }
     }
 
     if (framesToWin > -1) {
         if (--framesToWin <= 0) {
-            gameState = GameOver;
+            gameState = GameState::GameOver;
             _won = true;
         }
     }

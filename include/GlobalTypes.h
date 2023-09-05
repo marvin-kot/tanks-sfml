@@ -29,4 +29,24 @@ namespace globalTypes
         MaxDirection
     };
 
+    enum GameState
+    {
+        TitleScreen,
+        LoadNextLevel,
+        StartLevelScreen,
+        StartLevel,
+        PlayingLevel,
+        GameOver = 5,
+        GameOverScreen,
+        BonusShop,
+        SelectLevel,
+        ExitGame,
+        // Network Game states
+        WaitingForStartRequest,
+        WaitingForLevelStartRequest,
+        ConnectToHost,
+        WaitForLevelData
+    };
+
+
 }

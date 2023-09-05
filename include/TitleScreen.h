@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GlobalTypes.h"
+
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 
@@ -20,7 +22,7 @@ class TitleScreen
 public:
     static TitleScreen& instance();
 
-    int draw();
+    globalTypes::GameState draw();
     void processKeyboardPress(sf::Keyboard::Scancode);
 
     void selectOption();

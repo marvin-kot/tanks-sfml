@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MapCreator.h"
+#include "GlobalTypes.h"
 #include "NetGameTypes.h"
 
 #include <SFML/System/Time.hpp>
@@ -12,21 +13,8 @@ namespace allinone
 class Game
 {
 private:
-    enum GameState
-    {
-        TitleScreen = 0,
-        LoadNextLevel = 1,
-        StartLevelScreen,
-        StartLevel,
-        PlayingLevel,
-        GameOver = 5,
-        GameOverScreen,
-        BonusShop,
-        SelectLevel,
-        ExitGame
-    };
 
-    GameState gameState;
+    globalTypes::GameState gameState;
     int currentLevel;
     Level::Properties _currentLevelProperties;
 

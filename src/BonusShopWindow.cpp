@@ -72,13 +72,13 @@ void BonusShopWindow::draw()
 
     // draw title
     const int titleFontSize = 48;
-    std::string title = afterGameOver ? "Once more?" : "Welcome!";
+    std::string title = afterGameOver ? "Once more?" : afterWin ? "Another challenge?" : "Welcome!";
 
     currentStringY += titleFontSize * 2;
     UiUtils::instance().drawText( title, titleFontSize, centerX, currentStringY);
 
     const int subtitleSize = 24;
-    std::string subtitle = "Wanna buy an upgrade for your next run?";
+    std::string subtitle = "Wanna buy a perk for your next run?";
     currentStringY += subtitleSize * 2;
     UiUtils::instance().drawText( subtitle, subtitleSize, centerX, currentStringY);
 
@@ -144,10 +144,6 @@ void BonusShopWindow::drawEdging(int x,  int y)
 
 void BonusShopWindow::drawUpgrade(int index, int x, int y)
 {
-    // assert(index >=0 && index < PlayerUpgrade::currentRandomUpgrades.size());
-    // auto upgrade = PlayerUpgrade::currentRandomUpgrades[index];
-
-
     assert(index < PlayerUpgrade::availablePerkObjects.size());
     auto upgrade = PlayerUpgrade::availablePerkObjects.at(index);
 
