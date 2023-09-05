@@ -216,6 +216,7 @@ public:
 class ArmorUpgrade : public PlayerUpgrade
 {
     std::vector<int> _numberBasedOnLevel;
+    std::vector<int> _debuffBasedOnLevel;
 public:
     ArmorUpgrade(int level);
     void onCollect(GameObject *collector) override;

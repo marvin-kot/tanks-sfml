@@ -51,6 +51,9 @@ class PlayerController : public Controller
     bool _4dirSet = false;
     bool _rocketSet = false;
 
+    int _speedDebuff = 0;
+    int _shootReloadDebuff = 0;
+
 public:
     PlayerController(GameObject *obj);
     ~PlayerController();
@@ -59,7 +62,8 @@ public:
     void removePerks();
     void applyUpgrades();
     void updateAppearance();
-    void updateMoveSpeed(int speed) { _moveSpeed = speed; }
+    void setMoveSpeed(int speed);
+    int moveSpeed() const { return _moveSpeed; }
     int numberOfUpgrades() const;
     void setTemporaryInvincibility(int msec);
     void addXP(int val);
@@ -79,6 +83,17 @@ public:
 
     void setFourDirectionTurret();
     void setRocketLauncher();
+
+    void setSpeedDebuff(int d) { _speedDebuff = d; }
+    void setReloadDebuff(int d);
+
+    void resetCalculatedSpeedDebuff() {_speedDebuff = 0; }
+    void addToCalculatedSpeedDebuff(int d) { _speedDebuff += d; }
+    void applyCalculatedSpeedDebuff();
+
+    void resetCalculatedReloadDebuff() {_shootReloadDebuff = 0; }
+    void addToCalculatedReloadDebuff(int d) { _shootReloadDebuff += d; }
+    void applyCalculatedReloadDebuff();
 };
 
 struct PlayerSignal

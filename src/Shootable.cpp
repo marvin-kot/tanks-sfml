@@ -4,7 +4,7 @@
 Shootable::Shootable(GameObject *parent, int level, int timeout, int bulletSpeed)
     : _gameObject(parent)
     , _level(level)
-    , _actionTimeoutMs(timeout)
+    , _reloadTimeoutMs(timeout)
     , _bulletSpeed(bulletSpeed)
     , _damage(globalConst::DefaultDamage)
     {}
@@ -32,7 +32,7 @@ bool Shootable::shoot(globalTypes::Direction dir)
 }
 
 bool Shootable::isShootingProhibited() {
-    if  (_clock.getElapsedTime() < sf::milliseconds(_actionTimeoutMs)) return true;
+    if  (_clock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return true;
     auto bullets = ObjectsPool::getObjectsByType("bullet");
     int countMyBullets = 0;
 
@@ -125,7 +125,7 @@ bool RocketShootable::shoot(globalTypes::Direction dir)
 }
 
 bool RocketShootable::isShootingProhibited() {
-    if  (_clock.getElapsedTime() < sf::milliseconds(_actionTimeoutMs)) return true;
+    if  (_clock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return true;
     auto bullets = ObjectsPool::getObjectsByType("rocket");
     int countMyBullets = 0;
 
@@ -182,7 +182,7 @@ bool DoubleShootable::shoot(globalTypes::Direction dir)
 }
 
 bool DoubleShootable::isShootingProhibited() {
-    if  (_clock.getElapsedTime() < sf::milliseconds(_actionTimeoutMs)) return true;
+    if  (_clock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return true;
     auto bullets = ObjectsPool::getObjectsByType("bullet");
     int countMyBullets = 0;
 
@@ -239,7 +239,7 @@ bool DoubleRocketShootable::shoot(globalTypes::Direction dir)
 }
 
 bool DoubleRocketShootable::isShootingProhibited() {
-    if  (_clock.getElapsedTime() < sf::milliseconds(_actionTimeoutMs)) return true;
+    if  (_clock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return true;
     auto bullets = ObjectsPool::getObjectsByType("rocket");
     int countMyBullets = 0;
 

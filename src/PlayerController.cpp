@@ -19,10 +19,11 @@ static std::vector<int> xpNeededForLevelUp;
 
  void initXpLevelupNumbers()
  {
-    std::vector<int> limits = { 300, 400 };
+    std::vector<int> limits = { 300, 500 };
     for (int i = 2; i < 50 ; i++) {
         float coeff = 1;
-        if (i<5)        coeff = 1.3;
+        if (i<4)        coeff = 1.4;
+        else if (i<6)        coeff = 1.3;
         else if (i<8)   coeff = 1.2;
         //else if (i<9)  coeff = 1.1;
         else            coeff = 1.1;
@@ -168,10 +169,15 @@ void PlayerController::update()
     if (hasLevelOfUpgrade(PlayerUpgrade::BulletTank) == -1)
         return;
 
-    if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(1)) {
+    if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(0.9)) {
         // if "bullet tank" ability - become bullet + invulnerable + blink
-        if (Utils::currentFrame % 2 == 0)
+        if (Utils::currentFrame % 2 == 0) {
+            assert (_gameObject->spriteRenderer);
+            assert (_gameObject->turret);
+            assert (_gameObject->turret->spriteRenderer);
             _gameObject->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
+            _gameObject->turret->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
+        }
         _gameObject->damage = _gameObject->getComponent<Shootable>()->damage();
         setTemporaryInvincibility(globalConst::FixedFrameLength);
     } else {
@@ -326,8 +332,8 @@ void PlayerController::resetXP()
 
     Damageable *damageable = _gameObject->getComponent<Damageable>();
     damageable->setDefence(DefaultPlayerProtection);
-
-    updateMoveSpeed(DefaultPlayerSpeed);
+    _speedDebuff = 0;
+    setMoveSpeed(DefaultPlayerSpeed);
 
     updateAppearance();
 }
@@ -419,9 +425,16 @@ void PlayerController::removeUpgrade(PlayerUpgrade::UpgradeType t)
 
 void PlayerController::applyUpgrades()
 {
+    resetCalculatedReloadDebuff();
+    resetCalculatedSpeedDebuff();
+    _moveSpeed = globalConst::DefaultPlayerSpeed;
+
     for (auto it : _collectedUpgrades) {
         it.second->onCollect(_gameObject);
     }
+
+    applyCalculatedReloadDebuff();
+    applyCalculatedSpeedDebuff();
 
     // restore basic defence if needed
     Damageable *damageable = _gameObject->getComponent<Damageable>();
@@ -467,7 +480,7 @@ void PlayerController::setFourDirectionTurret()
 
     // take old turret values
     auto oldShootable = _gameObject->getComponent<Shootable>();
-    int actionTimeout = oldShootable->actionTimeoutMs();
+    int actionTimeout = oldShootable->reloadTimeoutMs();
     int damage = oldShootable->damage();
     int bulletSpeed = oldShootable->bulletSpeed();
 
@@ -476,9 +489,7 @@ void PlayerController::setFourDirectionTurret()
 
     // set new turret
     auto newShootable = new FourDirectionShootable(_gameObject, bulletSpeed);
-    //newShootable->setActionTimeoutMs(actionTimeout);
     newShootable->setDamage(damage);
-    //newShootable->setBulletSpeed(bulletSpeed);
 
     _gameObject->setShootable(newShootable);
     updateAppearance();
@@ -491,7 +502,7 @@ void PlayerController::setRocketLauncher()
 
     // take old turret values
     auto oldShootable = _gameObject->getComponent<Shootable>();
-    int actionTimeout = oldShootable->actionTimeoutMs();
+    int actionTimeout = oldShootable->reloadTimeoutMs();
     int damage = oldShootable->damage();
     int bulletSpeed = std::max(oldShootable->bulletSpeed(), globalConst::DefaultRocketSpeed);
 
@@ -500,10 +511,31 @@ void PlayerController::setRocketLauncher()
 
     // set new turret
     auto newShootable = new RocketShootable(_gameObject);
-    newShootable->setActionTimeoutMs(actionTimeout);
+    newShootable->setReloadTimeoutMs(actionTimeout);
     newShootable->setDamage(damage);
     newShootable->setBulletSpeed(bulletSpeed);
 
     _gameObject->setShootable(newShootable);
     updateAppearance();
+}
+
+
+void PlayerController::setMoveSpeed(int speed) {
+    _moveSpeed = speed;
+}
+
+void PlayerController::applyCalculatedSpeedDebuff()
+{
+    _moveSpeed -= _moveSpeed * _speedDebuff / 100;
+}
+
+
+void PlayerController::applyCalculatedReloadDebuff()
+{
+    assert(_gameObject != nullptr);
+    auto shootable = _gameObject->getComponent<Shootable>();
+    assert(shootable != nullptr);
+
+    int newReloadTimeout = globalConst::PlayerShootTimeoutMs + globalConst::PlayerShootTimeoutMs * _shootReloadDebuff / 100;
+    shootable->setReloadTimeoutMs(newReloadTimeout);
 }

@@ -12,6 +12,7 @@
 #include "Utils.h"
 
 #include <random>
+#include <format>
 
 using UpgradeType = PlayerUpgrade::UpgradeType;
 
@@ -663,7 +664,7 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
 
     _percentBasedOnLevel = { 30, 60, 80 };
     for (auto percent : _percentBasedOnLevel)
-        _effects.push_back("Bullet speed +" + std::to_string(percent) + "\%");
+        _effects.push_back("Bullet speed +" + std::to_string(percent) + "\%\nreload delay +25%");
 
     _iconRect = AssetManager::instance().getAnimationFrame("pistolCollectable", "default", 0).rect;
 }
@@ -674,11 +675,16 @@ void FasterBulletUpgrade::onCollect(GameObject *collector)
     auto shootable = collector->getComponent<Shootable>();
     assert(shootable != nullptr);
 
+    auto controller = collector->getComponent<PlayerController>();
+    assert(controller != nullptr);
+
     assert(_currentLevel < _percentBasedOnLevel.size());
     int percent = _percentBasedOnLevel[_currentLevel];
 
     const int newBulletSpeed = globalConst::DefaultPlayerBulletSpeed + (globalConst::DefaultPlayerBulletSpeed * percent / 100);
     shootable->setBulletSpeed(newBulletSpeed);
+
+    controller->addToCalculatedReloadDebuff(25);
 }
 
 
@@ -721,8 +727,13 @@ ArmorUpgrade::ArmorUpgrade(int level)
     _name = "Coat of steel";
 
     _numberBasedOnLevel = { 1, 2, 3, 4 };
-    for (auto number : _numberBasedOnLevel)
-        _effects.push_back("Tank protection +" + std::to_string(number));
+    _debuffBasedOnLevel = { 10, 20, 30, 40 };
+    for (int i=0; i<_numberBasedOnLevel.size(); i++) {
+        const int buff = _numberBasedOnLevel[i];
+        const int debuff = _debuffBasedOnLevel[i];
+        const std::string caption = std::format("Tank protection +{}\nMove speed -{}\%", buff, debuff);
+        _effects.push_back(caption);
+    }
 
     _iconRect = AssetManager::instance().getAnimationFrame("helmetCollectable", "default", 0).rect;
 }
@@ -736,6 +747,9 @@ void ArmorUpgrade::onCollect(GameObject *collector)
     assert(_currentLevel < _numberBasedOnLevel.size());
     int number = _numberBasedOnLevel[_currentLevel];
     damageable->setDefence(globalConst::DefaultPlayerProtection + number);
+
+    auto controller = collector->getComponent<PlayerController>();
+    controller->addToCalculatedSpeedDebuff(_debuffBasedOnLevel[_currentLevel]);
 }
 
 /////////////
@@ -761,7 +775,7 @@ void FasterTankUpgrade::onCollect(GameObject *collector)
     assert(_currentLevel < _percentBasedOnLevel.size());
     int percent = _percentBasedOnLevel[_currentLevel];
     const int newTankSpeed = globalConst::DefaultPlayerSpeed + globalConst::DefaultPlayerSpeed * percent / 100;
-    controller->updateMoveSpeed(newTankSpeed);
+    controller->setMoveSpeed(newTankSpeed);
 }
 
 ///////////////
@@ -775,7 +789,7 @@ PowerBulletUpgrade::PowerBulletUpgrade(int level)
 
     _numberBasedOnLevel = { 1, 2, 3};
     for (auto number : _numberBasedOnLevel)
-        _effects.push_back("Bullet damage +" + std::to_string(number) + "");
+        _effects.push_back("Bullet damage +" + std::to_string(number) + "\nReload delay +25\%");
 
     _iconRect = AssetManager::instance().getAnimationFrame("bulletCollectable", "default", 0).rect;
 }
@@ -789,6 +803,10 @@ void PowerBulletUpgrade::onCollect(GameObject *collector)
     assert(_currentLevel < _numberBasedOnLevel.size());
     int newDamage = globalConst::DefaultDamage + _numberBasedOnLevel[_currentLevel];
     shootable->setDamage(newDamage);
+
+    auto controller = collector->getComponent<PlayerController>();
+    assert(controller != nullptr);
+    controller->addToCalculatedReloadDebuff(25);
 }
 
 
@@ -924,7 +942,7 @@ void MachineGunUpgrade::onCollect(GameObject *target)
     shootable->setBulletSpeed(newBulletSpeed);
 
     // shoot speed
-    shootable->setActionTimeoutMs(globalConst::PlayerShootTimeoutMs * 2 / 3);
+    shootable->setReloadTimeoutMs(globalConst::PlayerShootTimeoutMs * 2 / 3);
 
     // number of bullets
     shootable->setLevel(32);

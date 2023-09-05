@@ -127,6 +127,32 @@ TankRandomController::TankRandomController(GameObject *parent, int spd, float ti
 bool TankRandomController::tryToMove()
 {
     using namespace globalTypes;
+
+    GameObject *target = nullptr;
+
+    if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < 80)
+        target = ObjectsPool::playerObject;
+    else if (ObjectsPool::eagleObject)
+        target = ObjectsPool::eagleObject;
+
+    using namespace globalTypes;
+    std::vector<Direction> directions;
+
+    for (int i=0; i<2; i++) {
+        if (target) {
+            if (target->position().x < _gameObject->position().x)
+                directions.push_back(Direction::Left);
+            if (target->position().y < _gameObject->position().y)
+                directions.push_back(Direction::Up);
+            if (target->position().x > _gameObject->position().x)
+                directions.push_back(Direction::Right);
+            if (target->position().y > _gameObject->position().y)
+                directions.push_back(Direction::Down);
+        }
+    }
+
+
+
     assert(_gameObject->direction() != Direction::Unknown );
     const auto oldDirection = _gameObject->direction();
     // add current direction to set to make moving in same direction more probable
@@ -195,7 +221,7 @@ bool TankKamikazeController::tryToMove()
     using namespace globalTypes;
     std::vector<Direction> directions;
 
-    for (int i=0; i<2; i++) {
+    for (int i=0; i<3; i++) {
         if (target) {
             if (target->position().x < _gameObject->position().x)
                 directions.push_back(Direction::Left);
@@ -263,13 +289,13 @@ bool TankBossController::decideIfToShoot(globalTypes::Direction oldDir) const
                     return false;
 
             if (hit == ObjectsPool::playerObject || hit == ObjectsPool::eagleObject) {
-                std::uniform_int_distribution<int> distribution(0, 4);
+                std::uniform_int_distribution<int> distribution(0, 2);
                 int shotChance = distribution(Utils::generator);
                 okToShoot = (shotChance == 0);
             }
 
             if (hit->type().rfind("brickWall", 0, 9) != std::string::npos) {
-                std::uniform_int_distribution<int> distribution(0, 20);
+                std::uniform_int_distribution<int> distribution(0, 10);
                 int shotChance = distribution(Utils::generator);
                 if (shotChance == 0) okToShoot = true;
             }
@@ -316,7 +342,7 @@ bool TankBossController::tryToMove()
     std::vector<Direction> directions;
 
     if (_nextDirection == globalTypes::Unknown) {
-        for (int i=0; i<2; i++)
+        for (int i=0; i<3; i++)
             if (target) {
                 if (target->position().x < _gameObject->position().x)
                     directions.push_back(Direction::Left);

@@ -323,7 +323,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         other->getCollectedBy(this);
     }
 
-    if (damage>0 && other->isFlagSet(BulletKillable)/* && _parentId != other->_id*/) {
+    if (damage>0 && other->isFlagSet(BulletKillable) && other->_damageable) {
         other->_damageable->takeDamage(damage);
         if (other->_damageable->isDestroyed()) {
             other->markForDeletion();

@@ -15,7 +15,7 @@ class GameObject;
 class Shootable
 {
 protected:
-    int _actionTimeoutMs;
+    int _reloadTimeoutMs;
     sf::Clock _clock;
     GameObject *_gameObject;
     bool _piercing = false;
@@ -24,8 +24,8 @@ protected:
     int _level;
 public:
     Shootable(GameObject *parent, int level, int timeout, int bulletSpeed);
-    inline void setActionTimeoutMs(int t) { _actionTimeoutMs = t; }
-    inline int actionTimeoutMs() const { return _actionTimeoutMs; }
+    inline void setReloadTimeoutMs(int t) { _reloadTimeoutMs = t; }
+    inline int reloadTimeoutMs() const { return _reloadTimeoutMs; }
     inline void setBulletSpeed(int bs) { _bulletSpeed = bs; }
     inline int bulletSpeed() const { return _bulletSpeed; }
     inline void setDamage(int d) { _damage = d; }
