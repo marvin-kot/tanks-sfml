@@ -34,7 +34,9 @@ public:
         startGame,
         briefingTheme,
         BossTheme,
-        ShopTheme
+        ShopTheme,
+        PartialReload,
+        FullReload
     };
 
 private:

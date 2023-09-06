@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "ObjectsPool.h"
 #include "SoundPlayer.h"
+#include "Shootable.h"
 #include "SpriteRenderer.h"
 #include "PlayerController.h"
 #include "GlobalConst.h"
@@ -95,4 +96,25 @@ void XpCollectable::onCollected(GameObject *collector)
     controller->addXP(_value);
 
     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::xpCollect, true);
+}
+
+//////
+
+AmmoCollectable::AmmoCollectable(GameObject *parent)
+: Collectable(parent)
+{}
+
+void AmmoCollectable::onCollected(GameObject *collector)
+{
+    assert(collector->isFlagSet(GameObject::Player));
+    //PlayerController *controller = collector->getComponent<PlayerController>();
+
+
+    auto shootable = collector->getComponent<Shootable>();
+    if (shootable->bullets() < shootable->maxBullets()) {
+        shootable->resetBullets();
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::FullReload, true);
+    }
+
+    //Collectable::onCollected(collector);
 }

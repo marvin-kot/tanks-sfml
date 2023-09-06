@@ -16,6 +16,8 @@ class HUD
     void drawBaseUpgrades(int baseY);
     void drawPerks(int baseY);
     void drawGlobalTimer();
+    void drawBullets(int baseY);
+
     void drawWinScreen();
     void drawFailScreen();
 

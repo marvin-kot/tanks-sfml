@@ -19,23 +19,25 @@ void DropGenerator::placeRandomCollectable()
     std::uniform_int_distribution<int> y_distr(1, (globalVars::mapSize.y/globalConst::spriteOriginalSizeY)-1);
 
     const std::vector<std::string> types = {
-        "helmetCollectable",
-        "timerCollectable",
+        //"helmetCollectable",
+        //"timerCollectable",
         //"shovelCollectable",
-        "starCollectable",
-        "grenadeCollectable",
-        "tankCollectable",
+        //"starCollectable",
+        //"grenadeCollectable",
+        //"tankCollectable",
+        "bulletCollectable"
     };
 
-    int x = x_distr(Utils::generator);
-    int y = y_distr(Utils::generator);
+    //int x = x_distr(Utils::generator);
+    //int y = y_distr(Utils::generator);
 
     std::uniform_int_distribution<int> type_distr(0, types.size()-1);
     int typeIndex = type_distr(Utils::generator);
 
     GameObject *collectable = createObject(types[typeIndex]);
     if (collectable) {
-        collectable->setPosition(x*globalConst::spriteOriginalSizeX, y*globalConst::spriteOriginalSizeX);
+        //collectable->setPosition(x*globalConst::spriteOriginalSizeX, y*globalConst::spriteOriginalSizeX);
+        collectable->copyParentPosition(_gameObject);
         ObjectsPool::addObject(collectable);
     }
 
@@ -79,6 +81,8 @@ GameObject * DropGenerator::createObject(std::string type)
             component = new GrenadeCollectable(collectable);
         else if (type == "tankCollectable")
             component = new TankCollectable(collectable);
+        else if (type == "bulletCollectable")
+            component = new AmmoCollectable(collectable);
         else if (type == "100xp")
             component = new XpCollectable(collectable, 100);
         else if (type == "200xp")

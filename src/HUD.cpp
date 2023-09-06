@@ -5,6 +5,8 @@
 #include "ObjectsPool.h"
 #include "PlayerUpgrade.h"
 #include "PlayerController.h"
+#include "Shootable.h"
+
 #include "Utils.h"
 #include "UiUtils.h"
 
@@ -53,6 +55,8 @@ void HUD::draw()
     drawBaseLives(112+64);
     drawBaseUpgrades(112+64+48);
     drawPerks(28);
+
+    drawBullets(globalConst::screen_h - 128);
 
     drawGlobalTimer();
 
@@ -163,6 +167,22 @@ void HUD::drawPerks(int baseY)
             UiUtils::instance().drawMiniIcon( obj->iconRect(), baseX, baseY );
             baseX -= 48;
         }
+    }
+}
+
+void HUD::drawBullets(int baseY)
+{
+    int baseX = 48;
+
+    if (ObjectsPool::playerObject == nullptr) return;
+
+    auto shootable = ObjectsPool::playerObject->getComponent<Shootable>();
+    assert(shootable != nullptr);
+
+    for (int i=0; i<shootable->maxBullets(); i++) {
+        auto color = shootable->bullets() <= i ? sf::Color(100, 100, 100) : sf::Color(250, 250, 250);
+        UiUtils::instance().drawRect(sf::IntRect(baseX-16, baseY, 32, 80), color);
+        baseX += 40;
     }
 }
 

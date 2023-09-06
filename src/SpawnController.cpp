@@ -84,12 +84,23 @@ void SpawnController::setBonusSpawnWithProbability(int val)
     _spawnBonusAtThisQuantity = tankDistr(Utils::generator);
 }
 
+void generateBonusWithProbability(GameObject *obj, int prob)
+{
+    // generate ammo with small probability
+    static std::uniform_int_distribution<int> tankDistr(0, 99);
+    int randNum = tankDistr(Utils::generator);
+    if (randNum < prob)
+        obj->appendFlags(GameObject::BonusOnHit);
+}
+
 GameObject *SpawnController::createObject(std::string type)
 {
     if (type == "npcBaseTank") {
         GameObject *enemy = new GameObject("npcBaseTank");
         enemy->setShootable(Shootable::createDefaultEnemyShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
+        generateBonusWithProbability(enemy, 7);
+
         enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 0));
         enemy->setController(new TankRandomController(enemy, globalConst::DefaultEnemySpeed, 1));
@@ -103,6 +114,7 @@ GameObject *SpawnController::createObject(std::string type)
         //enemy->setShootable(new Shootable(enemy, globalConst::HalvedTimeoutMs));
         enemy->setShootable(Shootable::createDefaultEnemyShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
+        generateBonusWithProbability(enemy, 7);
         enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 0));
         enemy->setController(new TankRandomController(enemy, globalConst::FastEnemySpeed, 0.75));
@@ -126,7 +138,6 @@ GameObject *SpawnController::createObject(std::string type)
 
     if (type == "npcPowerTank") {
         GameObject *enemy = new GameObject("npcPowerTank");
-        //enemy->setShootable(new Shootable(enemy, globalConst::DefaultTimeoutMs));
         Shootable *shootable = Shootable::createDefaultEnemyShootable(enemy);
         shootable->setDamage(2);
         shootable->setBulletSpeed(globalConst::DoubleEnemyBulletSpeed);
@@ -142,7 +153,6 @@ GameObject *SpawnController::createObject(std::string type)
 
     if (type == "npcGiantTank") {
         GameObject *enemy = new GameObject("npcGiantTank");
-        //enemy->setShootable(new Shootable(enemy, globalConst::DefaultTimeoutMs));
         Shootable *shootable = Shootable::createDoubleRocketShootable(enemy);
         shootable->setDamage(2);
         enemy->damage = 1; // has contact damage
@@ -158,8 +168,7 @@ GameObject *SpawnController::createObject(std::string type)
 
     if (type == "npcDoubleCannonArmorTank") {
         GameObject *enemy = new GameObject("npcDoubleCannonArmorTank");
-        //enemy->setShootable(new Shootable(enemy, globalConst::DefaultTimeoutMs));
-        Shootable *shootable = new DoubleShootable(enemy);
+        Shootable *shootable = new DoubleShootable(enemy, globalConst::EnemyDefaultMaxBullets);
         shootable->setDamage(1);
 
         enemy->setShootable(shootable);

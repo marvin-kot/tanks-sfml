@@ -27,12 +27,14 @@ public:
         TankArmor,
         XpAttractor,
         BonusEffectiveness,
+        FastReload,
         // tank super upgrades
         FourDirectionBullets,
         PiercingBullets,
         Rocket,
         BulletTank,
         MachineGun,
+        ReloadOnKill,
         // base upgrades
         BaseArmor,
         RepairWalls,
@@ -205,6 +207,14 @@ public:
     void onCollect(GameObject *collector) override;
 };
 
+class FastReloadUpgrade : public PlayerUpgrade
+{
+    std::vector<int> _percentBasedOnLevel;
+public:
+    FastReloadUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
 class MoreBulletsUpgrade : public PlayerUpgrade
 {
     std::vector<int> _numberBasedOnLevel;
@@ -278,6 +288,13 @@ class MachineGunUpgrade : public PlayerUpgrade
 {
 public:
     MachineGunUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class ReloadOnKillUpgrade : public PlayerUpgrade
+{
+public:
+    ReloadOnKillUpgrade(int level);
     void onCollect(GameObject *collector) override;
 };
 

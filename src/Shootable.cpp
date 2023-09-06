@@ -1,20 +1,26 @@
 #include "GameObject.h"
 #include "Shootable.h"
+#include "SoundPlayer.h"
 
-Shootable::Shootable(GameObject *parent, int level, int timeout, int bulletSpeed)
+Shootable::Shootable(GameObject *parent, int level, int timeout, int bulletSpeed, int maxBullets)
     : _gameObject(parent)
     , _level(level)
-    , _reloadTimeoutMs(timeout)
+    , _shootTimeoutMs(timeout)
     , _bulletSpeed(bulletSpeed)
     , _damage(globalConst::DefaultDamage)
-    {}
+    , _maxBullets(maxBullets)
+    {
+        resetBullets();
+        _shootClock.reset(true);
+    }
 
 bool Shootable::shoot(globalTypes::Direction dir)
 {
     assert( dir != globalTypes::Direction::Unknown);
     if (isShootingProhibited())
         return false;
-    _clock.restart();
+    _shootClock.reset(true);
+    _reloadClock.reset(true);
     GameObject *bullet = new GameObject(_gameObject, "bullet");
     bullet->setParentId(_gameObject->id());
     bullet->setFlags(GameObject::Bullet);
@@ -28,12 +34,56 @@ bool Shootable::shoot(globalTypes::Direction dir)
     // add to bullet pool
     ObjectsPool::addObject(bullet);
 
+    if (_bullets == _maxBullets) _reloadClock.reset(true);
+
+    _bullets--;
+
     return true;
 }
 
+void Shootable::checkForGamePause()
+{
+    if (!_pause && globalVars::gameIsPaused) {
+        _shootClock.pause();
+        _reloadClock.pause();
+
+        _pause = true;
+    } else if (_pause && ! globalVars::gameIsPaused) {
+        _shootClock.resume();
+        _reloadClock.resume();
+        _pause = false;
+    }
+}
+
+
+void Shootable::reloadByTimeout()
+{
+    checkForGamePause();
+    if (_pause) return;
+
+    if (_bullets == _maxBullets) return;
+    if  (_reloadClock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return;
+
+    bool isPlayer = _gameObject->isFlagSet(GameObject::Player);
+
+    if (_instantReload) {
+        _bullets = _maxBullets;
+        if (isPlayer)
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::FullReload, true);
+    }
+    else {
+        _bullets++;
+        if (isPlayer)
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::PartialReload, true);
+    }
+    _reloadClock.reset(true);
+}
+
 bool Shootable::isShootingProhibited() {
-    if  (_clock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return true;
-    auto bullets = ObjectsPool::getObjectsByType("bullet");
+    if (_bullets < 1) return true;
+    if  (_shootClock.getElapsedTime() < sf::milliseconds(_shootTimeoutMs)) return true;
+
+    /*auto bullets = ObjectsPool::getObjectsByType("bullet");
     int countMyBullets = 0;
 
     for (auto b : bullets) {
@@ -41,34 +91,49 @@ bool Shootable::isShootingProhibited() {
             countMyBullets++;
     }
 
-    return countMyBullets > _level;
+    return countMyBullets > _level;*/
+
+    return false;
 }
 
 
 Shootable *Shootable::createDefaultPlayerShootable(GameObject *parent)
 {
-    return new Shootable(parent, 0, globalConst::PlayerShootTimeoutMs, globalConst::DefaultPlayerBulletSpeed);
+    using namespace globalConst;
+    auto shootable = new Shootable(parent, 0, PlayerShootTimeoutMs, DefaultPlayerBulletSpeed, PlayerDefaultMaxBullets);
+    shootable->setReloadTimeoutMs(PlayerDefaultReloadTimeoutMs);
+
+    return shootable;
 }
 
 Shootable *Shootable::createDefaultEnemyShootable(GameObject *parent)
 {
-    return new Shootable(parent, 0, globalConst::EnemyShootTimeoutMs, globalConst::DefaultEnemyBulletSpeed);
+    using namespace globalConst;
+    auto shootable = new Shootable(parent, 0, EnemyShootTimeoutMs, DefaultEnemyBulletSpeed, EnemyDefaultMaxBullets);
+    shootable->setReloadTimeoutMs(EnemyDefaultReloadTimeoutMs);
+
+    return shootable;
 }
 
 Shootable *Shootable::createDefaultRocketShootable(GameObject *parent)
 {
-    return new RocketShootable(parent);
+    auto shootable = new RocketShootable(parent, globalConst::PlayerDefaultMaxBullets);
+    shootable->setReloadTimeoutMs(globalConst::PlayerDefaultReloadTimeoutMs);
+    return shootable;
 }
 
 Shootable *Shootable::createDoubleRocketShootable(GameObject *parent)
 {
-    return new DoubleRocketShootable(parent);
+    auto shootable = new DoubleRocketShootable(parent, globalConst::PlayerDefaultMaxBullets);
+    shootable->setReloadTimeoutMs(globalConst::PlayerDefaultReloadTimeoutMs);
+
+    return shootable;
 }
 
 ///// Four direction
 
-FourDirectionShootable::FourDirectionShootable(GameObject *parent, int bulletSpeed)
-: Shootable(parent, 0, globalConst::PlayerShootTimeoutMs*2, bulletSpeed)
+FourDirectionShootable::FourDirectionShootable(GameObject *parent, int bulletSpeed, int maxBullets)
+: Shootable(parent, 0, globalConst::PlayerShootTimeoutMs*2, bulletSpeed, maxBullets)
 {
 }
 
@@ -80,7 +145,7 @@ bool FourDirectionShootable::shoot(globalTypes::Direction)
     using namespace globalTypes;
     bool madeShot = false;
     if (isShootingProhibited()) return false;
-    _clock.restart();
+    _shootClock.reset(true);
 
     for (Direction dir = Up; dir <= Right; dir = (Direction)((int)dir + 1)) {
         GameObject *bullet = new GameObject(_gameObject, "bullet");
@@ -101,8 +166,8 @@ bool FourDirectionShootable::shoot(globalTypes::Direction)
 }
 
 
-RocketShootable::RocketShootable(GameObject *parent)
-: Shootable(parent, 0, globalConst::RocketShootTimeoutMs, globalConst::DefaultRocketSpeed)
+RocketShootable::RocketShootable(GameObject *parent, int maxBullets)
+: Shootable(parent, 0, globalConst::RocketShootTimeoutMs, globalConst::DefaultRocketSpeed, maxBullets)
 {}
 
 bool RocketShootable::shoot(globalTypes::Direction dir)
@@ -110,7 +175,7 @@ bool RocketShootable::shoot(globalTypes::Direction dir)
     assert( dir != globalTypes::Direction::Unknown);
     if (isShootingProhibited())
         return false;
-    _clock.restart();
+    _shootClock.reset(true);
     GameObject *bullet = new GameObject(_gameObject, "rocket");
     bullet->setParentId(_gameObject->id());
     bullet->setFlags(GameObject::Bullet | GameObject::Explosive);
@@ -125,7 +190,9 @@ bool RocketShootable::shoot(globalTypes::Direction dir)
 }
 
 bool RocketShootable::isShootingProhibited() {
-    if  (_clock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return true;
+    return Shootable::isShootingProhibited();
+    /*
+    if  (_shootClock.getElapsedTime() < sf::milliseconds(_shootTimeoutMs)) return true;
     auto bullets = ObjectsPool::getObjectsByType("rocket");
     int countMyBullets = 0;
 
@@ -135,12 +202,13 @@ bool RocketShootable::isShootingProhibited() {
     }
 
     return countMyBullets > _level;
+    */
 }
 
 //////////////
 
-DoubleShootable::DoubleShootable(GameObject *parent)
-: Shootable(parent, 0, globalConst::EnemyShootTimeoutMs, globalConst::DefaultEnemyBulletSpeed)
+DoubleShootable::DoubleShootable(GameObject *parent, int maxBullets)
+: Shootable(parent, 0, globalConst::EnemyShootTimeoutMs, globalConst::DefaultEnemyBulletSpeed, maxBullets)
 {}
 
 bool DoubleShootable::shoot(globalTypes::Direction dir)
@@ -150,7 +218,7 @@ bool DoubleShootable::shoot(globalTypes::Direction dir)
     if (isShootingProhibited())
         return false;
 
-    _clock.restart();
+    _shootClock.reset(true);
 
     sf::Vector2i pos = _gameObject->position();
 
@@ -182,7 +250,7 @@ bool DoubleShootable::shoot(globalTypes::Direction dir)
 }
 
 bool DoubleShootable::isShootingProhibited() {
-    if  (_clock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return true;
+    if  (_shootClock.getElapsedTime() < sf::milliseconds(_shootTimeoutMs)) return true;
     auto bullets = ObjectsPool::getObjectsByType("bullet");
     int countMyBullets = 0;
 
@@ -196,8 +264,8 @@ bool DoubleShootable::isShootingProhibited() {
 
 ////
 
-DoubleRocketShootable::DoubleRocketShootable(GameObject *parent)
-: Shootable(parent, 0, globalConst::EnemyShootTimeoutMs, globalConst::DefaultEnemyBulletSpeed * 4 / 3)
+DoubleRocketShootable::DoubleRocketShootable(GameObject *parent, int maxBullets)
+: Shootable(parent, 0, globalConst::EnemyShootTimeoutMs, globalConst::DefaultEnemyBulletSpeed * 4 / 3, maxBullets)
 {}
 
 bool DoubleRocketShootable::shoot(globalTypes::Direction dir)
@@ -207,7 +275,7 @@ bool DoubleRocketShootable::shoot(globalTypes::Direction dir)
     if (isShootingProhibited())
         return false;
 
-    _clock.restart();
+    _shootClock.reset(true);
 
     sf::Vector2i pos = _gameObject->position();
 
@@ -239,7 +307,9 @@ bool DoubleRocketShootable::shoot(globalTypes::Direction dir)
 }
 
 bool DoubleRocketShootable::isShootingProhibited() {
-    if  (_clock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return true;
+    return Shootable::isShootingProhibited();
+    /*
+    if  (_shootClock.getElapsedTime() < sf::milliseconds(_shootTimeoutMs)) return true;
     auto bullets = ObjectsPool::getObjectsByType("rocket");
     int countMyBullets = 0;
 
@@ -248,13 +318,13 @@ bool DoubleRocketShootable::isShootingProhibited() {
             countMyBullets++;
     }
 
-    return countMyBullets > 1;
+    return countMyBullets > 1;*/
 }
 
 
 ////
 
-KamikazeShootable::KamikazeShootable(GameObject *parent) : Shootable(parent, 0, 0, 0) {}
+KamikazeShootable::KamikazeShootable(GameObject *parent) : Shootable(parent, 0, 0, 0, 0) {}
 
 bool KamikazeShootable::shoot(globalTypes::Direction)
 {

@@ -68,6 +68,7 @@ public:
     void setTemporaryInvincibility(int msec);
     void addXP(int val);
     int xp() const { return _xp; }
+    int level() const { return _level; }
     void resetXP();
     void levelUp();
 
@@ -93,7 +94,10 @@ public:
 
     void resetCalculatedReloadDebuff() {_shootReloadDebuff = 0; }
     void addToCalculatedReloadDebuff(int d) { _shootReloadDebuff += d; }
+    void subtractFromCalculatedReloadDebuff(int d) { _shootReloadDebuff -= d; if (_shootReloadDebuff<0) _shootReloadDebuff = 0;}
     void applyCalculatedReloadDebuff();
+
+    void onKillEnemy(GameObject *enemy);
 };
 
 struct PlayerSignal

@@ -24,7 +24,9 @@ static std::unordered_map<SoundType, std::string> soundPaths = {
     {SoundType::startGame, string("assets/new_sounds/Coin Pickup 42.wav")},
     {SoundType::briefingTheme, string("assets/audio/march-massacre.wav")},
     {SoundType::BossTheme, string("assets/audio/bossTankLoop.wav")},
-    {SoundType::ShopTheme, string("assets/audio/shop-theme.wav")}
+    {SoundType::ShopTheme, string("assets/audio/shop-theme.wav")},
+    {SoundType::PartialReload, string("assets/new_sounds/Gun Reload 6.wav")},
+    {SoundType::FullReload, string("assets/new_sounds/Gun Reload 1.wav")}
 };
 
 

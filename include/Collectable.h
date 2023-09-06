@@ -47,3 +47,9 @@ struct XpCollectable : public Collectable
 private:
     int _value;
 };
+
+struct AmmoCollectable : public Collectable
+{
+    AmmoCollectable(GameObject *parent);
+    void onCollected(GameObject *collector) override;
+};

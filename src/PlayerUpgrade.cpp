@@ -38,6 +38,7 @@ std::vector<UpgradeType> PlayerUpgrade::availableTypes = {
         TankSpeed,
         PowerBullets,
         TankArmor,
+        FastReload,
         BonusEffectiveness,
         FreezeEnemies,
         InstantKillEnemies,
@@ -59,6 +60,7 @@ const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     UpgradeType::FastBullets,
     UpgradeType::MoreBullets,
     UpgradeType::TankSpeed,
+    UpgradeType::FastReload,
     UpgradeType::PowerBullets,
     UpgradeType::TankArmor,
     PlayerUpgrade::BonusEffectiveness,
@@ -105,7 +107,8 @@ const std::map<UpgradeType, std::pair<UpgradeType, int>> upgradeDepencies = {};
 
 const std::map<UpgradeType, std::unordered_set<UpgradeType>> upgradeNegations = {
     {UpgradeType::FastBullets, {UpgradeType::PiercingBullets, UpgradeType::MachineGun}},
-    {UpgradeType::PowerBullets, {UpgradeType::PiercingBullets, UpgradeType::Rocket, UpgradeType::FourDirectionBullets}},
+    {UpgradeType::PowerBullets, {UpgradeType::PiercingBullets, UpgradeType::Rocket, UpgradeType::FourDirectionBullets, UpgradeType::ReloadOnKill}},
+    {UpgradeType::FastReload, {UpgradeType::ReloadOnKill}},
     {UpgradeType::TankArmor, {UpgradeType::BulletTank}},
     {UpgradeType::TankSpeed, {UpgradeType::BulletTank}},
     {UpgradeType::MoreBullets, {UpgradeType::FourDirectionBullets, UpgradeType::MachineGun}},
@@ -119,7 +122,8 @@ const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::RepairWalls, 3},
     {UpgradeType::BaseInvincibility, 4},
     {UpgradeType::MoreBullets,  4},
-    {UpgradeType::FastBullets,  3},
+    {UpgradeType::FastBullets,  4},
+    {UpgradeType::FastReload,  4},
     {UpgradeType::TankArmor,  4},
     {UpgradeType::TankSpeed,  4},
     {UpgradeType::PowerBullets,  3},
@@ -131,6 +135,7 @@ const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::FavoriteBase,  1},
     {UpgradeType::BulletTank,  1},
     {UpgradeType::FourDirectionBullets,  1},
+    {UpgradeType::ReloadOnKill,  1},
     {UpgradeType::Rocket,  1},
     {UpgradeType::MachineGun,  1},
     {UpgradeType::BaseRestoreOnDamage,  1}
@@ -232,6 +237,8 @@ std::vector<UpgradeType> PlayerUpgrade::fillLocalTypesList(PlayerController *pCo
             else if (level == maxLevel)
                 continue; // do not add to list
         } else if (baseUpgradeTypes.contains(t)) {
+            // NEW - make base upgrades more expensive by starting generating them only from 4th level
+            if (pContr->level() < 4) continue;
             int maxLevel = upgradeCap.contains(t) ? upgradeCap.at(t)-1 : 3;
             int level = eContr->hasLevelOfUpgrade(t);
             if (level>-1 && level < maxLevel)
@@ -290,6 +297,8 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
         mandatoryUpgrades.push(Rocket);
     if (isUpgradedToMax(controller, MoreBullets) && isUpgradedToMax(controller, FastBullets))
         mandatoryUpgrades.push(MachineGun);
+    if (isUpgradedToMax(controller, FastReload) && isUpgradedToMax(controller, PowerBullets))
+        mandatoryUpgrades.push(ReloadOnKill);
     if (isUpgradedToMax(eagleController, RepairWalls) && isUpgradedToMax(eagleController, BaseInvincibility))
         mandatoryUpgrades.push(BaseRestoreOnDamage);
 
@@ -365,6 +374,9 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
         case FastBullets:
             newUpgrade = new FasterBulletUpgrade(level);
             break;
+        case FastReload:
+            newUpgrade = new FastReloadUpgrade(level);
+            break;
         case MoreBullets:
             newUpgrade = new MoreBulletsUpgrade(level);
             break;
@@ -427,6 +439,9 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
             break;
         case MachineGun:
             newUpgrade = new MachineGunUpgrade(level);
+            break;
+        case ReloadOnKill:
+            newUpgrade = new ReloadOnKillUpgrade(level);
             break;
         case SacrificeLifeForBase:
             newUpgrade = new SacrificeLifeForBaseUpgrade(level);
@@ -662,9 +677,11 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
     _type = FastBullets;
     _name = "Fast delivery";
 
-    _percentBasedOnLevel = { 30, 60, 80 };
-    for (auto percent : _percentBasedOnLevel)
-        _effects.push_back("Bullet speed +" + std::to_string(percent) + "\%\nreload delay +25%");
+    _percentBasedOnLevel = { 50, 50, 100, 100 };
+    _effects.push_back("Bullet speed +" + std::to_string(_percentBasedOnLevel[0]) + "\%");
+    _effects.push_back("Shooting speed +" + std::to_string(_percentBasedOnLevel[1]) + "\%");
+    _effects.push_back("Bullet speed +" + std::to_string(_percentBasedOnLevel[2]) + "\%");
+    _effects.push_back("Shooting speed +" + std::to_string(_percentBasedOnLevel[3]) + "\%");
 
     _iconRect = AssetManager::instance().getAnimationFrame("pistolCollectable", "default", 0).rect;
 }
@@ -679,13 +696,63 @@ void FasterBulletUpgrade::onCollect(GameObject *collector)
     assert(controller != nullptr);
 
     assert(_currentLevel < _percentBasedOnLevel.size());
-    int percent = _percentBasedOnLevel[_currentLevel];
 
-    const int newBulletSpeed = globalConst::DefaultPlayerBulletSpeed + (globalConst::DefaultPlayerBulletSpeed * percent / 100);
+    int bulletModifier = 0;
+    int timeoutModifier = 0;
+
+    switch (_currentLevel) {
+        case 0:
+            bulletModifier =  _percentBasedOnLevel[0];
+            break;
+        case 1:
+            bulletModifier =  _percentBasedOnLevel[0];
+            timeoutModifier = _percentBasedOnLevel[1];
+            break;
+        case 2:
+            bulletModifier =  _percentBasedOnLevel[2];
+            timeoutModifier = _percentBasedOnLevel[1];
+            break;
+        case 3:
+            bulletModifier =  _percentBasedOnLevel[2];
+            timeoutModifier = _percentBasedOnLevel[3];
+            break;
+        default:
+            assert(false); // we mustn't be here;
+    }
+
+    const int newBulletSpeed = globalConst::DefaultPlayerBulletSpeed + (globalConst::DefaultPlayerBulletSpeed * bulletModifier / 100);
     shootable->setBulletSpeed(newBulletSpeed);
 
-    controller->addToCalculatedReloadDebuff(25);
+    const int newShootTimeout = globalConst::PlayerShootTimeoutMs - (globalConst::PlayerShootTimeoutMs * timeoutModifier / 100);
+    shootable->setShootTimeoutMs(newShootTimeout);
 }
+
+///////////////
+FastReloadUpgrade::FastReloadUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::TankUpgrade;
+    _type = FastReload;
+    _name = "Fast Reload";
+
+    _percentBasedOnLevel = { 10, 20, 30, 40 };
+    for (auto number : _percentBasedOnLevel)
+        _effects.push_back("+" + std::to_string(number) + "\% ammo reload speed");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("pistolCollectable", "default", 0).rect;
+}
+
+void FastReloadUpgrade::onCollect(GameObject *collector)
+{
+    assert(collector != nullptr);
+    auto shootable = collector->getComponent<Shootable>();
+    assert(shootable != nullptr);
+    assert(_currentLevel < _percentBasedOnLevel.size());
+
+    int newReloadTimeout = globalConst::PlayerDefaultReloadTimeoutMs - globalConst::PlayerDefaultReloadTimeoutMs * _percentBasedOnLevel[_currentLevel]/100;
+    shootable->setReloadTimeoutMs(newReloadTimeout);
+}
+
 
 
 ///////////////
@@ -698,7 +765,7 @@ MoreBulletsUpgrade::MoreBulletsUpgrade(int level)
 
     _numberBasedOnLevel = { 1, 2, 3, 4 };
     for (auto number : _numberBasedOnLevel)
-        _effects.push_back("+" + std::to_string(number) + " bullets at time");
+        _effects.push_back("+" + std::to_string(number) + " bullets in ammutition");
 
     _iconRect = AssetManager::instance().getAnimationFrame("tankCollectable", "default", 0).rect;
 }
@@ -710,10 +777,8 @@ void MoreBulletsUpgrade::onCollect(GameObject *collector)
     assert(shootable != nullptr);
     assert(_currentLevel < _numberBasedOnLevel.size());
 
-    shootable->resetLevel();
-
-    for (int i=0; i<_numberBasedOnLevel[_currentLevel]; i++)
-        shootable->increaseLevel();
+    int newMaxBullets = globalConst::PlayerDefaultMaxBullets + _numberBasedOnLevel[_currentLevel];
+    shootable->setMaxBullets(newMaxBullets);
 }
 
 
@@ -942,12 +1007,38 @@ void MachineGunUpgrade::onCollect(GameObject *target)
     shootable->setBulletSpeed(newBulletSpeed);
 
     // shoot speed
-    shootable->setReloadTimeoutMs(globalConst::PlayerShootTimeoutMs * 2 / 3);
+    shootable->setShootTimeoutMs(globalConst::PlayerShootTimeoutMs / 2);
 
-    // number of bullets
-    shootable->setLevel(32);
+    // set max ammo
+    shootable->setMaxBullets(10);
+
+    // set damage
+    //shootable->setDamage(std::max(shootable->damage()/2, 1));
+
+    // set instant reload
+    shootable->setInstantReload(true);
+
 }
 
+///
+
+ReloadOnKillUpgrade::ReloadOnKillUpgrade(int level)
+: PlayerUpgrade(level)
+{
+    _synergic = true;
+    _category = PlayerUpgrade::TankUpgrade;
+    _type  = ReloadOnKill;
+    _name = "Harvester of sorrow";
+
+    _effects.push_back("Replaces [Fast reload] and\n[power bullets] upgrades\nAmmo will fully reload\nafter every succesful kill");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("skullCollectable", "default", 0).rect;
+}
+
+void ReloadOnKillUpgrade::onCollect(GameObject *target)
+{
+    // nothing is needed except the fact of presense of this effect
+}
 
 //////////
 

@@ -267,10 +267,18 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
 
         // just hit non-transparent target (and it's not its own creator)
         if (!other->isFlagSet(BulletPassable) && _parentId != other->id()) {
-            if (isFlagSet(PiercingBullet) && other->isFlagSet(BulletKillable)) {
+            if (isFlagSet(PiercingBullet)) {
                 auto bullet = dynamic_cast<BulletController *>(_controller);
-                if (bullet->loseDamage() < 1)
-                    markForDeletion();
+                if (other->isFlagSet(BulletKillable)) {
+                    if (bullet->loseDamage() < 1)
+                        markForDeletion();
+                } else if (other->isFlagSet(Bullet)) {
+                    auto otherBullet = dynamic_cast<BulletController *>(other->_controller);
+                    if (bullet->damage() > otherBullet->damage())
+                        bullet->loseDamage();
+                    else
+                        markForDeletion();
+                }
             } else {
                 markForDeletion();
             }
@@ -294,6 +302,10 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                 GameObject *bulletAuthor = ObjectsPool::findNpcById(other->_parentId);
                 if (bulletAuthor && bulletAuthor->isFlagSet(NPC))
                     friendlyFire = true;
+                else if (bulletAuthor && bulletAuthor->isFlagSet(Player)) {
+                    dynamic_cast<PlayerController *>(bulletAuthor->_controller)->onKillEnemy(this);
+                }
+
             }
 
             if (!friendlyFire) {
@@ -605,6 +617,9 @@ net::ThinGameObject GameObject::update()
         _controller->update();
     else
         move(0, 0);
+
+    if (_shootable)
+        _shootable->reloadByTimeout();
 
     net::ThinGameObject thin;
     thin.id = _id;

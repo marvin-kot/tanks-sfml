@@ -401,6 +401,10 @@ void PlayerController::chooseUpgrade(int index)
                 removeUpgrade(PlayerUpgrade::MoreBullets);
                 removeUpgrade(PlayerUpgrade::PowerBullets);
             }
+            if (tp == PlayerUpgrade::ReloadOnKill) {
+                removeUpgrade(PlayerUpgrade::FastReload);
+                removeUpgrade(PlayerUpgrade::PowerBullets);
+            }
             break;
         }
         case PlayerUpgrade::BaseUpgrade:
@@ -441,6 +445,9 @@ void PlayerController::applyUpgrades()
     assert(damageable != nullptr);
     if (damageable->defence() < globalConst::DefaultPlayerProtection)
         damageable->setDefence(globalConst::DefaultPlayerProtection);
+    // restore ammunition
+    Shootable * shootable = _gameObject->getComponent<Shootable>();
+    shootable->resetBullets();
 
     updateAppearance();
 }
@@ -480,15 +487,16 @@ void PlayerController::setFourDirectionTurret()
 
     // take old turret values
     auto oldShootable = _gameObject->getComponent<Shootable>();
-    int actionTimeout = oldShootable->reloadTimeoutMs();
+    int actionTimeout = oldShootable->shootTimeoutMs();
     int damage = oldShootable->damage();
     int bulletSpeed = oldShootable->bulletSpeed();
+    int maxBullets = oldShootable->maxBullets();
 
     // delete old turret
     delete oldShootable;
 
     // set new turret
-    auto newShootable = new FourDirectionShootable(_gameObject, bulletSpeed);
+    auto newShootable = new FourDirectionShootable(_gameObject, bulletSpeed, maxBullets);
     newShootable->setDamage(damage);
 
     _gameObject->setShootable(newShootable);
@@ -502,16 +510,17 @@ void PlayerController::setRocketLauncher()
 
     // take old turret values
     auto oldShootable = _gameObject->getComponent<Shootable>();
-    int actionTimeout = oldShootable->reloadTimeoutMs();
+    int actionTimeout = oldShootable->shootTimeoutMs();
     int damage = oldShootable->damage();
     int bulletSpeed = std::max(oldShootable->bulletSpeed(), globalConst::DefaultRocketSpeed);
+    int maxBullets = oldShootable->maxBullets();
 
     // delete old turret
     delete oldShootable;
 
     // set new turret
-    auto newShootable = new RocketShootable(_gameObject);
-    newShootable->setReloadTimeoutMs(actionTimeout);
+    auto newShootable = new RocketShootable(_gameObject, maxBullets);
+    newShootable->setShootTimeoutMs(actionTimeout);
     newShootable->setDamage(damage);
     newShootable->setBulletSpeed(bulletSpeed);
 
@@ -536,6 +545,20 @@ void PlayerController::applyCalculatedReloadDebuff()
     auto shootable = _gameObject->getComponent<Shootable>();
     assert(shootable != nullptr);
 
-    int newReloadTimeout = globalConst::PlayerShootTimeoutMs + globalConst::PlayerShootTimeoutMs * _shootReloadDebuff / 100;
-    shootable->setReloadTimeoutMs(newReloadTimeout);
+    int newShootTimeout = globalConst::PlayerShootTimeoutMs + globalConst::PlayerShootTimeoutMs * _shootReloadDebuff / 100;
+    shootable->setShootTimeoutMs(newShootTimeout);
+}
+
+void PlayerController::onKillEnemy(GameObject *enemy)
+{
+    (void *)enemy;
+
+    if (hasLevelOfUpgrade(PlayerUpgrade::ReloadOnKill) != -1) {
+        auto shootable = _gameObject->getComponent<Shootable>();
+        assert(shootable != nullptr);
+        if (shootable->bullets() < shootable->maxBullets()) {
+            shootable->resetBullets();
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::FullReload, true);
+        }
+    }
 }

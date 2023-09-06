@@ -50,7 +50,11 @@ namespace globalConst
     constexpr int DefaultTimeoutMs = 1000;
     constexpr int HalvedTimeoutMs = 500;
     constexpr int PlayerShootTimeoutMs = 200;
+    constexpr int PlayerDefaultReloadTimeoutMs = 800;
+    constexpr int PlayerDefaultMaxBullets = 4;
     constexpr int EnemyShootTimeoutMs = 500;
+    constexpr int EnemyDefaultReloadTimeoutMs = 1000;
+    constexpr int EnemyDefaultMaxBullets = 1;
     constexpr int RocketShootTimeoutMs = 500;
     constexpr int DefaultRocketSpeed = 170;
 
