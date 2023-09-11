@@ -115,6 +115,14 @@ GameObject *MapCreator::buildObject(std::string type)
         return tree;
     }
 
+    if (type == "concrete_floor") {
+        GameObject *floor = new GameObject("concrete_floor");
+        floor->setFlags(GameObject::TankPassable | GameObject::BulletPassable | GameObject::Static);
+        floor->setRenderer(new SpriteRenderer(floor), 1);
+
+        return floor;
+    }
+
     if (type == "water") {
         GameObject *water = new GameObject("water");
         water->setFlags(GameObject::BulletPassable | GameObject::Static);
@@ -154,6 +162,8 @@ MapCreator::MapCreator()
 {
     charMap = {
             {'@', "spawner_player"},
+            {'.', "concrete_floor"},
+            {',', "grass_floor"},
             {'#', "brickWall"},
             {'*', "concreteWall"},
             {'!', "eagle"},
@@ -261,9 +271,11 @@ int MapCreator::parseMapFile(std::string fileName)
 void MapCreator::placeBrickWall(int x, int y)
 {
     constexpr int basicTileSize = globalConst::spriteOriginalSizeX;
+    constexpr int tileCenter = basicTileSize / 2;
     constexpr int subtileSize = basicTileSize / 2;
     constexpr int subtileCenter = subtileSize / 2;
     using namespace std;
+
     vector<string> parts = {"brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2"};
     int i=0;
     for (auto part : parts) {
@@ -276,6 +288,13 @@ void MapCreator::placeBrickWall(int x, int y)
         ObjectsPool::addObject(object);
         i++;
     }
+
+    // put floor under brick
+    GameObject *object = MapCreator::buildObject("concrete_floor");
+    object->setSize(basicTileSize, basicTileSize);
+    object->setPosition(x + tileCenter, y + tileCenter);
+    ObjectsPool::addObject(object);
+
 }
 
 Level::Properties MapCreator::buildMapFromData()
@@ -304,12 +323,24 @@ Level::Properties MapCreator::buildMapFromData()
                     object->setPosition(x*basicTileSize + tileCenter, y*basicTileSize + tileCenter);
                     ObjectsPool::addObject(object);
                     if (object->type() == "spawner_player") {
+                        {
+                            GameObject *floor = MapCreator::buildObject("concrete_floor");
+                            floor->setSize(basicTileSize, basicTileSize);
+                            floor->setPosition(x*basicTileSize + tileCenter, y*basicTileSize + tileCenter);
+                            ObjectsPool::addObject(floor);
+                        }
                         ObjectsPool::playerSpawnerObject = object;
                         playerCreated = true;
                     }
 
                     if (object->type() == "eagle") {
                         ObjectsPool::eagleObject = object;
+                        {
+                            GameObject *floor = MapCreator::buildObject("concrete_floor");
+                            floor->setSize(basicTileSize, basicTileSize);
+                            floor->setPosition(x*basicTileSize + tileCenter, y*basicTileSize + tileCenter);
+                            ObjectsPool::addObject(floor);
+                        }
                     }
                 }
             }

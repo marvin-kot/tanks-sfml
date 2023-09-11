@@ -30,7 +30,7 @@ int main()
             return -1;
         }
 
-        sf::sleep(sf::milliseconds(16));
+        sf::sleep(sf::milliseconds(12));
     }
 
     Logger::instance() << "Game window is closed";

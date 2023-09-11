@@ -505,7 +505,7 @@ FreezeEnemiesBonus::FreezeEnemiesBonus(int level)
     for (auto time : _timeoutBasedOnLevel)
         _effects.push_back("Freezes all enemy tanks\nfor " + std::to_string(time) + " sec");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("timerCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("freezeCollectable", "default", 0).rect;
 }
 
 void FreezeEnemiesBonus::onCollect(GameObject *)
@@ -610,7 +610,7 @@ TankAdditionalLifePerk::TankAdditionalLifePerk()
 
     _effects.push_back("Start with +1 life");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("plusCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("plusTankCollectable", "default", 0).rect;
 }
 
 
@@ -683,7 +683,7 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
     _effects.push_back("Bullet speed +" + std::to_string(_percentBasedOnLevel[2]) + "\%");
     _effects.push_back("Shooting speed +" + std::to_string(_percentBasedOnLevel[3]) + "\%");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("pistolCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("fastBulletCollectable", "default", 0).rect;
 }
 
 void FasterBulletUpgrade::onCollect(GameObject *collector)
@@ -739,7 +739,7 @@ FastReloadUpgrade::FastReloadUpgrade(int level)
     for (auto number : _percentBasedOnLevel)
         _effects.push_back("+" + std::to_string(number) + "\% ammo reload speed");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("pistolCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("fastReloadCollectable", "default", 0).rect;
 }
 
 void FastReloadUpgrade::onCollect(GameObject *collector)
@@ -767,7 +767,7 @@ MoreBulletsUpgrade::MoreBulletsUpgrade(int level)
     for (auto number : _numberBasedOnLevel)
         _effects.push_back("+" + std::to_string(number) + " bullets in ammutition");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("tankCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("ammoPlusCollectable", "default", 0).rect;
 }
 
 void MoreBulletsUpgrade::onCollect(GameObject *collector)
@@ -792,7 +792,7 @@ ArmorUpgrade::ArmorUpgrade(int level)
     _name = "Coat of steel";
 
     _numberBasedOnLevel = { 1, 2, 3, 4 };
-    _debuffBasedOnLevel = { 10, 20, 30, 40 };
+    _debuffBasedOnLevel = { 5, 10, 15, 20 };
     for (int i=0; i<_numberBasedOnLevel.size(); i++) {
         const int buff = _numberBasedOnLevel[i];
         const int debuff = _debuffBasedOnLevel[i];
@@ -1120,7 +1120,7 @@ FavoriteTankPerk::FavoriteTankPerk()
 
     _effects.push_back("More chance to obtain\ntank upgrades");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("tankCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("tankCrownCollectable", "default", 0).rect;
 }
 
 void FavoriteTankPerk::onCollect(GameObject *)
@@ -1140,7 +1140,7 @@ FavoriteBasePerk::FavoriteBasePerk()
 
     _effects.push_back("More chance to obtain\nbase upgrades");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("eagleCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("eagleCrownCollectable", "default", 0).rect;
 }
 
 void FavoriteBasePerk::onCollect(GameObject *)

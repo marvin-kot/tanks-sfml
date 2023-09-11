@@ -36,8 +36,8 @@ Game::Game() : gameState(GameState::TitleScreen) {}
 
 bool Game::loadAssets()
 {
-    if (!AssetManager::instance().loadSpriteSheet("spriteSheet16x16")) {
-        Logger::instance() << "[ERROR] Could not open assets/spriteSheet16x16.png";
+    if (!AssetManager::instance().loadSpriteSheet("spriteSheet32x32")) {
+        Logger::instance() << "[ERROR] Could not open assets/spriteSheet32x32.png";
         return false;
     }
 
@@ -56,6 +56,7 @@ bool Game::initializeWindow()
     Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML");
     //Utils::window.setVerticalSyncEnabled(true);
     Utils::window.setFramerateLimit(FixedFrameRate);
+    Utils::window.setKeyRepeatEnabled(false);
     return true;
 }
 
@@ -97,6 +98,7 @@ bool Game::update()
     if (!globalVars::gameIsPaused)
         recalculateViewPort();
     drawObjects();
+    drawBorders();
     HUD::instance().draw();
 
 
@@ -124,12 +126,26 @@ void Game::updateFrameClock()
     Utils::currentFrame++;
     Utils::lastFrameTime = Utils::refreshClock.getElapsedTime();
     Utils::refreshClock.restart();
+
+    static int i=0;
+    static int frameTimes[512];
+
+    if (i < 300) {
+        frameTimes[i] = Utils::lastFrameTime.asMilliseconds();
+        i++;
+    } else {
+        i=0;
+        Logger::instance() << "last 500 frames: ";
+        for (int j=0;j<300;j++)
+            Logger::instance() << frameTimes[j] << ", ";
+        Logger::instance() << "\n";
+    }
 }
 
 void Game::processWindowEvents()
 {
     sf::Event event;
-    while (Utils::window.pollEvent(event)) {
+    if (Utils::window.pollEvent(event)) {
         switch (event.type) {
             case sf::Event::Closed:
                 PlayerUpgrade::deletePerks();
@@ -419,9 +435,9 @@ void Game::drawGameScreen()
     // draw objects (order matter)
     // draw border
     using namespace globalConst;
-    sf::RectangleShape greyRect(sf::Vector2f(screen_w, screen_h));
-    greyRect.setFillColor(sf::Color(102, 102, 102));
-    Utils::window.draw(greyRect);
+    //sf::RectangleShape greyRect(sf::Vector2f(screen_w, screen_h));
+    //greyRect.setFillColor(sf::Color(102, 102, 102));
+    //Utils::window.draw(greyRect);
 
     // draw view port
 
@@ -431,6 +447,40 @@ void Game::drawGameScreen()
     blackRect.setPosition(sf::Vector2f(globalVars::gameViewPort.left, globalVars::gameViewPort.top));
     blackRect.setFillColor(sf::Color(50, 0, 0));
     Utils::window.draw(blackRect);
+}
+
+void Game::drawBorders()
+{
+    //using namespace globalConst;
+    // draw 4 grey rects
+    const int viewPortWidth = std::min<int>(globalVars::mapSize.x*globalConst::spriteDisplaySizeX, globalVars::gameViewPort.width);
+    const int viewPortHeight = std::min<int>(globalVars::mapSize.y*globalConst::spriteDisplaySizeY, globalVars::gameViewPort.height);
+    const int borderWidth = (globalConst::screen_w - viewPortWidth)/2;
+    const int borderHeight = (globalConst::screen_h - viewPortHeight)/2;
+    {
+        sf::RectangleShape greyRect(sf::Vector2f(borderWidth, globalConst::screen_h));
+        greyRect.setPosition(0, 0);
+        greyRect.setFillColor(sf::Color(102, 102, 102));
+        Utils::window.draw(greyRect);
+    }
+    {
+        sf::RectangleShape greyRect(sf::Vector2f(borderWidth, globalConst::screen_h));
+        greyRect.setPosition(globalConst::screen_w-borderWidth, 0);
+        greyRect.setFillColor(sf::Color(102, 102, 102));
+        Utils::window.draw(greyRect);
+    }
+    {
+        sf::RectangleShape greyRect(sf::Vector2f(viewPortWidth, borderHeight));
+        greyRect.setPosition(borderWidth, 0);
+        greyRect.setFillColor(sf::Color(102, 102, 102));
+        Utils::window.draw(greyRect);
+    }
+    {
+        sf::RectangleShape greyRect(sf::Vector2f(viewPortWidth, borderHeight));
+        greyRect.setPosition(borderWidth, borderHeight+viewPortHeight);
+        greyRect.setFillColor(sf::Color(102, 102, 102));
+        Utils::window.draw(greyRect);
+    }
 }
 
 void Game::recalculateViewPort()
@@ -643,18 +693,5 @@ void Game::drawStartLevelScreen()
     Utils::window.display();
 }
 
-void Game::drawGameOverScreen()
-{
-    using namespace globalConst;
-    // grey background
-    UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(102, 102, 102));
-
-    UiUtils::instance().drawText(
-        "GAME OVER" , 48,
-        screen_w/2, screen_h/2 - 64, false,
-        sf::Color::White);
-
-    Utils::window.display();
-}
 
 }

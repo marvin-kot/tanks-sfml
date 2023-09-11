@@ -267,6 +267,14 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
 
         // just hit non-transparent target (and it's not its own creator)
         if (!other->isFlagSet(BulletPassable) && _parentId != other->id()) {
+            // damage target
+            /*if (other->isFlagSet(BulletKillable) && other->_damageable != nullptr) {
+                other->_damageable->takeDamage(damage);
+                if (other->_damageable->isDestroyed()) {
+                    other->markForDeletion();
+                }
+            }*/
+
             if (isFlagSet(PiercingBullet)) {
                 auto bullet = dynamic_cast<BulletController *>(_controller);
                 if (other->isFlagSet(BulletKillable)) {
@@ -303,7 +311,10 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                 if (bulletAuthor && bulletAuthor->isFlagSet(NPC))
                     friendlyFire = true;
                 else if (bulletAuthor && bulletAuthor->isFlagSet(Player)) {
-                    dynamic_cast<PlayerController *>(bulletAuthor->_controller)->onKillEnemy(this);
+                    if (_damageable->isDestroyed())
+                        dynamic_cast<PlayerController *>(bulletAuthor->_controller)->onKillEnemy(this);
+                    else
+                        SoundPlayer::instance().enqueueSound(SoundPlayer::DamageEnemy, true);
                 }
 
             }
@@ -319,6 +330,12 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                 if (_damageable->isDestroyed()) {
                     markForDeletion();
                     cancelMovement = true;
+
+                    if (isFlagSet(Static)) { // only brick wall has flags BulletKillable and Static
+                        GameObject *bulletAuthor = ObjectsPool::findNpcById(other->_parentId);
+                        if (bulletAuthor && bulletAuthor->isFlagSet(Player))
+                            SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
+                    }
                 }
             }
         }
@@ -615,19 +632,19 @@ net::ThinGameObject GameObject::update()
 {
     if (_controller)
         _controller->update();
-    else
+    else if (isFlagSet(GameObject::CollectableBonus))
         move(0, 0);
 
     if (_shootable)
         _shootable->reloadByTimeout();
 
-    net::ThinGameObject thin;
+    /*net::ThinGameObject thin;
     thin.id = _id;
     thin.x = _x;
     thin.x = _y;
-    thin.flags = static_cast<uint16_t>(_flags);
+    thin.flags = static_cast<uint16_t>(_flags);*/
 
-    return thin;
+    return net::ThinGameObject();
 }
 
 int GameObject::distanceTo(GameObject *other)

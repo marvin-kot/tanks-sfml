@@ -66,7 +66,9 @@ void Shootable::reloadByTimeout()
 
     bool isPlayer = _gameObject->isFlagSet(GameObject::Player);
 
-    if (_instantReload) {
+
+    //if (_instantReload) {
+    if (_bullets == 0) {
         _bullets = _maxBullets;
         if (isPlayer)
             SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::FullReload, true);
@@ -222,8 +224,8 @@ bool DoubleShootable::shoot(globalTypes::Direction dir)
 
     sf::Vector2i pos = _gameObject->position();
 
-    int offsetX = (dir == Direction::Up || dir == Direction::Down) ? 3 : 0;
-    int offsetY = (dir == Direction::Left || dir == Direction::Right) ? 3 : 0;
+    int offsetX = (dir == Direction::Up || dir == Direction::Down) ? 5 : 0;
+    int offsetY = (dir == Direction::Left || dir == Direction::Right) ? 5 : 0;
 
     {
         GameObject *bullet = new GameObject(_gameObject, "bullet");

@@ -98,7 +98,7 @@ void  LevelUpPopupMenu::drawCursor(sf::RectangleShape& parentRect)
             break;
     }*/
 
-    sf::RectangleShape whiteRect(sf::Vector2f(18, 18));
+    sf::RectangleShape whiteRect(sf::Vector2f(globalConst::spriteOriginalSizeX+2, globalConst::spriteOriginalSizeY+2));
     whiteRect.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
     whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
     whiteRect.setPosition(cursorX, cursorY);

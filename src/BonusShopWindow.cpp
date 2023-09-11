@@ -122,7 +122,7 @@ void BonusShopWindow::draw()
 
 void BonusShopWindow::drawCursor(int x,  int y)
 {
-    sf::RectangleShape whiteRect(sf::Vector2f(18, 18));
+    sf::RectangleShape whiteRect(sf::Vector2f(globalConst::spriteOriginalSizeX+2, globalConst::spriteOriginalSizeY+2));
     whiteRect.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
     whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
     whiteRect.setPosition(x, y);
@@ -133,7 +133,7 @@ void BonusShopWindow::drawCursor(int x,  int y)
 
 void BonusShopWindow::drawEdging(int x,  int y)
 {
-    sf::RectangleShape whiteRect(sf::Vector2f(18, 18));
+    sf::RectangleShape whiteRect(sf::Vector2f(globalConst::spriteOriginalSizeX+2, globalConst::spriteOriginalSizeY+2));
     whiteRect.setScale(globalConst::spriteScaleX+2, globalConst::spriteScaleY+2);
     whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
     whiteRect.setPosition(x, y);
@@ -155,12 +155,12 @@ void BonusShopWindow::drawUpgrade(int index, int x, int y)
     if (index == _currentUpgradeCursor)
         drawCursor(x, y);
 
-    sf::IntRect iconRect = upgrade->iconRect(); // sf::IntRect(272, 16, 16, 16);
+    sf::IntRect iconRect = upgrade->iconRect();
     UiUtils::instance().drawIcon(iconRect, x, y);
 
     std::string caption = upgrade->name();
     const int captionFontSize = 18;
-    int offsetY = y + 40 + captionFontSize;
+    int offsetY = y + 40 + captionFontSize*2;
     UiUtils::instance().drawText(caption, captionFontSize, x, offsetY);
     offsetY += captionFontSize + 5;
     int priceSize = 14;

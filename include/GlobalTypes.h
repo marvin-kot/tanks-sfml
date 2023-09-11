@@ -8,7 +8,8 @@ namespace globalTypes
         Up,
         Left,
         Down,
-        Right
+        Right,
+        Max4Direction
     };
 
     enum EagleWallDirection

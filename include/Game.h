@@ -44,6 +44,7 @@ private:
     void updateAllObjectControllers();
     void processDeletedObjects();
     void drawGameScreen();
+    void drawBorders();
     void recalculateViewPort();
     void drawObjects();
     void updateDisplay();
@@ -51,7 +52,6 @@ private:
     void pause(bool);
 
     void drawStartLevelScreen();
-    void drawGameOverScreen();
 
     bool winConditionsMet() const;
     bool failConditionsMet() const;

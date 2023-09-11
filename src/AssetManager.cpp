@@ -133,14 +133,16 @@ std::vector<AnimationFrame> AssetManager::getAnimationFrames(std::string type, s
 {
     assert(jsonLoaded == true);
     assert(jsonParsed == true);
+    assert(objectTypeAnimations.contains(type) == true);
+    assert(objectTypeAnimations.at(type).contains(animation) == true);
     return objectTypeAnimations.at(type).at(animation).frames;
 }
 
 AnimationFrame AssetManager::getAnimationFrame(std::string type, std::string animation, int frameNum)
 {
     assert(objectTypeAnimations.empty() == false);
-    assert(objectTypeAnimations.find(type) != objectTypeAnimations.end());
-    assert(objectTypeAnimations.at(type).find(animation) != objectTypeAnimations.at(type).end());
+    assert(objectTypeAnimations.contains(type) == true);
+    assert(objectTypeAnimations.at(type).contains(animation) == true);
     assert(objectTypeAnimations.at(type).at(animation).frames.empty() == false);
     assert(objectTypeAnimations.at(type).at(animation).frames.size() >= frameNum);
 

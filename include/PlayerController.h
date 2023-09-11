@@ -98,6 +98,8 @@ public:
     void applyCalculatedReloadDebuff();
 
     void onKillEnemy(GameObject *enemy);
+
+    void restoreProtection();
 };
 
 struct PlayerSignal

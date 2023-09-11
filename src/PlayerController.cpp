@@ -193,19 +193,19 @@ void PlayerController::resetMoveStartTimer()
 int PlayerController::trySqueeze()
 {
     if (_currMoveX == 0) {
-        if (_gameObject->move(1, _currMoveY) == 0)
-            if (_gameObject->move(-1, _currMoveY) == 0)
-                if (_gameObject->move(2, _currMoveY) == 0)
-                    if (_gameObject->move(-2, _currMoveY) == 0)
-                        if (_gameObject->move(3, _currMoveY) == 0)
-                            return _gameObject->move(-3, _currMoveY);
+        if (_gameObject->move(2, _currMoveY) == 0)
+            if (_gameObject->move(-2, _currMoveY) == 0)
+                if (_gameObject->move(4, _currMoveY) == 0)
+                    if (_gameObject->move(-4, _currMoveY) == 0)
+                        if (_gameObject->move(6, _currMoveY) == 0)
+                            return _gameObject->move(-6, _currMoveY);
     } else if (_currMoveY == 0) {
-        if (_gameObject->move(_currMoveX, 1) == 0)
-            if (_gameObject->move(_currMoveX, -1) == 0)
-                if (_gameObject->move(_currMoveX, 2) == 0)
-                    if (_gameObject->move(_currMoveX, -2) == 0)
-                        if (_gameObject->move(_currMoveX, 3) == 0)
-                            return _gameObject->move(_currMoveX, -3);
+        if (_gameObject->move(_currMoveX, 2) == 0)
+            if (_gameObject->move(_currMoveX, -2) == 0)
+                if (_gameObject->move(_currMoveX, 4) == 0)
+                    if (_gameObject->move(_currMoveX, -4) == 0)
+                        if (_gameObject->move(_currMoveX, 6) == 0)
+                            return _gameObject->move(_currMoveX, -6);
     }
 
     return 1;
@@ -228,37 +228,39 @@ void PlayerController::updateAppearance()
     int turretOffsetX = 0;
     int turretOffsetY = 0;
 
+    using namespace globalConst;
+
     switch (damageable->defence()) {
         case 0:
-            baseRenderer->setSpriteSheetOffset(0, -16);
-            turretOffsetX = 16;
+            baseRenderer->setSpriteSheetOffset(0, -spriteOriginalSizeY);
+            turretOffsetX = spriteOriginalSizeX;
             break;
         case 1:
             baseRenderer->setSpriteSheetOffset(0, 0);
             break;
         case 2:
-            baseRenderer->setSpriteSheetOffset(0, 16);
+            baseRenderer->setSpriteSheetOffset(0, spriteOriginalSizeY);
             break;
         case 3:
-            baseRenderer->setSpriteSheetOffset(0, 32);
+            baseRenderer->setSpriteSheetOffset(0, spriteOriginalSizeY);
             break;
         case 4:
-            baseRenderer->setSpriteSheetOffset(0, 48);
+            baseRenderer->setSpriteSheetOffset(0, spriteOriginalSizeY*2);
             break;
         case 5:
-            baseRenderer->setSpriteSheetOffset(0, 48);
+            baseRenderer->setSpriteSheetOffset(0, spriteOriginalSizeY*2);
             break;
     }
 
     Shootable *shootable = _gameObject->getComponent<Shootable>();
     if (shootable->bulletSpeed() > globalConst::DefaultPlayerBulletSpeed)
-        turretOffsetY = 16;
+        turretOffsetY = spriteOriginalSizeY;
 
     if (shootable->damage() > 1)
-        turretOffsetY = 32;
+        turretOffsetY = spriteOriginalSizeY * 2;
 
     if (_4dirSet)
-        turretOffsetY = 64;
+        turretOffsetY = spriteOriginalSizeY * 3;
 
     turretRenderer->setSpriteSheetOffset(turretOffsetX, turretOffsetY);
 
@@ -269,7 +271,7 @@ void PlayerController::onDamaged()
 {
     if (!_invincible) {
         updateAppearance();
-        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::debuff, true);
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::GetDamage, true);
         _gameObject->getComponent<SpriteRenderer>()->setOneFrameTintColor(sf::Color::Red);
         setTemporaryInvincibility(500);
     }
@@ -452,6 +454,11 @@ void PlayerController::applyUpgrades()
     updateAppearance();
 }
 
+void PlayerController::restoreProtection()
+{
+    
+}
+
 int PlayerController::hasLevelOfUpgrade(PlayerUpgrade::UpgradeType type) const
 {
     if (_collectedUpgrades.find(type) == _collectedUpgrades.end())
@@ -562,3 +569,4 @@ void PlayerController::onKillEnemy(GameObject *enemy)
         }
     }
 }
+

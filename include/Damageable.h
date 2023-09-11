@@ -9,6 +9,7 @@ class Damageable
 private:
     GameObject *_gameObject;
     int _def;
+    int _maxDefence;
     bool _invincible;
 
     sf::Clock _clock;
@@ -19,6 +20,10 @@ public:
 
     void setDefence(int def);
     int defence() const;
+
+    int maxDefence() const;
+
+    void restoreDefence();
 
     void makeInvincible(bool);
     bool isInvincible() const;

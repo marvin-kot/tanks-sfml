@@ -11,33 +11,6 @@
 #include "UiUtils.h"
 
 
-
-void drawCursor(sf::RectangleShape& parentRect, int pos)
-{
-    int cursorX = 0;
-    int cursorY = parentRect.getPosition().y - parentRect.getSize().y/8;
-    switch (pos) {
-        case 0:
-            cursorX = parentRect.getPosition().x - parentRect.getSize().x/4 - 32;
-            break;
-        case 1:
-            cursorX = parentRect.getPosition().x;
-            break;
-        case 2:
-            cursorX = parentRect.getPosition().x + parentRect.getSize().x/4 + 32;
-            break;
-    }
-
-    sf::RectangleShape whiteRect(sf::Vector2f(18, 18));
-    whiteRect.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
-    whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
-    whiteRect.setPosition(cursorX, cursorY);
-    whiteRect.setFillColor(sf::Color(200, 200, 200));
-    Utils::window.draw(whiteRect);
-}
-
-////////////////////////////////////////
-
 HUD::HUD()
 {}
 

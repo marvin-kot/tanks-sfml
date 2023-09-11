@@ -53,3 +53,9 @@ struct AmmoCollectable : public Collectable
     AmmoCollectable(GameObject *parent);
     void onCollected(GameObject *collector) override;
 };
+
+struct RepairCollectable : public Collectable
+{
+    RepairCollectable(GameObject *parent);
+    void onCollected(GameObject *collector) override;
+};

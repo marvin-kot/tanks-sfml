@@ -12,19 +12,23 @@
 using namespace globalTypes;
 using namespace sf;
 
+constexpr int subtileSize = globalConst::spriteOriginalSizeX/2;
+constexpr int subtileCenter = subtileSize/2;
+constexpr int wallOffset = subtileSize + subtileCenter;
+
 static const std::map<EagleWallDirection, sf::Vector2i> dirOffsets = {
-    {DownLeft, Vector2i(-12, 12)},
-    {LeftLeftDown, Vector2i(-12, 4)},
-    {LeftLeftUp, Vector2i(-12, -4)},
-    {UpLeft, Vector2i(-12, -12)},
-    {UpUpLeft, Vector2i(-4, -12)},
-    {UpUpRight, Vector2i(4, -12)},
-    {UpRight, Vector2i(12, -12)},
-    {RightRightUp, Vector2i(12, -4)},
-    {RightRightDown, Vector2i(12, 4)},
-    {DownRight, Vector2i(12, 12)},
-    {DownDownRight, Vector2i(4, 12)},
-    {DownDownLeft, Vector2i(-4, 12)}
+    {DownLeft, Vector2i(-wallOffset, wallOffset)},
+    {LeftLeftDown, Vector2i(-wallOffset, subtileCenter)},
+    {LeftLeftUp, Vector2i(-wallOffset, -subtileCenter)},
+    {UpLeft, Vector2i(-wallOffset, -wallOffset)},
+    {UpUpLeft, Vector2i(-subtileCenter, -wallOffset)},
+    {UpUpRight, Vector2i(subtileCenter, -wallOffset)},
+    {UpRight, Vector2i(wallOffset, -wallOffset)},
+    {RightRightUp, Vector2i(wallOffset, -subtileCenter)},
+    {RightRightDown, Vector2i(wallOffset, subtileCenter)},
+    {DownRight, Vector2i(wallOffset, wallOffset)},
+    {DownDownRight, Vector2i(subtileCenter, wallOffset)},
+    {DownDownLeft, Vector2i(-subtileCenter, wallOffset)}
 };
 
 EagleController::EagleController(GameObject *obj)
@@ -72,14 +76,14 @@ void EagleController::update()
             if (_clock.getElapsedTime() > sf::milliseconds(_rebuildTimeouts.top())) {
                 _clock.reset(true);
                 if (false == ObjectsPool::getEagleWalls().contains(_currentBuildDirection)) {
-                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::debuff, true);
+                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::BuildWall, true);
                     const int thisX = _gameObject->position().x;
                     const int thisY = _gameObject->position().y;
                     const auto offset = dirOffsets.at(_currentBuildDirection);
                     Logger::instance() << "build dir " << (int)_currentBuildDirection << " coord " << thisX + offset.x << " " << thisY + offset.y << "\n";
                     GameObject *obj = MapCreator::buildObject("brickWall1x1");
                     assert(obj != nullptr);
-                    obj->setSize(8, 8);
+                    obj->setSize(globalConst::spriteOriginalSizeX/2, globalConst::spriteOriginalSizeY/2);
                     obj->setPosition(
                     thisX + offset.x, thisY + offset.y);
                     ObjectsPool::addEagleWall(_currentBuildDirection, obj);
@@ -167,24 +171,26 @@ void EagleController::updateAppearance()
     Damageable *damageable = _gameObject->getComponent<Damageable>();
     assert(damageable != nullptr);
 
+    using namespace globalConst;
+
     switch (damageable->defence()) {
         case 0:
-            renderer->setSpriteSheetOffset(-16, 16);
+            renderer->setSpriteSheetOffset(-spriteOriginalSizeX, spriteOriginalSizeX);
             break;
         case 1:
             renderer->setSpriteSheetOffset(0, 0);
             break;
         case 2:
-            renderer->setSpriteSheetOffset(0, 16);
+            renderer->setSpriteSheetOffset(0, spriteOriginalSizeX);
             break;
         case 3:
-            renderer->setSpriteSheetOffset(0, 32);
+            renderer->setSpriteSheetOffset(0, spriteOriginalSizeX*2);
             break;
         case 4:
-            renderer->setSpriteSheetOffset(0, 32);
+            renderer->setSpriteSheetOffset(0, spriteOriginalSizeX*2);
             break;
         case 5:
-            renderer->setSpriteSheetOffset(0, 32);
+            renderer->setSpriteSheetOffset(0, spriteOriginalSizeX*3);
             break;
     }
 
@@ -230,7 +236,7 @@ void EagleController::setTempInvincibilityAfterDamage(int timeout)
 void EagleController::onDamaged()
 {
     updateAppearance();
-    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::debuff, true);
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::GetDamage, true);
 
     Damageable *dmg = _gameObject->getComponent<Damageable>();
 

@@ -114,7 +114,7 @@ GameObject *SpawnController::createObject(std::string type)
         //enemy->setShootable(new Shootable(enemy, globalConst::HalvedTimeoutMs));
         enemy->setShootable(Shootable::createDefaultEnemyShootable(enemy));
         enemy->setFlags(GameObject::NPC | GameObject::BulletKillable);
-        generateBonusWithProbability(enemy, 7);
+        generateBonusWithProbability(enemy, 9);
         enemy->setRenderer(new SpriteRenderer(enemy), 2);
         enemy->setDamageable(new Damageable(enemy, 0));
         enemy->setController(new TankRandomController(enemy, globalConst::FastEnemySpeed, 0.75));

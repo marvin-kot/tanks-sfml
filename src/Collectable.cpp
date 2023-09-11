@@ -1,5 +1,6 @@
 #include "Collectable.h"
 
+#include "Damageable.h"
 #include "GameObject.h"
 #include "ObjectsPool.h"
 #include "SoundPlayer.h"
@@ -117,4 +118,24 @@ void AmmoCollectable::onCollected(GameObject *collector)
     }
 
     //Collectable::onCollected(collector);
+}
+
+
+//////
+
+RepairCollectable::RepairCollectable(GameObject *parent)
+: Collectable(parent)
+{}
+
+void RepairCollectable::onCollected(GameObject *collector)
+{
+    assert(collector->isFlagSet(GameObject::Player));
+    auto damageable = collector->getComponent<Damageable>();
+    assert(damageable != nullptr);
+    if (damageable->defence() < damageable->maxDefence()) {
+        damageable->restoreDefence();
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusCollect, true);
+        auto controller = collector->getComponent<PlayerController>();
+        controller->updateAppearance();
+    }
 }

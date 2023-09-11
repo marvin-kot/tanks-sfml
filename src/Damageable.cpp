@@ -29,12 +29,22 @@ bool Damageable::isDestroyed() const
 
 void Damageable::setDefence(int def)
 {
-    _def = def;
+    _maxDefence = _def = def;
 }
 
 int Damageable::defence() const
 {
     return _def;
+}
+
+int Damageable::maxDefence() const
+{
+    return _maxDefence;
+}
+
+void Damageable::restoreDefence()
+{
+    _def = _maxDefence;
 }
 
 void Damageable::makeInvincible(bool val)

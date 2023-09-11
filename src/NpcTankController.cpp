@@ -58,15 +58,15 @@ int NpcTankController::trySqueeze()
 {
     int moved = 1;
     if (_currMoveX == 0) {
-        moved = _gameObject->move(1, _currMoveY);
+        moved = _gameObject->move(2, _currMoveY);
         if (moved == 0) {
-            moved = _gameObject->move(-1, _currMoveY);
+            moved = _gameObject->move(-2, _currMoveY);
         }
 
     } else if (_currMoveY == 0) {
-        moved = _gameObject->move(_currMoveX, 1);
+        moved = _gameObject->move(_currMoveX, 2);
         if (moved == 0) {
-            moved = _gameObject->move(_currMoveX, -1);
+            moved = _gameObject->move(_currMoveX, -2);
         }
     }
 
@@ -124,13 +124,30 @@ TankRandomController::TankRandomController(GameObject *parent, int spd, float ti
 {}
 
 
+static globalTypes::Direction oppositeDirection(globalTypes::Direction dir)
+{
+    using namespace globalTypes;
+    switch (dir) {
+        case Direction::Left:
+            return Direction::Right;
+        case Direction::Right:
+            return Direction::Left;
+        case Direction::Up:
+            return Direction::Down;
+        case Direction::Down:
+            return Direction::Up;
+    }
+
+    return Direction::Unknown;
+}
+
 bool TankRandomController::tryToMove()
 {
     using namespace globalTypes;
 
     GameObject *target = nullptr;
 
-    if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < 80)
+    if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < globalConst::spriteOriginalSizeX*5)
         target = ObjectsPool::playerObject;
     else if (ObjectsPool::eagleObject)
         target = ObjectsPool::eagleObject;
@@ -138,27 +155,39 @@ bool TankRandomController::tryToMove()
     using namespace globalTypes;
     std::vector<Direction> directions;
 
+    assert(_gameObject->direction() != Direction::Unknown );
+    const auto oldDirection = _gameObject->direction();
+    directions.push_back(oldDirection);
+
     for (int i=0; i<2; i++) {
         if (target) {
-            if (target->position().x < _gameObject->position().x)
+            if (target->position().x < _gameObject->position().x && oldDirection != Direction::Right)
                 directions.push_back(Direction::Left);
-            if (target->position().y < _gameObject->position().y)
+            if (target->position().y < _gameObject->position().y && oldDirection != Direction::Down)
                 directions.push_back(Direction::Up);
-            if (target->position().x > _gameObject->position().x)
+            if (target->position().x > _gameObject->position().x && oldDirection != Direction::Left)
                 directions.push_back(Direction::Right);
-            if (target->position().y > _gameObject->position().y)
+            if (target->position().y > _gameObject->position().y && oldDirection != Direction::Up)
                 directions.push_back(Direction::Down);
         }
     }
 
 
+    for (int i = 1; i<(int)Direction::Max4Direction; i++) {
+        Direction dir = static_cast<Direction>(i);
+        if (dir != oppositeDirection(oldDirection))
+            directions.push_back(dir);
+    }
 
-    assert(_gameObject->direction() != Direction::Unknown );
-    const auto oldDirection = _gameObject->direction();
-    // add current direction to set to make moving in same direction more probable
-    std::vector<Direction> possibleMoves = {Up, Left, Right, Down, oldDirection};
 
-    return tryMoveToOneOfDirections(possibleMoves);
+    bool resetTimer = tryMoveToOneOfDirections(directions);
+
+    if (!_isMoving) {
+        directions.push_back(oppositeDirection(oldDirection));
+        resetTimer = tryMoveToOneOfDirections(directions);
+    }
+
+    return resetTimer;
 }
 
 
@@ -200,9 +229,9 @@ bool TankKamikazeController::decideIfToShoot(globalTypes::Direction oldDir) cons
 {
     GameObject *target = nullptr;
 
-    if (ObjectsPool::eagleObject && _gameObject->distanceTo(ObjectsPool::eagleObject) < 26)
+    if (ObjectsPool::eagleObject && _gameObject->distanceTo(ObjectsPool::eagleObject) < globalConst::spriteOriginalSizeX * 1.4)
         target = ObjectsPool::eagleObject;
-    else if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < 20)
+    else if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < globalConst::spriteOriginalSizeX)
         target = ObjectsPool::playerObject;
 
     return (target != nullptr);
@@ -213,34 +242,48 @@ bool TankKamikazeController::tryToMove()
 {
     GameObject *target = nullptr;
 
-    if (ObjectsPool::eagleObject && _gameObject->distanceTo(ObjectsPool::eagleObject) < 80)
+    if (ObjectsPool::eagleObject && _gameObject->distanceTo(ObjectsPool::eagleObject) < globalConst::spriteOriginalSizeX*5)
         target = ObjectsPool::eagleObject;
-    else if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < 80)
+    else if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < globalConst::spriteOriginalSizeX*5)
         target = ObjectsPool::playerObject;
 
     using namespace globalTypes;
     std::vector<Direction> directions;
 
-    for (int i=0; i<3; i++) {
+    assert(_gameObject->direction() != Direction::Unknown );
+    const auto oldDirection = _gameObject->direction();
+    directions.push_back(oldDirection);
+
+     for (int i=0; i<4; i++) {
         if (target) {
-            if (target->position().x < _gameObject->position().x)
+            if (target->position().x < _gameObject->position().x && oldDirection != Direction::Right)
                 directions.push_back(Direction::Left);
-            if (target->position().y < _gameObject->position().y)
+            if (target->position().y < _gameObject->position().y && oldDirection != Direction::Down)
                 directions.push_back(Direction::Up);
-            if (target->position().x > _gameObject->position().x)
+            if (target->position().x > _gameObject->position().x && oldDirection != Direction::Left)
                 directions.push_back(Direction::Right);
-            if (target->position().y > _gameObject->position().y)
+            if (target->position().y > _gameObject->position().y && oldDirection != Direction::Up)
                 directions.push_back(Direction::Down);
         }
     }
 
-    directions.push_back(Direction::Left);
-    directions.push_back(Direction::Up);
-    directions.push_back(Direction::Right);
-    directions.push_back(Direction::Down);
+
+    for (int i = 1; i<(int)Direction::Max4Direction; i++) {
+        Direction dir = static_cast<Direction>(i);
+        if (dir != oppositeDirection(oldDirection))
+            directions.push_back(dir);
+    }
 
 
-    return tryMoveToOneOfDirections(directions);
+    bool resetTimer = tryMoveToOneOfDirections(directions);
+
+    if (!_isMoving) {
+        directions.push_back(oppositeDirection(oldDirection));
+        resetTimer = tryMoveToOneOfDirections(directions);
+    }
+
+    return resetTimer;
+
 }
 
 
@@ -377,21 +420,22 @@ void TankBossController::onDamaged()
     NpcTankController::onDamaged();
 
     using namespace globalTypes;
+    using namespace globalConst;
     if (ObjectsPool::playerObject == nullptr)
         return;
 
     auto target = ObjectsPool::playerObject;
 
-    if (target->position().x - _gameObject->position().x > 16)
+    if (target->position().x - _gameObject->position().x > spriteOriginalSizeX)
         //_nextDirection.push(Direction::Right);
         _nextDirection = Direction::Right;
-    if (target->position().x - _gameObject->position().x < -16)
+    if (target->position().x - _gameObject->position().x < -spriteOriginalSizeX*2)
         //_nextDirection.push(Direction::Left);
         _nextDirection = Direction::Left;
-    if (target->position().y - _gameObject->position().y > 16)
+    if (target->position().y - _gameObject->position().y > spriteOriginalSizeX)
         //_nextDirection.push(Direction::Down);
         _nextDirection = Direction::Down;
-    if (target->position().y - _gameObject->position().y < -16)
+    if (target->position().y - _gameObject->position().y < -spriteOriginalSizeX)
         //_nextDirection.push(Direction::Up);
         _nextDirection = Direction::Up;
 }

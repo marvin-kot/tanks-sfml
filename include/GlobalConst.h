@@ -16,11 +16,11 @@ namespace globalConst
     constexpr int FixedFrameRate = 30;
     constexpr float FixedFrameLength = 1 / (float)FixedFrameRate;
 
-    constexpr int spriteOriginalSizeX = 16;
-    constexpr int spriteOriginalSizeY = 16;
+    constexpr int spriteOriginalSizeX = 32;
+    constexpr int spriteOriginalSizeY = 32;
 
-    constexpr int spriteScaleX = 6;
-    constexpr int spriteScaleY = 6;
+    constexpr int spriteScaleX = 3;
+    constexpr int spriteScaleY = 3;
 
     constexpr int spriteDisplaySizeX = spriteOriginalSizeX * spriteScaleX;
     constexpr int spriteDisplaySizeY = spriteOriginalSizeY * spriteScaleY;
@@ -33,9 +33,9 @@ namespace globalConst
 
     constexpr int viewPortWidthPx = viewPortWidthTiles * spriteDisplaySizeX;
     constexpr int viewPortHeightPx = viewPortHeightTiles * spriteDisplaySizeY;
-
-    constexpr int DefaultPlayerSpeed = 50;
-    constexpr int DefaultEnemySpeed = DefaultPlayerSpeed * 2 / 3;
+    constexpr float SpeedBase = 3;
+    constexpr int DefaultPlayerSpeed = static_cast<int>(SpeedBase * spriteOriginalSizeX);
+    constexpr int DefaultEnemySpeed = DefaultPlayerSpeed * 4 / 7;
     constexpr int FastEnemySpeed = DefaultEnemySpeed * 4 / 3;
     constexpr int SlowEnemySpeed = DefaultEnemySpeed * 2 / 3;
 
@@ -43,13 +43,13 @@ namespace globalConst
     constexpr int DefaultBaseProtection = 1;
     constexpr int DefaultPlayerBulletSpeed = DefaultPlayerSpeed * 7 / 3;
     constexpr int DoublePlayerBulletSpeed = DefaultPlayerBulletSpeed * 3 / 2;
-    constexpr int DefaultEnemyBulletSpeed = DefaultEnemySpeed * 8 / 3;
+    constexpr int DefaultEnemyBulletSpeed = DefaultEnemySpeed * 7 / 3;
     constexpr int DoubleEnemyBulletSpeed = DefaultEnemyBulletSpeed * 3 / 2;
     constexpr int DefaultDamage = 1;
     constexpr int DoubleDamage = 2;
     constexpr int DefaultTimeoutMs = 1000;
     constexpr int HalvedTimeoutMs = 500;
-    constexpr int PlayerShootTimeoutMs = 200;
+    constexpr int PlayerShootTimeoutMs = 250;
     constexpr int PlayerDefaultReloadTimeoutMs = 800;
     constexpr int PlayerDefaultMaxBullets = 4;
     constexpr int EnemyShootTimeoutMs = 500;
