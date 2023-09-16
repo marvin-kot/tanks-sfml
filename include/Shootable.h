@@ -32,6 +32,8 @@ protected:
     int _reloadTimeoutMs;
     bool _instantReload = false;
 
+    int _tempBullets;
+
     bool _pause = false;
     void checkForGamePause();
 public:
@@ -40,6 +42,8 @@ public:
     inline int reloadTimeoutMs() const { return _reloadTimeoutMs; }
     inline void setShootTimeoutMs(int t) { _shootTimeoutMs = t; }
     inline int maxBullets() const { return _maxBullets; }
+    inline int tempBullets() const { return _tempBullets; }
+    void addTempBullets(int b);
     inline void setMaxBullets(int b) { _maxBullets = b; }
     inline int bullets() const { return _bullets; }
     inline void resetBullets() { _bullets = _maxBullets; }

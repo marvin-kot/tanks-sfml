@@ -32,7 +32,7 @@ static const std::map<EagleWallDirection, sf::Vector2i> dirOffsets = {
 };
 
 EagleController::EagleController(GameObject *obj)
-: Controller(obj, 0), _state(Starting), _invincibilityAfterDamageTimeout(500),_invincible(false)
+: Controller(obj, 0), _state(Starting), _invincibilityAfterDamageTimeout(750),_invincible(false)
 {}
 
 EagleController::~EagleController()

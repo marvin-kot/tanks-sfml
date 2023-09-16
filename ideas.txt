@@ -4,10 +4,31 @@ Gameplay:
 
 Survive waves of enemy tanks while protecting your base!
 
+Control the tank
+Protect the base
+Kill enemies
+Collect experience and level up
+On level up you get 4 random rewards, you have to choose one
+Rewards can be:
+- tank upgrade
+- base upgrade
+- instant bonus
+
+Tank or base upgrades have 3-4 levels. Get more levels to upgrade fully!
+You can have 4 upgrades at most
+Tank upgrades are lost when your tank is destroyed.
+Base skills are for the whole run.
+All levels and collected XP are also gone when your tank is destroyed.
+
+
+If all your tanks, or the base are destroyed, you lose
+If you manage to survive the hordes of enemies, you win
+
+
+
 
 Base mechanics like in original Battle City game:
 - 4 directions
-- shot speed depends on how many bullets are currently in air
 - player protects base ("eagle" surrounded by destroyable walls)
 - enemies move randomly (mostly)
 - two players can play cooperatively (in furure versions)
@@ -30,7 +51,7 @@ game rules:
 - [optional] the can be a boss in the end of the level
 - every killed enemy leaves piece of XP. amount depends on the tank type
 - player needs to collect XP to gain it
-- on level up player can choose one of 3 random upgrades
+- on level up player can choose one of 4 random upgrades
 - upgrades can be: tank upgrades (1-4 levels), base upgrades (1-4 levels), one time bonuses
 - when losing a life, player loses all XP and tank upgrades (but not the base upgrades!)
 - base can be destroyed by friendly fire!

@@ -9,6 +9,7 @@ Shootable::Shootable(GameObject *parent, int level, int timeout, int bulletSpeed
     , _bulletSpeed(bulletSpeed)
     , _damage(globalConst::DefaultDamage)
     , _maxBullets(maxBullets)
+    , _tempBullets(0)
     {
         resetBullets();
         _shootClock.reset(true);
@@ -36,9 +37,31 @@ bool Shootable::shoot(globalTypes::Direction dir)
 
     if (_bullets == _maxBullets) _reloadClock.reset(true);
 
-    _bullets--;
+    if (_tempBullets > 0)
+        _tempBullets--;
+    else
+        _bullets--;
 
     return true;
+}
+
+void Shootable::addTempBullets(int b)
+{
+    int missingBullets = _maxBullets - _bullets;
+
+    if (missingBullets > 0) {
+        while (b>0 && _bullets < _maxBullets) {
+            _bullets++;
+            b--;
+        }
+    }
+
+    while (b>0) {
+        _tempBullets++;
+        b--;
+    }
+
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::FullReload, true);
 }
 
 void Shootable::checkForGamePause()
@@ -65,7 +88,6 @@ void Shootable::reloadByTimeout()
     if  (_reloadClock.getElapsedTime() < sf::milliseconds(_reloadTimeoutMs)) return;
 
     bool isPlayer = _gameObject->isFlagSet(GameObject::Player);
-
 
     //if (_instantReload) {
     if (_bullets == 0) {

@@ -50,6 +50,7 @@ private:
 
 struct AmmoCollectable : public Collectable
 {
+    const int _amount = 3;
     AmmoCollectable(GameObject *parent);
     void onCollected(GameObject *collector) override;
 };

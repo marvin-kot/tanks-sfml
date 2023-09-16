@@ -108,18 +108,9 @@ AmmoCollectable::AmmoCollectable(GameObject *parent)
 void AmmoCollectable::onCollected(GameObject *collector)
 {
     assert(collector->isFlagSet(GameObject::Player));
-    //PlayerController *controller = collector->getComponent<PlayerController>();
-
-
     auto shootable = collector->getComponent<Shootable>();
-    if (shootable->bullets() < shootable->maxBullets()) {
-        shootable->resetBullets();
-        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::FullReload, true);
-    }
-
-    //Collectable::onCollected(collector);
+    shootable->addTempBullets(_amount);
 }
-
 
 //////
 

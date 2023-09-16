@@ -372,6 +372,7 @@ void Game::processDeletedObjects()
             if (obj->isFlagSet(GameObject::Bullet)) {
                 if (obj->isFlagSet(GameObject::Explosive)) {
                     GameObject *explosion = new GameObject("bigExplosion");
+                    explosion->setController(new ExplosionController(explosion, false));
                     explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
                     explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
                     explosion->copyParentPosition(obj);
@@ -396,6 +397,7 @@ void Game::processDeletedObjects()
                 explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
                 explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
                 if (obj->isFlagSet(GameObject::Explosive)) {
+                    explosion->setController(new ExplosionController(explosion, false));
                     explosion->damage = 1;
                 }
                 explosion->copyParentPosition(obj);

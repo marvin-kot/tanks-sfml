@@ -229,9 +229,9 @@ bool TankKamikazeController::decideIfToShoot(globalTypes::Direction oldDir) cons
 {
     GameObject *target = nullptr;
 
-    if (ObjectsPool::eagleObject && _gameObject->distanceTo(ObjectsPool::eagleObject) < globalConst::spriteOriginalSizeX * 1.4)
+    if (ObjectsPool::eagleObject && _gameObject->distanceTo(ObjectsPool::eagleObject) < globalConst::spriteOriginalSizeX * 1.6)
         target = ObjectsPool::eagleObject;
-    else if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < globalConst::spriteOriginalSizeX)
+    else if (ObjectsPool::playerObject && _gameObject->distanceTo(ObjectsPool::playerObject) < globalConst::spriteOriginalSizeX * 1.1)
         target = ObjectsPool::playerObject;
 
     return (target != nullptr);

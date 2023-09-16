@@ -254,8 +254,13 @@ std::vector<UpgradeType> PlayerUpgrade::fillLocalTypesList(PlayerController *pCo
             availableTypesLocal.push_back(t); // add once more
 
         // specific cases
-        if (t == RebuildEagleWalls && ObjectsPool::getEagleWalls().size() >= globalTypes::EagleWallDirection::MaxDirection-1)
-            continue;
+        if (t == RebuildEagleWalls) {
+            if (ObjectsPool::getEagleWalls().size() >= globalTypes::EagleWallDirection::MaxDirection-1)
+                continue;
+            if (isUpgradedToMax(pContr, RepairWalls))
+                continue;
+        }
+
         availableTypesLocal.push_back(t);
     }
 
@@ -274,7 +279,7 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
     auto eagleController = ObjectsPool::eagleObject->getComponent<EagleController>();
     assert(eagleController != nullptr);
     if (eagleController == nullptr) {
-         Logger::instance() << "[ERROR]No eagle!\n";
+        Logger::instance() << "[ERROR]No eagle!\n";
         return;
     }
 
@@ -677,7 +682,7 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
     _type = FastBullets;
     _name = "Fast delivery";
 
-    _percentBasedOnLevel = { 50, 50, 100, 100 };
+    _percentBasedOnLevel = { 50, 40, 100, 80 };
     _effects.push_back("Bullet speed +" + std::to_string(_percentBasedOnLevel[0]) + "\%");
     _effects.push_back("Shooting speed +" + std::to_string(_percentBasedOnLevel[1]) + "\%");
     _effects.push_back("Bullet speed +" + std::to_string(_percentBasedOnLevel[2]) + "\%");
@@ -1048,11 +1053,11 @@ XpModifierUpgrade::XpModifierUpgrade(int level)
     _category = PlayerUpgrade::Perk;
     _type = XpIncreaser;
     _price = perkPrices.at(_type);
-    _name = "War machine learning";
+    _name = "Price of wisdom";
 
-    _numberBasedOnLevel = { 25 };
+    _numberBasedOnLevel = { 0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300 };
     for (auto number : _numberBasedOnLevel)
-        _effects.push_back("Get +" + std::to_string(number) + "\% more experience");
+        _effects.push_back("+25\% to gained experience\nafter every death");
 
     _iconRect = AssetManager::instance().getAnimationFrame("xpCollectable", "default", 0).rect;
 }

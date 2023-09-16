@@ -118,3 +118,12 @@ public:
     void update() override;
     void appendLife();
 };
+
+
+class ExplosionController : public Controller
+{
+    bool _dontHurtParent;
+public:
+    ExplosionController(GameObject *parent, bool dontHurtParent);
+    void update() override;
+};

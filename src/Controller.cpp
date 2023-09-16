@@ -142,3 +142,21 @@ void RocketController::update()
 
     _currSpeed += (_maxSpeed - _startSpeed)/20;
 }
+
+
+
+
+ExplosionController::ExplosionController(GameObject *parent, bool dontHurtParent)
+: Controller(parent, 0), _dontHurtParent(dontHurtParent)
+{
+    _clock.reset(true);
+}
+
+
+void ExplosionController::update()
+{
+    checkForGamePause();
+    if (_pause) return;
+
+    _gameObject->move(0, 0);
+}

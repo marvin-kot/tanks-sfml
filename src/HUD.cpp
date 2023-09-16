@@ -157,6 +157,11 @@ void HUD::drawBullets(int baseY)
         UiUtils::instance().drawRect(sf::IntRect(baseX-16, baseY, 32, 80), color);
         baseX += 40;
     }
+
+    for (int j=0; j<shootable->tempBullets(); j++) {
+        UiUtils::instance().drawRect(sf::IntRect(baseX-16, baseY, 32, 80), sf::Color::Green);
+        baseX += 40;
+    }
 }
 
 void HUD::drawWinScreen()

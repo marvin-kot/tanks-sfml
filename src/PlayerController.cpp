@@ -55,12 +55,21 @@ PlayerController::PlayerController(GameObject *obj)
 PlayerController::~PlayerController()
 {
     // if player has "atomic core" trait, kill all enemies instantly
-
     if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::KillAllOnDeath)) {
         std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcDoubleCannonArmorTank"});
         std::for_each(objectsToKill.cbegin(), objectsToKill.cend(), [](GameObject *obj) {
             obj->markForDeletion();
         });
+    }
+
+    // if player has "war machine learning"
+
+    if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::XpIncreaser)) {
+        for (auto obj : PlayerUpgrade::availablePerkObjects) {
+            if (obj->type() == PlayerUpgrade::XpIncreaser) {
+                obj->increaseLevel();
+            }
+        }
     }
 
     resetXP();
@@ -273,7 +282,7 @@ void PlayerController::onDamaged()
         updateAppearance();
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::GetDamage, true);
         _gameObject->getComponent<SpriteRenderer>()->setOneFrameTintColor(sf::Color::Red);
-        setTemporaryInvincibility(500);
+        setTemporaryInvincibility(750);
     }
 }
 
