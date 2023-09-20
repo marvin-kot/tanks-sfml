@@ -37,6 +37,7 @@ class AssetManager
 
 public:
     std::unordered_map<std::string, Assets::AnimationMap> objectTypeAnimations;
+    std::unordered_map<int, Assets::AnimationFrame> framesById;
 
     static AssetManager& instance();
 

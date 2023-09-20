@@ -12,6 +12,7 @@
 #include "ObjectsPool.h"
 #include "PersistentGameData.h"
 #include "PlayerController.h"
+#include "RandomMapCreator.h"
 #include "SoundPlayer.h"
 #include "TitleScreen.h"
 #include "Utils.h"
@@ -23,14 +24,7 @@
 
 namespace allinone {
 
-std::vector<std::string> levelMaps = {
-    "assets/testmap4.txt",
-    //"assets/testmap.txt",
-    //"assets/testmap2.txt"
-};
-
 using namespace globalTypes;
-
 
 Game::Game() : gameState(GameState::TitleScreen) {}
 
@@ -54,9 +48,11 @@ bool Game::initializeWindow()
 {
     using namespace globalConst;
     Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML");
+
     //Utils::window.setVerticalSyncEnabled(true);
     Utils::window.setFramerateLimit(FixedFrameRate);
     Utils::window.setKeyRepeatEnabled(false);
+
     return true;
 }
 
@@ -91,6 +87,7 @@ bool Game::update()
 
     if (ObjectsPool::bossObject && !globalVars::gameIsPaused)
         SoundPlayer::instance().playBossTheme();
+
     // play sounds
     SoundPlayer::instance().processQueuedSounds();
 
@@ -100,8 +97,6 @@ bool Game::update()
     drawObjects();
     drawBorders();
     HUD::instance().draw();
-
-
 
     if (LevelUpPopupMenu::instance().isOpen()) {
         SoundPlayer::instance().pauseAllSounds();
@@ -126,20 +121,6 @@ void Game::updateFrameClock()
     Utils::currentFrame++;
     Utils::lastFrameTime = Utils::refreshClock.getElapsedTime();
     Utils::refreshClock.restart();
-
-    static int i=0;
-    static int frameTimes[512];
-
-    if (i < 300) {
-        frameTimes[i] = Utils::lastFrameTime.asMilliseconds();
-        i++;
-    } else {
-        i=0;
-        Logger::instance() << "last 500 frames: ";
-        for (int j=0;j<300;j++)
-            Logger::instance() << frameTimes[j] << ", ";
-        Logger::instance() << "\n";
-    }
 }
 
 void Game::processWindowEvents()
@@ -322,7 +303,7 @@ int Game::processStateChange()
 
 bool Game::buildLevelMap(std::string fileName)
 {
-    MapCreator mapBuilder;
+    RandomMapCreator mapBuilder;
     mapBuilder.parseMapFile(fileName);
     _currentLevelProperties = mapBuilder.buildMapFromData();
     if (_currentLevelProperties.failedToLoad)
@@ -352,82 +333,82 @@ void Game::processDeletedObjects()
     auto &allObjects = ObjectsPool::getAllObjects();
     std::vector<GameObject *> objectsToAdd;
 
-        // delete objects marked for deletion on previous step
-        while (!ObjectsPool::objectsToDelete.empty()) {
-            GameObject *obj = ObjectsPool::objectsToDelete.front();
+    // delete objects marked for deletion on previous step
+    while (!ObjectsPool::objectsToDelete.empty()) {
+        GameObject *obj = ObjectsPool::objectsToDelete.front();
 
-            if (obj->isFlagSet(GameObject::Player)) {
-                globalVars::player1Lives--;
-                ObjectsPool::playerObject = nullptr;
-            }
+        if (obj->isFlagSet(GameObject::Player)) {
+            globalVars::player1Lives--;
+            ObjectsPool::playerObject = nullptr;
+        }
 
-            if (obj->isFlagSet(GameObject::Eagle)) {
-                ObjectsPool::eagleObject = nullptr;
-                // do not break here - we still need to create explosion few lines later!
-            }
+        if (obj->isFlagSet(GameObject::Eagle)) {
+            ObjectsPool::eagleObject = nullptr;
+            // do not break here - we still need to create explosion few lines later!
+        }
 
-            if (obj->isFlagSet(GameObject::PlayerSpawner))
-                ObjectsPool::playerSpawnerObject = nullptr;
+        if (obj->isFlagSet(GameObject::PlayerSpawner))
+            ObjectsPool::playerSpawnerObject = nullptr;
 
-            if (obj->isFlagSet(GameObject::Bullet)) {
-                if (obj->isFlagSet(GameObject::Explosive)) {
-                    GameObject *explosion = new GameObject("bigExplosion");
-                    explosion->setController(new ExplosionController(explosion, false));
-                    explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
-                    explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                    explosion->copyParentPosition(obj);
-                    explosion->damage = 1;
-                    objectsToAdd.push_back(explosion);
-                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
-                } else {
-                    GameObject *explosion = new GameObject("smallExplosion");
-                    explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
-                    explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                    explosion->copyParentPosition(obj);
-
-                    objectsToAdd.push_back(explosion);
-                }
-
-                if (obj->getParentObject() && obj->getParentObject()->isFlagSet(GameObject::Player))
-                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
-            }
-
-            if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle)) {
+        if (obj->isFlagSet(GameObject::Bullet)) {
+            if (obj->isFlagSet(GameObject::Explosive)) {
                 GameObject *explosion = new GameObject("bigExplosion");
+                explosion->setController(new ExplosionController(explosion, false));
                 explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
                 explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                if (obj->isFlagSet(GameObject::Explosive)) {
-                    explosion->setController(new ExplosionController(explosion, false));
-                    explosion->damage = 1;
-                }
+                explosion->copyParentPosition(obj);
+                explosion->damage = 1;
+                objectsToAdd.push_back(explosion);
+                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+            } else {
+                GameObject *explosion = new GameObject("smallExplosion");
+                explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
+                explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
                 explosion->copyParentPosition(obj);
 
                 objectsToAdd.push_back(explosion);
-
-                if (obj->isFlagSet(GameObject::Player | GameObject::Eagle | GameObject::Boss))
-                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
-                else
-                    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
             }
 
-            if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive)) {
-                _killsCount++;
+            if (obj->getParentObject() && obj->getParentObject()->isFlagSet(GameObject::Player))
+                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
+        }
+
+        if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle)) {
+            GameObject *explosion = new GameObject("bigExplosion");
+            explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
+            explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+            if (obj->isFlagSet(GameObject::Explosive)) {
+                explosion->setController(new ExplosionController(explosion, false));
+                explosion->damage = 1;
             }
+            explosion->copyParentPosition(obj);
 
-            if (obj->isFlagSet(GameObject::BonusOnHit)) {
-                obj->generateDrop();
-                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
-            } else
-                obj->dropXp();
+            objectsToAdd.push_back(explosion);
 
-            ObjectsPool::kill(obj);
-            ObjectsPool::objectsToDelete.pop();
+            if (obj->isFlagSet(GameObject::Player | GameObject::Eagle | GameObject::Boss))
+                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
+            else
+                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
         }
 
-        // temporary explosion effects
-        for (auto obj : objectsToAdd) {
-            ObjectsPool::addObject(obj);
+        if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive)) {
+            _killsCount++;
         }
+
+        if (obj->isFlagSet(GameObject::BonusOnHit)) {
+            obj->generateDrop();
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
+        } else
+            obj->dropXp();
+
+        ObjectsPool::kill(obj);
+        ObjectsPool::objectsToDelete.pop();
+    }
+
+    // temporary explosion effects
+    for (auto obj : objectsToAdd) {
+        ObjectsPool::addObject(obj);
+    }
 }
 
 
@@ -527,6 +508,7 @@ void Game::drawObjects()
 
     // 2. draw tanks and bullets
     std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByDrawOrder(2);
+
     std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(); });
 
     // 3. draw walls and trees
@@ -535,6 +517,7 @@ void Game::drawObjects()
 
     // 4. visual effects
     auto objectsToDrawFourth = ObjectsPool::getObjectsByDrawOrder(4);
+
     std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(); });
 }
 
@@ -611,7 +594,7 @@ bool Game::winConditionsMet() const
 
 bool Game::failConditionsMet() const
 {
-    int countPlayerObjects = ObjectsPool::countObjectsByTypes({"player", "spawner_player"});
+    int countPlayerObjects = ObjectsPool::countObjectsByTypes({"playerBase", "spawner_player"});
     if (countPlayerObjects < 1 )
         return true;
 

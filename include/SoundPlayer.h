@@ -1,11 +1,8 @@
 #pragma once
 
-
 #include "Logger.h"
 
-
 #include <SFML/Audio.hpp>
-
 #include <queue>
 #include <unordered_map>
 

@@ -307,6 +307,9 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
     if (isUpgradedToMax(eagleController, RepairWalls) && isUpgradedToMax(eagleController, BaseInvincibility))
         mandatoryUpgrades.push(BaseRestoreOnDamage);
 
+    // TEMP
+    mandatoryUpgrades.push(MachineGun);
+
     std::unordered_set<UpgradeType> alreadyGenerated;
 
     for (int i = 0; i < globalConst::NumOfUpgradesOnLevelup; i++) {
@@ -605,13 +608,14 @@ void TankAdditionalLifeBonus::onCollect(GameObject *collector)
 }
 
 TankAdditionalLifePerk::TankAdditionalLifePerk()
-: TankAdditionalLifeBonus(0)
 {
-    _currentLevel = 0;
     _category = PlayerUpgrade::Perk;
     _type = PlayerUpgrade::PlusLifeOnStart;
     _price = perkPrices.at(_type);
     _name = "Spare tank";
+
+    _numberBasedOnLevel = {1};
+    _currentLevel = 0;
 
     _effects.push_back("Start with +1 life");
 
@@ -682,7 +686,7 @@ FasterBulletUpgrade::FasterBulletUpgrade(int level)
     _type = FastBullets;
     _name = "Fast delivery";
 
-    _percentBasedOnLevel = { 50, 40, 100, 80 };
+    _percentBasedOnLevel = { 50, 25, 100, 50 };
     _effects.push_back("Bullet speed +" + std::to_string(_percentBasedOnLevel[0]) + "\%");
     _effects.push_back("Shooting speed +" + std::to_string(_percentBasedOnLevel[1]) + "\%");
     _effects.push_back("Bullet speed +" + std::to_string(_percentBasedOnLevel[2]) + "\%");
@@ -728,8 +732,9 @@ void FasterBulletUpgrade::onCollect(GameObject *collector)
     const int newBulletSpeed = globalConst::DefaultPlayerBulletSpeed + (globalConst::DefaultPlayerBulletSpeed * bulletModifier / 100);
     shootable->setBulletSpeed(newBulletSpeed);
 
-    const int newShootTimeout = globalConst::PlayerShootTimeoutMs - (globalConst::PlayerShootTimeoutMs * timeoutModifier / 100);
-    shootable->setShootTimeoutMs(newShootTimeout);
+    //const int newShootTimeout = globalConst::PlayerShootTimeoutMs - (globalConst::PlayerShootTimeoutMs * timeoutModifier / 100);
+    //shootable->setShootTimeoutMs(newShootTimeout);
+    controller->subtractFromCalculatedReloadDebuff(timeoutModifier);
 }
 
 ///////////////
@@ -993,7 +998,7 @@ MachineGunUpgrade::MachineGunUpgrade(int level)
     _type  = MachineGun;
     _name = "Machine gun";
 
-    _effects.push_back("Replaces [Productive turret] and\n[Fast delivery] upgrades\nNew turret shoots limitless,\nfast bullets at rapid speed");
+    _effects.push_back("Replaces [Productive turret] and\n[Fast delivery] upgrades\nBullet speed +80\%\nShoot speed + 60\%\nAmmo contains 16 bullets");
 
     _iconRect = AssetManager::instance().getAnimationFrame("machineGunCollectable", "default", 0).rect;
 }
@@ -1012,10 +1017,10 @@ void MachineGunUpgrade::onCollect(GameObject *target)
     shootable->setBulletSpeed(newBulletSpeed);
 
     // shoot speed
-    shootable->setShootTimeoutMs(globalConst::PlayerShootTimeoutMs / 2);
+    target->getComponent<PlayerController>()->subtractFromCalculatedReloadDebuff(60);
 
     // set max ammo
-    shootable->setMaxBullets(10);
+    shootable->setMaxBullets(16);
 
     // set damage
     //shootable->setDamage(std::max(shootable->damage()/2, 1));

@@ -113,6 +113,7 @@ bool AssetManager::parseJsonToDataStructure()
                         frame.duration = 0;
 
                     animation.frames.push_back(frame);
+                    framesById[frame.id] = frame;
                 }
 
                 animationMap[animationName] = animation;

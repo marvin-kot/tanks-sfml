@@ -38,17 +38,25 @@ void GameObject::assignUniqueId()
 
 GameObject::~GameObject()
 {
-    if (spriteRenderer)
+    if (spriteRenderer) {
         delete spriteRenderer;
+        spriteRenderer = nullptr;
+    }
 
-    if (_controller)
+    if (_controller) {
         delete _controller;
+        _controller = nullptr;
+    }
 
-    if (_shootable)
+    if (_shootable) {
         delete _shootable;
+        _shootable = nullptr;
+    }
 
-    if (_damageable)
+    if (_damageable) {
         delete _damageable;
+        _damageable = nullptr;
+    }
 
     if (_dropGenerator)
         delete _dropGenerator;
@@ -147,23 +155,30 @@ bool GameObject::networkDraw(net::ThinGameObject& thin)
     mappedX = mappedX - mapViewPort.left;
     mappedY = mappedY - mapViewPort.top;
 
-
     int screenX = mappedX + globalVars::gameViewPort.left;
     int screenY = mappedY + globalVars::gameViewPort.top;
-
 
     thin.x = screenX;
     thin.y = screenY;
     thin.id = _id;
     thin.flags = static_cast<uint16_t>(_flags);
     return spriteRenderer->networkDraw(thin);
-    /*if (visualEffect) {
+
+    // TODO turret
+
+    if (visualEffect) {
         net::ThinGameObject fx;
         fx.zorder = 5;
         if (visualEffect->networkDraw(fx))
             ObjectsPool::thinGameObjects[visualEffect->id()] = fx;
-    }*/
+    }
 
+    if (turret) {
+        net::ThinGameObject turret;
+        turret.zorder = 3;
+        if (visualEffect->networkDraw(turret))
+            ObjectsPool::thinGameObjects[visualEffect->id()] = turret;
+    }
 }
 
 void GameObject::hide(bool val)
@@ -286,7 +301,8 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                         bullet->loseDamage();
                     else
                         markForDeletion();
-                }
+                } else if (!other->isFlagSet(BulletPassable))
+                    markForDeletion(); // if hit concrete block
             } else {
                 markForDeletion();
             }
@@ -617,6 +633,11 @@ void GameObject::getCollectedBy(GameObject *collector)
 void GameObject::setCurrentDirection(globalTypes::Direction dir)
 {
     _direction = dir;
+    if (spriteRenderer)
+        spriteRenderer->setCurrentDirection(dir);
+
+    if (turret && turret->spriteRenderer)
+        turret->spriteRenderer->setCurrentDirection(dir);
 }
 
 bool GameObject::shoot()
@@ -642,7 +663,9 @@ net::ThinGameObject GameObject::update()
     thin.id = _id;
     thin.x = _x;
     thin.x = _y;
-    thin.flags = static_cast<uint16_t>(_flags);*/
+    thin.flags = static_cast<uint16_t>(_flags);
+
+    return thin*/
 
     return net::ThinGameObject();
 }

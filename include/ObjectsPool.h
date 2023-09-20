@@ -23,7 +23,6 @@ private:
 
     static void cleanupOtherContainers(GameObject *);
 public:
-
     static std::queue<GameObject *> objectsToDelete;
 
     static std::unordered_map<int, net::ThinGameObject> thinGameObjects;

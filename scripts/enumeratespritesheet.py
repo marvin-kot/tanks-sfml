@@ -42,7 +42,7 @@ def pass_argv(argv):
         sys.exit(2)
 
     ifilename = default_path
-    ofilename = default_path + '.new'
+    ofilename = default_path
 
     for opt, arg in opts:
         if opt == '-h':

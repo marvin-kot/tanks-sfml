@@ -28,33 +28,48 @@ void SpriteRenderer::setNewObjectType(std::string type)
     _currentAnimationFrames = AssetManager::instance().getAnimationFrames(_objectType, _currentAnimation);
 }
 
-void SpriteRenderer::setCurrentAnimation(std::string id)
+void SpriteRenderer::setCurrentAnimation(std::string id, bool oneShot)
 {
     assert(id.empty() == false);
 
     if (id == _currentAnimation)
         return;
 
+    _prevAnimation = _currentAnimation;
     _currentAnimation = id;
+    _oneShot = oneShot;
 
-    if (id == "default") {
-        // TODO: organize it better
-    } else if (id == "up") {
-        _mirror = false;
-        _turn = false;
-        // do nothing
-    } else if (id == "right") {
-        _mirror = false;
-        _turn = true;
-    } else if (id == "down") {
-        _mirror = true;
-        _turn = false;
-    } else if (id == "left") {
-        _mirror = true;
-        _turn = true;
+    _currentAnimationFrames = AssetManager::instance().getAnimationFrames(_objectType, id);
+
+    showAnimationFrame(0);
+    playAnimation(true);
+    _clock.restart();
+}
+
+void SpriteRenderer::setCurrentDirection(globalTypes::Direction dir)
+{
+    if (dir == _direction) return;
+
+    switch (dir) {
+        case globalTypes::Left:
+            _mirror = true;
+            _turn = true;
+            break;
+        case globalTypes::Up:
+            _mirror = false;
+            _turn = false;
+            break;
+        case globalTypes::Right:
+            _mirror = false;
+            _turn = true;
+            break;
+        case globalTypes::Down:
+            _mirror = true;
+            _turn = false;
+            break;
     }
 
-    _currentAnimationFrames = AssetManager::instance().getAnimationFrames(_objectType, "default");
+    _direction = dir;
 
     showAnimationFrame(0);
     playAnimation(true);
@@ -108,10 +123,8 @@ void SpriteRenderer::setAnimationFrame(int frameNum, net::ThinGameObject& obj)
     rect.left += offsetX;
     rect.top += offsetY;
 
-    obj.spr_left = rect.left;
-    obj.spr_top = rect.top;
-    obj.spr_w = rect.width;
-    obj.spr_h = rect.height;
+    obj.frame_id = _currentAnimationFrames[_currentFrame].id;
+    obj.frape_prop = ((int)_mirror << FRAMEPROP_BIT_MIRROR) | ((int)_turn << FRAMEPROP_BIT_ROTATE);
 }
 
 void SpriteRenderer::draw()
@@ -124,6 +137,12 @@ void SpriteRenderer::draw()
         if (framesCount > 1 && _animate) {
             if (_clock.getElapsedTime() > sf::milliseconds(_currentAnimationFrames[_currentFrame].duration)) {
                 int nextFrame = _currentFrame+1 < framesCount ? _currentFrame+1 : 0;
+
+                if (_oneShot && nextFrame == 0) {
+                    _oneShot = false;
+                    setCurrentAnimation(_prevAnimation);
+                    return;
+                }
                 showAnimationFrame(nextFrame);
                 _clock.restart();
             }
@@ -152,7 +171,6 @@ bool SpriteRenderer::networkDraw(net::ThinGameObject& object)
     }
 
     setAnimationFrame(_currentFrame, object);
-
     return true;
 }
 

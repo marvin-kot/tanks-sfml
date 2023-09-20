@@ -77,6 +77,7 @@ void EagleController::update()
                 _clock.reset(true);
                 if (false == ObjectsPool::getEagleWalls().contains(_currentBuildDirection)) {
                     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::BuildWall, true);
+
                     const int thisX = _gameObject->position().x;
                     const int thisY = _gameObject->position().y;
                     const auto offset = dirOffsets.at(_currentBuildDirection);
@@ -175,31 +176,27 @@ void EagleController::updateAppearance()
 
     switch (damageable->defence()) {
         case 0:
-            renderer->setSpriteSheetOffset(-spriteOriginalSizeX, spriteOriginalSizeX);
+            renderer->setCurrentAnimation("damaged");
             break;
         case 1:
-            renderer->setSpriteSheetOffset(0, 0);
+            renderer->setCurrentAnimation("default");
             break;
         case 2:
-            renderer->setSpriteSheetOffset(0, spriteOriginalSizeX);
+            renderer->setCurrentAnimation("upgrade-1");
             break;
         case 3:
-            renderer->setSpriteSheetOffset(0, spriteOriginalSizeX*2);
+            renderer->setCurrentAnimation("upgrade-2");
             break;
         case 4:
-            renderer->setSpriteSheetOffset(0, spriteOriginalSizeX*2);
+            renderer->setCurrentAnimation("upgrade-2");
             break;
         case 5:
-            renderer->setSpriteSheetOffset(0, spriteOriginalSizeX*3);
+            renderer->setCurrentAnimation("upgrade-3");
             break;
     }
 
     renderer->showAnimationFrame(0);
 }
-
-
-
-
 
 int EagleController::hasLevelOfUpgrade(PlayerUpgrade::UpgradeType type) const
 {

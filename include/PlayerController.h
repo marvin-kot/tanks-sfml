@@ -8,9 +8,6 @@
 
 #include <map>
 
-#define SINGLE_APP
-
-
 class PlayerController : public Controller
 {
     sf::Keyboard::Key _mostRecentKey;
@@ -43,6 +40,9 @@ class PlayerController : public Controller
 
     int trySqueeze();
     bool _prevMoved = false;
+
+    bool _upgradeSpeed = false;
+    bool _upgradePower = false;
 
     net::PlayerInput _recentPlayerInput;
 
@@ -78,6 +78,7 @@ public:
     void removeUpgrade(PlayerUpgrade::UpgradeType);
     void onDamaged() override;
     void setXpModifier(int mod) { _xpModifier = mod; }
+
     int xpModifier() const { return _xpModifier; }
     void setPlayerInput(const net::PlayerInput& input) { _recentPlayerInput = input; }
     void resetMoveStartTimer();
@@ -94,12 +95,13 @@ public:
 
     void resetCalculatedReloadDebuff() {_shootReloadDebuff = 0; }
     void addToCalculatedReloadDebuff(int d) { _shootReloadDebuff += d; }
-    void subtractFromCalculatedReloadDebuff(int d) { _shootReloadDebuff -= d; if (_shootReloadDebuff<0) _shootReloadDebuff = 0;}
+    void subtractFromCalculatedReloadDebuff(int d) { _shootReloadDebuff -= d;}
     void applyCalculatedReloadDebuff();
 
     void onKillEnemy(GameObject *enemy);
 
     void restoreProtection();
+
 };
 
 struct PlayerSignal

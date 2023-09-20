@@ -7,6 +7,7 @@
 #include <SFML/System/Clock.hpp>
 
 #include "AssetManager.h"
+#include "GlobalTypes.h"
 #include "NetGameTypes.h"
 
 class GameObject;
@@ -22,6 +23,7 @@ protected:
 
     std::string _objectType = "";
     std::string _currentAnimation = "";
+    std::string _prevAnimation = "";
 
     std::vector<Assets::AnimationFrame> _currentAnimationFrames;
     int _currentFrame = 0;
@@ -31,6 +33,7 @@ protected:
     sf::Clock _clock;
 
     bool _animate = false;
+    bool _oneShot = false;
 
     int _spriteSheetOffsetX = 0;
     int _spriteSheetOffsetY = 0;
@@ -42,10 +45,13 @@ protected:
     bool _mirror = false;
     bool _turn = false;
 
+    globalTypes::Direction _direction = globalTypes::Direction::Unknown;
+
 public:
     SpriteRenderer(GameObject * parent, std::string type = "");
     virtual ~SpriteRenderer() {}
-    void setCurrentAnimation(std::string id);
+    void setCurrentAnimation(std::string id, bool oneShot = false);
+    void setCurrentDirection(globalTypes::Direction);
     void hide(bool);
     bool isHidden();
     virtual void draw();

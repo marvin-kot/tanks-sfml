@@ -44,27 +44,15 @@ void Controller::prepareMoveInDirection(globalTypes::Direction dir, int speed)
     switch (dir) {
         case globalTypes::Left:
             _currMoveX = -speed; _currMoveY = 0;
-            _gameObject->setCurrentAnimation("left");
-            if (_gameObject->turret)
-                _gameObject->turret->setCurrentAnimation("left");
             break;
         case globalTypes::Up:
             _currMoveY = -speed; _currMoveX = 0;
-            _gameObject->setCurrentAnimation("up");
-            if (_gameObject->turret)
-                _gameObject->turret->setCurrentAnimation("up");
             break;
-        case globalTypes::Right: // right
+        case globalTypes::Right:
             _currMoveX = speed; _currMoveY = 0;
-            _gameObject->setCurrentAnimation("right");
-            if (_gameObject->turret)
-                _gameObject->turret->setCurrentAnimation("right");
             break;
-        case globalTypes::Down: // down
+        case globalTypes::Down:
             _currMoveY = speed; _currMoveX = 0;
-            _gameObject->setCurrentAnimation("down");
-            if (_gameObject->turret)
-                _gameObject->turret->setCurrentAnimation("down");
             break;
         default:
             _currMoveY = 0; _currMoveX = 0;
@@ -81,12 +69,6 @@ void Controller::checkForGamePause()
         _pause = false;
     }
 }
-
-/////
-
-
-
-
 
 /////
 

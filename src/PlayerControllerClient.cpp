@@ -1,17 +1,15 @@
 #include "PlayerControllerClient.h"
 #include "GlobalTypes.h"
 #include "NetGameTypes.h"
-
-
+#include "GameClient.h"
+#include "GlobalTypes.h"
 
 PlayerControllerClient::PlayerControllerClient()
 {
-
 }
 
 PlayerControllerClient::~PlayerControllerClient()
 {
-
 }
 
 PlayerControllerClient& PlayerControllerClient::instance()
@@ -35,9 +33,6 @@ bool PlayerControllerClient::wasPressed(KeysPressed flag)
 
 void PlayerControllerClient::update(net::PlayerInput *input)
 {
-    //checkForGamePause();
-    //if (_pause) return;
-
     bool action = false;
 
     input->shoot_request = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
@@ -90,8 +85,7 @@ void PlayerControllerClient::update(net::PlayerInput *input)
         }
     }
 
-    //Logger::instance() << "speed: " << fSpeed << "/" << speed << "\n";
-    globalTypes::Direction direction = globalTypes::Direction::Unknown;//_gameObject->direction();
+    globalTypes::Direction direction = globalTypes::Direction::Unknown;
     switch (recentKey) {
         case sf::Keyboard::Left:
             direction = globalTypes::Left;

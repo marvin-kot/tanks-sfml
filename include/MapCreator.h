@@ -78,7 +78,7 @@ protected:
     std::map<char, std::string> charMap;
 public:
     MapCreator();
-    int parseMapFile(std::string fileName);
+    virtual int parseMapFile(std::string fileName);
     Level::Properties buildMapFromData();
     Level::Properties levelProperties() const { return _currLevelProperies; };
     int placeSpawnerObjects();

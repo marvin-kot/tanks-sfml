@@ -27,7 +27,8 @@ public:
 
         for (auto it = objects.cbegin(); it != objects.cend(); ++it) {
             net::ThinGameObject go = (*it);
-            sf::IntRect rect(go.spr_left, go.spr_top, go.spr_w, go.spr_h);
+            Assets::AnimationFrame frame = AssetManager::instance().framesById[go.frame_id];
+            sf::IntRect rect(frame.rect.left, frame.rect.top, frame.rect.width, frame.rect.height);
             _sprite.setTextureRect(rect);
             _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);
             _sprite.setOrigin(rect.width/2, rect.height/2);
@@ -43,7 +44,8 @@ public:
 
         for (int i = 0; i < num_objects; i++) {
             net::ThinGameObject& go = objects[i];
-            sf::IntRect rect(go.spr_left, go.spr_top, go.spr_w, go.spr_h);
+            Assets::AnimationFrame frame = AssetManager::instance().framesById[go.frame_id];
+            sf::IntRect rect(frame.rect.left, frame.rect.top, frame.rect.width, frame.rect.height);
             _sprite.setPosition(go.x, go.y);
             _sprite.setTextureRect(rect);
             _sprite.setScale(globalConst::spriteScaleX, globalConst::spriteScaleY);

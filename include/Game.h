@@ -13,17 +13,13 @@ namespace allinone
 class Game
 {
 private:
-
     globalTypes::GameState gameState;
     int currentLevel;
     Level::Properties _currentLevelProperties;
-
     int framesToDie, framesToWin;
 
     int _killsCount;
-
     sf::Time _finishTime;
-
     bool _won = false;
 
 public:

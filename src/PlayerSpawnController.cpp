@@ -21,7 +21,7 @@ PlayerSpawnController::~PlayerSpawnController()
 GameObject * PlayerSpawnController::createObject()
 {
     Logger::instance() << "Creating player...\n";
-    GameObject *pc = new GameObject("player");
+    GameObject *pc = new GameObject("playerBase");
     pc->setShootable(Shootable::createDefaultPlayerShootable(pc));
     pc->setFlags(GameObject::Player | GameObject::BulletKillable);
     pc->setRenderer(new SpriteRenderer(pc), 2);

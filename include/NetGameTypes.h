@@ -6,7 +6,6 @@
 #include <SFML/Network/Packet.hpp>
 
 #include <cstdint>
-//#include <string>
 
 
 namespace net
@@ -39,28 +38,24 @@ struct MapDetails
     char fail[32];
 };
 
+#define FRAMEPROP_BIT_MIRROR 0
+#define FRAMEPROP_BIT_ROTATE 1
+
 struct ThinGameObject
 {
     sf::Uint16  id; // 2
     sf::Uint16 x, y; // 4
-    sf::Uint16 spr_left, spr_top, spr_w, spr_h;  // 8
-    sf::Uint16  flags; // 10
-    sf::Uint8 zorder; // 11
+    sf::Uint8 frame_id; // 5
+    sf::Uint8 frape_prop; // 6
+    sf::Uint16  flags; // 8
+    sf::Uint8 zorder; // 9
     sf::Uint8 dummy;
-
-    //friend std::ostream& operator<< (std::ostream& os, const ThinGameObject& o);
-
 };
-
-/*std::ostream& operator<< (std::ostream& os, const ThinGameObject& o) {
-        os << "obj " << o.id << " | " << o.x << " " << "y |" << o.spr_left << " " << o.spr_top << " " << o.spr_w << " " << o.spr_h;
-        return os;
-    }*/
 
 struct UpgradeInfo
 {
     bool isBaseUpgrade;
-    sf::Uint8 spr_left, spr_top, spr_w, spr_h;  // 8
+    sf::Uint8 frame_id;
     sf::Uint8 level;
     char description[64];
 };
@@ -71,11 +66,8 @@ struct PlayerInfo
     uint8_t level;
     uint32_t xp;
     uint8_t lives;
-    UpgradeInfo upgrades[4];
+    UpgradeInfo upgrades[globalConst::PlayerUpgradesLimit];
 };
-
-//extern sf::Packet& operator <<(sf::Packet& packet, const ThinGameObject& o);
-//extern sf::Packet& operator >>(sf::Packet& packet, ThinGameObject& o);
 
 constexpr int MaxVisibleObjects = globalConst::viewPortWidthTiles * globalConst::viewPortHeightTiles * 4;
 
@@ -89,10 +81,9 @@ struct FrameDetails
     sf::Uint8 sounds_stop[2];
     sf::Uint16 num_objects;
     ThinGameObject objects[MaxVisibleObjects];
+    sf::Uint8 pause;
+    sf::Uint8 upgradeIds[globalConst::NumOfUpgradesOnLevelup];
 };
-
-//extern sf::Packet& operator <<(sf::Packet& packet, const FrameDetails& f);
-//extern sf::Packet& operator >>(sf::Packet& packet, FrameDetails& f);
 
 struct PlayerInput
 {
