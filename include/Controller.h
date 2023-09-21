@@ -36,6 +36,7 @@ public:
     virtual void update() {}
 
     virtual void onDamaged() {};
+    virtual void onCollided(GameObject *) {}
 };
 
 class BulletController : public Controller
@@ -126,4 +127,26 @@ class ExplosionController : public Controller
 public:
     ExplosionController(GameObject *parent, bool dontHurtParent);
     void update() override;
+};
+
+
+class LandmineController : public Controller
+{
+    bool _dontHurtParent;
+public:
+    LandmineController(GameObject *parent, bool dontHurtParent);
+    void update() override;
+    void onCollided(GameObject *) override;
+};
+
+class StaticTurretController : public Controller
+{
+    globalTypes::Direction _direction;
+    int _level;
+public:
+    StaticTurretController(GameObject *parent, globalTypes::Direction dir);
+    void update() override;
+    void onCollided(GameObject *) override;
+    void setLevel(int l) { _level = l; }
+    bool decideIfToShoot() const;
 };

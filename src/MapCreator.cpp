@@ -342,6 +342,14 @@ Level::Properties MapCreator::buildMapFromData()
                             ObjectsPool::addObject(floor);
                         }
                     }
+
+                    if (object->type() == "tree") {
+                        // put floor under brick
+                        GameObject *floor = MapCreator::buildObject("concrete_floor");
+                        floor->setSize(basicTileSize, basicTileSize);
+                        floor->setPosition(x*basicTileSize + tileCenter, y*basicTileSize + tileCenter);
+                        ObjectsPool::addObject(floor);
+                    }
                 }
             }
         }

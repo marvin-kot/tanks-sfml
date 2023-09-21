@@ -6,6 +6,7 @@
 
 class Controller;
 class Shootable;
+class SecondShootable;
 class Damageable;
 class DropGenerator;
 class Collectable;
@@ -42,7 +43,9 @@ public:
         PiercingBullet = 0x2000,
         Delete = 0x4000,
         Boss = 0x8000,
-        Explosive = 0x10000
+        Explosive = 0x10000,
+        Landmine = 0x20000,
+        OwnedByPlayer = 0x40000
     };
 
 private:
@@ -54,6 +57,7 @@ private:
     bool _deleteme = false;
 
     Shootable *_shootable = nullptr;
+    Shootable *_secondShootable = nullptr;
     Damageable *_damageable = nullptr;
     DropGenerator *_dropGenerator = nullptr;
     Collectable *_collectable = nullptr;
@@ -122,6 +126,7 @@ public:
 
     void setController(Controller *);
     void setShootable(Shootable *);
+    void setSecondShootable(SecondShootable *);
     void setRenderer(SpriteRenderer *, int order);
     void setDamageable(Damageable *);
     void setDropGenerator(DropGenerator *);
@@ -141,6 +146,7 @@ public:
 
     net::ThinGameObject update();
     bool shoot();
+    bool useSecondWeapon();
 
     template <typename T>
     T *getComponent();

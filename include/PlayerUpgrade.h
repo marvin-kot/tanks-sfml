@@ -28,6 +28,9 @@ public:
         XpAttractor,
         BonusEffectiveness,
         FastReload,
+        TankLandmine,
+        TankTurretSetter,
+        RamMachine,
         // tank super upgrades
         FourDirectionBullets,
         PiercingBullets,
@@ -331,3 +334,30 @@ public:
     PlayerUpgrade::SacrificeLifeForBase,
     PlayerUpgrade::PlusLifeOnStart,
     PlayerUpgrade::GreedForXP*/
+
+
+class LandmineTankUpgrade : public PlayerUpgrade
+{
+    std::vector<int> _numberBasedOnLevel;
+public:
+    LandmineTankUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+
+class TurretTankUpgrade : public PlayerUpgrade
+{
+    std::vector<int> _numberBasedOnLevel;
+public:
+    TurretTankUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+
+class RamTankUpgrade : public PlayerUpgrade
+{
+    std::vector<int> _numberBasedOnLevel;
+public:
+    RamTankUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};

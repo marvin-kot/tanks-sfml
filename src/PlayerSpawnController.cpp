@@ -6,6 +6,7 @@
 #include "Shootable.h"
 #include "Logger.h"
 #include "ObjectsPool.h"
+#include "SecondShootable.h"
 
 PlayerSpawnController::PlayerSpawnController(GameObject *parent, int lives, int powerLevel)
 : Controller(parent, 0)
@@ -23,6 +24,8 @@ GameObject * PlayerSpawnController::createObject()
     Logger::instance() << "Creating player...\n";
     GameObject *pc = new GameObject("playerBase");
     pc->setShootable(Shootable::createDefaultPlayerShootable(pc));
+    //TEMP
+    //pc->setSecondShootable(new LandmineSetter(pc));
     pc->setFlags(GameObject::Player | GameObject::BulletKillable);
     pc->setRenderer(new SpriteRenderer(pc), 2);
     pc->setDamageable(new Damageable(pc, globalConst::DefaultPlayerProtection));

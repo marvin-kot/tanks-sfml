@@ -120,12 +120,18 @@ void PlayerController::update()
     if (_recentPlayerInput.shoot_request) {
         if (_gameObject->shoot()) {
             SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::Shoot, true);
-            if (_upgradePower)
+            if (_4dirSet)
+                _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-4dir-shot", true);
+            else if (_upgradePower)
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-power-shot", true);
             else if (_upgradeSpeed)
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-speed-shot", true);
             else
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("default-shot", true);
+        }
+    } else if (_recentPlayerInput.weapon2_request) {
+        if (_gameObject->useSecondWeapon()) {
+            // TODO
         }
     }
 
@@ -166,22 +172,37 @@ void PlayerController::update()
         }
     }
 
-    if (hasLevelOfUpgrade(PlayerUpgrade::BulletTank) == -1)
-        return;
+    int ramLevel = hasLevelOfUpgrade(PlayerUpgrade::RamMachine);
+    if (ramLevel > -1) {
+        if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(0.1)) {
+            _gameObject->damage = ramLevel+1;
+            if (Utils::currentFrame % 2 == 0) {
+                assert (_gameObject->spriteRenderer);
+                _gameObject->spriteRenderer->setOneFrameTintColor(sf::Color(200, 200, 255));
+            }
+        } else
+            _gameObject->damage = 0;
+    }
 
-    if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(0.9)) {
-        // if "bullet tank" ability - become bullet + invulnerable + blink
-        if (Utils::currentFrame % 2 == 0) {
-            assert (_gameObject->spriteRenderer);
-            assert (_gameObject->turret);
-            assert (_gameObject->turret->spriteRenderer);
-            _gameObject->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
-            _gameObject->turret->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
+
+
+
+
+    if (hasLevelOfUpgrade(PlayerUpgrade::BulletTank) > -1) {
+        if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(0.9)) {
+            // if "bullet tank" ability - become bullet + invulnerable + blink
+            if (Utils::currentFrame % 2 == 0) {
+                assert (_gameObject->spriteRenderer);
+                assert (_gameObject->turret);
+                assert (_gameObject->turret->spriteRenderer);
+                _gameObject->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
+                _gameObject->turret->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
+            }
+            _gameObject->damage = _gameObject->getComponent<Shootable>()->damage();
+            setTemporaryInvincibility(globalConst::FixedFrameLength);
+        } else {
+            _gameObject->damage = 0;
         }
-        _gameObject->damage = _gameObject->getComponent<Shootable>()->damage();
-        setTemporaryInvincibility(globalConst::FixedFrameLength);
-    } else {
-        _gameObject->damage = 0;
     }
 }
 
@@ -511,7 +532,8 @@ void PlayerController::setFourDirectionTurret()
 
     // take old turret values
     auto oldShootable = _gameObject->getComponent<Shootable>();
-    int actionTimeout = oldShootable->shootTimeoutMs();
+    int shootTimeout = oldShootable->shootTimeoutMs();
+    int reloadTimeout = oldShootable->reloadTimeoutMs();
     int damage = oldShootable->damage();
     int bulletSpeed = oldShootable->bulletSpeed();
     int maxBullets = oldShootable->maxBullets();
@@ -522,6 +544,8 @@ void PlayerController::setFourDirectionTurret()
     // set new turret
     auto newShootable = new FourDirectionShootable(_gameObject, bulletSpeed, maxBullets);
     newShootable->setDamage(damage);
+    newShootable->setShootTimeoutMs(shootTimeout);
+    newShootable->setReloadTimeoutMs(reloadTimeout);
 
     _gameObject->setShootable(newShootable);
     updateAppearance();

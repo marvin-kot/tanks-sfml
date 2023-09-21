@@ -36,7 +36,9 @@ public:
         BossTheme,
         ShopTheme,
         PartialReload,
-        FullReload
+        FullReload,
+        SetLandmine,
+        RejectLandmine
     };
 
 private:

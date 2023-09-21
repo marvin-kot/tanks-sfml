@@ -9,6 +9,7 @@
 #include "ObjectsPool.h"
 #include "PlayerController.h"
 #include "Shootable.h"
+#include "SecondShootable.h"
 #include "SoundPlayer.h"
 #include "Utils.h"
 
@@ -46,6 +47,11 @@ GameObject::~GameObject()
     if (_controller) {
         delete _controller;
         _controller = nullptr;
+    }
+
+    if (_secondShootable) {
+        delete _secondShootable;
+        _secondShootable = nullptr;
     }
 
     if (_shootable) {
@@ -283,13 +289,6 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         // just hit non-transparent target (and it's not its own creator)
         if (!other->isFlagSet(BulletPassable) && _parentId != other->id()) {
             // damage target
-            /*if (other->isFlagSet(BulletKillable) && other->_damageable != nullptr) {
-                other->_damageable->takeDamage(damage);
-                if (other->_damageable->isDestroyed()) {
-                    other->markForDeletion();
-                }
-            }*/
-
             if (isFlagSet(PiercingBullet)) {
                 auto bullet = dynamic_cast<BulletController *>(_controller);
                 if (other->isFlagSet(BulletKillable)) {
@@ -416,6 +415,9 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         other->markForDeletion();
 
     }
+
+    if (_controller)
+        _controller->onCollided(other);
 }
 
 bool GameObject::isOnIce() const
@@ -515,7 +517,11 @@ GameObject *GameObject::linecastInDirection(int id, int startX, int startY, glob
     using namespace globalTypes;
     using namespace globalVars;
 
-    auto objectList = ObjectsPool::getObjectsByTypes({ "brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2", "concreteWall" });
+    auto objectList = ObjectsPool::getObjectsByTypes(
+        { "brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2", "concreteWall",
+          "playerBase", "eagle", "npcBaseTank", "staticTurret",
+          "npcFastTank", "npcArmorTank", "npcPowerTank", "npcGiantTank", "npcDoubleCannonArmorTank", "npcKamikazeTank"
+        });
 
     const int step = 4;
     switch (direction) {
@@ -586,6 +592,14 @@ void GameObject::setShootable(Shootable * shtbl)
     _shootable = shtbl;
 }
 
+void GameObject::setSecondShootable(SecondShootable * shtbl)
+{
+    if (_secondShootable)
+        delete _secondShootable;
+
+    _secondShootable = shtbl;
+}
+
 void GameObject::setRenderer(SpriteRenderer *rndr, int order)
 {
     spriteRenderer = rndr;
@@ -644,6 +658,14 @@ bool GameObject::shoot()
 {
     if (_shootable)
         return _shootable->shoot(_direction);
+    else
+        return false;
+}
+
+bool GameObject::useSecondWeapon()
+{
+    if (_secondShootable)
+        return _secondShootable->shoot(_direction);
     else
         return false;
 }

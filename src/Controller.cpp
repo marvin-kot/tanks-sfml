@@ -1,6 +1,7 @@
 #include "Controller.h"
 #include "GlobalConst.h"
 #include "GameObject.h"
+#include "ObjectsPool.h"
 #include "Utils.h"
 
 #include <algorithm>
@@ -141,4 +142,83 @@ void ExplosionController::update()
     if (_pause) return;
 
     _gameObject->move(0, 0);
+}
+
+
+/////////
+
+
+LandmineController::LandmineController(GameObject *parent, bool dontHurtParent)
+: Controller(parent, 0), _dontHurtParent(dontHurtParent)
+{
+    _clock.reset(true);
+}
+
+
+void LandmineController::update()
+{
+    checkForGamePause();
+    if (_pause) return;
+
+    _gameObject->move(0, 0);
+}
+
+void LandmineController::onCollided(GameObject *obj)
+{
+    if (_dontHurtParent && (obj->id() == _gameObject->parentId() || obj->parentId() == _gameObject->parentId()))
+        return;
+
+    if (obj->isFlagSet(GameObject::ObjectFlags::BulletKillable))
+        _gameObject->shoot();
+}
+
+///
+
+StaticTurretController::StaticTurretController(GameObject *parent, globalTypes::Direction dir)
+: Controller(parent, 0), _direction(dir)
+{
+    _clock.reset(true);
+}
+
+void StaticTurretController::update()
+{
+    checkForGamePause();
+
+    if (_pause)
+        return;
+
+    _gameObject->move(0, 0);
+
+    if (nullptr == ObjectsPool::playerObject || !_gameObject->collides(*ObjectsPool::playerObject))
+        _gameObject->unsetFlags(GameObject::TankPassable);
+
+    if (decideIfToShoot())
+        _gameObject->shoot();
+}
+
+void StaticTurretController::onCollided(GameObject *obj)
+{
+}
+
+bool StaticTurretController::decideIfToShoot() const
+{
+    GameObject *hit = _gameObject->linecastInCurrentDirection();
+
+    if (hit == nullptr)
+        return false;
+
+    bool targetIsPlayer = false;
+    if (ObjectsPool::playerObject && _gameObject->parentId() != ObjectsPool::playerObject->id())
+        targetIsPlayer = true;
+
+    if (targetIsPlayer && (hit == ObjectsPool::playerObject || hit == ObjectsPool::eagleObject)) {
+        return true;
+    }
+
+    if (!targetIsPlayer && hit->isFlagSet(GameObject::NPC)) {
+        return true;
+    }
+
+
+    return false;
 }

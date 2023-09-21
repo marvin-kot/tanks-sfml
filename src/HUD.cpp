@@ -59,9 +59,9 @@ void HUD::drawPlayerXP(int baseY)
 
 void HUD::drawTankLives(int baseY)
 {
-    constexpr int iconWidth = 7;
-    constexpr int iconHeight = 8;
-    sf::IntRect rect = sf::IntRect(377, 144, iconWidth, iconHeight);
+    constexpr int iconWidth = 11;
+    constexpr int iconHeight = 14;
+    sf::IntRect rect = sf::IntRect(163, 17, iconWidth, iconHeight);
 
     int baseX = 17;
 
@@ -99,7 +99,7 @@ void HUD::drawTankUpgrades(int baseY)
 
 void HUD::drawBaseLives(int baseY)
 {
-    sf::IntRect eagleRect = sf::IntRect(376, 125, 9, 8);
+    sf::IntRect eagleRect = sf::IntRect(176, 17, 16, 14);
     UiUtils::instance().drawMiniIcon(eagleRect, 20, baseY);
 }
 
@@ -133,12 +133,12 @@ void HUD::drawBaseUpgrades(int baseY)
 
 void HUD::drawPerks(int baseY)
 {
-    int baseX = globalConst::screen_w - 48;
+    int baseX = globalConst::screen_w - 64;
 
     for (auto obj : PlayerUpgrade::availablePerkObjects) {
         if (PlayerUpgrade::playerOwnedPerks.contains(obj->type())) {
             UiUtils::instance().drawMiniIcon( obj->iconRect(), baseX, baseY );
-            baseX -= 48;
+            baseX -= 64;
         }
     }
 }

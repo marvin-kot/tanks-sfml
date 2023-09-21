@@ -36,6 +36,7 @@ void PlayerControllerClient::update(net::PlayerInput *input)
     bool action = false;
 
     input->shoot_request = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+    input->weapon2_request = sf::Keyboard::isKeyPressed(sf::Keyboard::X);
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
         if (!wasPressed(LeftPressed))

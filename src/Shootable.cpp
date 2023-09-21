@@ -167,9 +167,10 @@ bool FourDirectionShootable::shoot(globalTypes::Direction)
     // direction param here does not matter and exist only for compatibility
 
     using namespace globalTypes;
-    bool madeShot = false;
+
     if (isShootingProhibited()) return false;
     _shootClock.reset(true);
+    _reloadClock.reset(true);
 
     for (Direction dir = Up; dir <= Right; dir = (Direction)((int)dir + 1)) {
         GameObject *bullet = new GameObject(_gameObject, "bullet");
@@ -186,9 +187,18 @@ bool FourDirectionShootable::shoot(globalTypes::Direction)
         ObjectsPool::addObject(bullet);
     }
 
+    if (_bullets == _maxBullets) _reloadClock.reset(true);
+
+    if (_tempBullets > 0)
+        _tempBullets--;
+    else
+        _bullets--;
+
     return true;
 }
 
+
+/////
 
 RocketShootable::RocketShootable(GameObject *parent, int maxBullets)
 : Shootable(parent, 0, globalConst::RocketShootTimeoutMs, globalConst::DefaultRocketSpeed, maxBullets)

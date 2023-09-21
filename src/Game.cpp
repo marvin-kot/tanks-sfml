@@ -47,7 +47,7 @@ bool Game::loadAssets()
 bool Game::initializeWindow()
 {
     using namespace globalConst;
-    Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML");
+    Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML", sf::Style::Fullscreen);
 
     //Utils::window.setVerticalSyncEnabled(true);
     Utils::window.setFramerateLimit(FixedFrameRate);
@@ -62,6 +62,8 @@ void Game::initializeVariables()
     framesToDie = -1;
     framesToWin = -1;
     _killsCount = 0;
+    unsigned seed = std::chrono::steady_clock::now().time_since_epoch().count();
+    Utils::generator = std::default_random_engine(seed);
     PersistentGameData::instance().loadDataFromDisk();
     PlayerUpgrade::generatePerks();
     gameState = GameState::TitleScreen;
@@ -162,24 +164,7 @@ void Game::processWindowEvents()
                         pause(!globalVars::gameIsPaused);
                     }
                 } else if (gameState == BonusShop) {
-                    if (event.key.scancode == sf::Keyboard::Scan::Left)
-                        BonusShopWindow::instance().moveCursorLeft();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Right)
-                        BonusShopWindow::instance().moveCursorRight();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Down)
-                        BonusShopWindow::instance().moveCursorDown();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Up)
-                        BonusShopWindow::instance().moveCursorUp();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Enter)
-                        BonusShopWindow::instance().getSelectedUpgrade();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
-                        SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
-                        gameState = GameState::TitleScreen;
-                    }
-                    else if (event.key.scancode == sf::Keyboard::Scan::Space) {
-                        SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
-                        gameState = GameState::SelectLevel;
-                    }
+                    BonusShopWindow::instance().processKeyboardPress(event.key.scancode, gameState);
                 } else if (gameState == GameState::SelectLevel) {
                     if (event.key.scancode == sf::Keyboard::Scan::Down)
                         MissionSelectScreen::instance().moveCursorDown();
@@ -373,7 +358,7 @@ void Game::processDeletedObjects()
                 SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
         }
 
-        if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle)) {
+        if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle | GameObject::OwnedByPlayer)) {
             GameObject *explosion = new GameObject("bigExplosion");
             explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
             explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);

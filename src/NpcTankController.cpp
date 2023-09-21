@@ -202,7 +202,7 @@ bool TankRandomController::decideIfToShoot(globalTypes::Direction oldDir) const
     if (hit == nullptr)
         return false;
 
-    if (hit == ObjectsPool::playerObject || hit == ObjectsPool::eagleObject) {
+    if (hit->isFlagSet(GameObject::Player | GameObject::Eagle | GameObject::OwnedByPlayer) && hit->isFlagSet(GameObject::BulletKillable)) {
         std::uniform_int_distribution<int> distribution(0, 10);
         int shotChance = distribution(Utils::generator);
         return (shotChance == 0);

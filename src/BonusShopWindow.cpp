@@ -240,3 +240,24 @@ void BonusShopWindow::getSelectedUpgrade()
         SoundPlayer::instance().playSound(SoundPlayer::SoundType::bulletHitWall);
     }
 }
+
+void BonusShopWindow::processKeyboardPress(sf::Keyboard::Scancode scancode, globalTypes::GameState& gameState)
+{
+    if (scancode == sf::Keyboard::Scan::Left)
+        moveCursorLeft();
+    else if (scancode == sf::Keyboard::Scan::Right)
+        moveCursorRight();
+    else if (scancode == sf::Keyboard::Scan::Down)
+        moveCursorDown();
+    else if (scancode == sf::Keyboard::Scan::Up)
+        moveCursorUp();
+    else if (scancode == sf::Keyboard::Scan::Space)
+        getSelectedUpgrade();
+    else if (scancode == sf::Keyboard::Scan::Escape) {
+        SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
+        gameState = globalTypes::GameState::TitleScreen;
+    } else if (scancode == sf::Keyboard::Scan::Enter) {
+        SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
+        gameState = globalTypes::GameState::SelectLevel;
+    }
+}

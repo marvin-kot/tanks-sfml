@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include "GlobalTypes.h"
 
 #pragma once
 
@@ -34,4 +35,7 @@ public:
     void getSelectedUpgrade();
     bool isOpen() const { return _isOpen; }
     int cursorPosition() const { return _currentUpgradeCursor; }
+
+    void processKeyboardPress(sf::Keyboard::Scancode scancode, globalTypes::GameState& gameState);
+
 };

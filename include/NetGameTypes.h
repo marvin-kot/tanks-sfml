@@ -89,6 +89,7 @@ struct PlayerInput
 {
     sf::Uint8 direction_request;
     bool shoot_request;
+    bool weapon2_request;
     bool pause_request;
     bool exit_request;
     bool isUpgradeChoice;
