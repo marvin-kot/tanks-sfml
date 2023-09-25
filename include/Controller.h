@@ -26,6 +26,10 @@ protected:
     int _currMoveY = 0;
     int _moveSpeed;
 
+    int _paralyzedForMs = 0;
+    sftools::Chronometer _blinkClock;
+    sftools::Chronometer _paralyzeClock;
+
     bool _addSpeed = false;
     int moveSpeedForCurrentFrame();
     void prepareMoveInDirection(globalTypes::Direction, int spd);
@@ -37,6 +41,7 @@ public:
 
     virtual void onDamaged() {};
     virtual void onCollided(GameObject *) {}
+    void paralyze(int msec);
 };
 
 class BulletController : public Controller
@@ -149,4 +154,39 @@ public:
     void onCollided(GameObject *) override;
     void setLevel(int l) { _level = l; }
     bool decideIfToShoot() const;
+};
+
+
+class BlockageController : public Controller
+{
+public:
+    BlockageController(GameObject *parent);
+    void update() override;
+    void onDamaged();
+};
+
+
+class JezekController : public Controller
+{
+    bool _dontHurtParent;
+public:
+    JezekController(GameObject *parent, bool dontHurtParent);
+    void update() override;
+    void onCollided(GameObject *) override;
+};
+
+class SkullController : public Controller
+{
+    int _timeoutMsec;
+public:
+    SkullController(GameObject *parent, int timeout);
+
+    void update() override;
+};
+
+class StaticCarController : public Controller
+{
+public:
+    StaticCarController(GameObject *parent);
+    void onCollided(GameObject *) override;
 };

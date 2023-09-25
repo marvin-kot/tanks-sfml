@@ -24,8 +24,7 @@ GameObject * PlayerSpawnController::createObject()
     Logger::instance() << "Creating player...\n";
     GameObject *pc = new GameObject("playerBase");
     pc->setShootable(Shootable::createDefaultPlayerShootable(pc));
-    //TEMP
-    //pc->setSecondShootable(new LandmineSetter(pc));
+    //TEMP //pc->setSecondShootable(new JezekSetter(pc));
     pc->setFlags(GameObject::Player | GameObject::BulletKillable);
     pc->setRenderer(new SpriteRenderer(pc), 2);
     pc->setDamageable(new Damageable(pc, globalConst::DefaultPlayerProtection));

@@ -33,6 +33,7 @@ public:
         moveCursor,
         startGame,
         briefingTheme,
+        TitleTheme,
         BossTheme,
         ShopTheme,
         PartialReload,
@@ -62,6 +63,7 @@ public:
     static SoundPlayer& instance();
 
     void playSound(SoundType);
+    void playSoundWithOffset(SoundType, int offset);
     void stopSound(SoundType);
     void pauseSound(SoundType);
     void pauseAllSounds();

@@ -8,6 +8,8 @@
 
 #include <map>
 
+class SkullCollectable;
+
 class PlayerController : public Controller
 {
     sf::Keyboard::Key _mostRecentKey;
@@ -29,7 +31,7 @@ class PlayerController : public Controller
 
     std::map<PlayerUpgrade::UpgradeType, PlayerUpgrade *> _collectedUpgrades;
 
-    int _xp;
+    long _xp;
     int _level = 0;
 
     bool _invincible;
@@ -54,6 +56,10 @@ class PlayerController : public Controller
     int _speedDebuff = 0;
     int _shootReloadDebuff = 0;
 
+    bool _blink = false;
+
+    void blinkIfParalyzed();
+    sf::Time prevFrameTime;
 public:
     PlayerController(GameObject *obj);
     ~PlayerController();
@@ -101,6 +107,10 @@ public:
     void onKillEnemy(GameObject *enemy);
 
     void restoreProtection();
+
+    void restoreLevelAndUpgrades(SkullCollectable *);
+
+    void dropSkull();
 
 };
 

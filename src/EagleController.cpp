@@ -31,6 +31,21 @@ static const std::map<EagleWallDirection, sf::Vector2i> dirOffsets = {
     {DownDownLeft, Vector2i(-subtileCenter, wallOffset)}
 };
 
+static const std::map<EagleWallDirection, std::string> dirWallTypes = {
+    {DownLeft, "brickWall1x2"},
+    {LeftLeftDown, "brickWall1x2"},
+    {LeftLeftUp, "brickWall1x1"},
+    {UpLeft, "brickWall1x1"},
+    {UpUpLeft, "brickWall1x1"},
+    {UpUpRight, "brickWall2x1"},
+    {UpRight, "brickWall2x1"},
+    {RightRightUp, "brickWall2x1"},
+    {RightRightDown, "brickWall2x2"},
+    {DownRight, "brickWall2x2"},
+    {DownDownRight, "brickWall2x2"},
+    {DownDownLeft, "brickWall1x2"}
+};
+
 EagleController::EagleController(GameObject *obj)
 : Controller(obj, 0), _state(Starting), _invincibilityAfterDamageTimeout(750),_invincible(false)
 {}
@@ -81,8 +96,8 @@ void EagleController::update()
                     const int thisX = _gameObject->position().x;
                     const int thisY = _gameObject->position().y;
                     const auto offset = dirOffsets.at(_currentBuildDirection);
-                    Logger::instance() << "build dir " << (int)_currentBuildDirection << " coord " << thisX + offset.x << " " << thisY + offset.y << "\n";
-                    GameObject *obj = MapCreator::buildObject("brickWall1x1");
+                    //Logger::instance() << "build dir " << (int)_currentBuildDirection << " coord " << thisX + offset.x << " " << thisY + offset.y << "\n";
+                    GameObject *obj = MapCreator::buildObject("brickWall-segment"/*dirWallTypes.at(_currentBuildDirection)*/);
                     assert(obj != nullptr);
                     obj->setSize(globalConst::spriteOriginalSizeX/2, globalConst::spriteOriginalSizeY/2);
                     obj->setPosition(

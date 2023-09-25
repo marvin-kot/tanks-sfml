@@ -1,7 +1,9 @@
 #include "Controller.h"
+#include "Damageable.h"
 #include "GlobalConst.h"
 #include "GameObject.h"
 #include "ObjectsPool.h"
+#include "SoundPlayer.h"
 #include "Utils.h"
 
 #include <algorithm>
@@ -37,6 +39,17 @@ int Controller::moveSpeedForCurrentFrame()
     return speed;
 }
 
+void Controller::paralyze(int msec)
+{
+    assert(_gameObject != nullptr);
+    if (_gameObject->isFlagSet(GameObject::Player))
+        msec /= 2;
+
+    _paralyzedForMs = msec;
+    _blinkClock.reset(true);
+    _paralyzeClock.reset(true);
+}
+
 void Controller::prepareMoveInDirection(globalTypes::Direction dir, int speed)
 {
     assert(dir != globalTypes::Direction::Unknown);
@@ -64,9 +77,13 @@ void Controller::checkForGamePause()
 {
     if (!_pause && globalVars::gameIsPaused) {
         _clock.pause();
+        _paralyzeClock.pause();
+        _blinkClock.pause();
         _pause = true;
     } else if (_pause && ! globalVars::gameIsPaused) {
         _clock.resume();
+        _paralyzeClock.resume();
+        _blinkClock.resume();
         _pause = false;
     }
 }
@@ -168,8 +185,9 @@ void LandmineController::onCollided(GameObject *obj)
     if (_dontHurtParent && (obj->id() == _gameObject->parentId() || obj->parentId() == _gameObject->parentId()))
         return;
 
-    if (obj->isFlagSet(GameObject::ObjectFlags::BulletKillable))
+    if (obj->isFlagSet(GameObject::ObjectFlags::BulletKillable)) {
         _gameObject->shoot();
+    }
 }
 
 ///
@@ -221,4 +239,104 @@ bool StaticTurretController::decideIfToShoot() const
 
 
     return false;
+}
+
+//////
+
+
+BlockageController::BlockageController(GameObject *parent)
+: Controller(parent, 0) {}
+
+
+void BlockageController::update()
+{
+    checkForGamePause();
+
+    if (_pause)
+        return;
+
+    if (nullptr == ObjectsPool::playerObject || !_gameObject->collides(*ObjectsPool::playerObject))
+        _gameObject->unsetFlags(GameObject::TankPassable);
+}
+
+
+
+void BlockageController::onDamaged() {
+    assert(_gameObject != nullptr);
+    auto damageable = _gameObject->getComponent<Damageable>();
+    assert(damageable != nullptr);
+    assert(_gameObject->spriteRenderer != nullptr);
+    switch (damageable->defence())
+    {
+        case 1:
+            _gameObject->spriteRenderer->setCurrentAnimation("damaged");
+            break;
+        case 0:
+            _gameObject->spriteRenderer->setCurrentAnimation("damaged-2");
+            break;
+        default:
+            _gameObject->spriteRenderer->setCurrentAnimation("default");
+    }
+}
+
+
+JezekController::JezekController(GameObject *parent, bool dontHurtParent)
+: Controller(parent, 0), _dontHurtParent(dontHurtParent) {}
+
+
+void JezekController::update()
+{
+    checkForGamePause();
+    if (_pause) return;
+
+    _gameObject->move(0, 0);
+}
+
+void JezekController::onCollided(GameObject *obj)
+{
+    assert(_gameObject != nullptr);
+
+    if (_dontHurtParent && (obj->id() == _gameObject->parentId() || obj->parentId() == _gameObject->parentId()))
+        return;
+
+    if (obj->isFlagSet(GameObject::ObjectFlags::BulletKillable)) {
+        _gameObject->markForDeletion();
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::DestroyWall, true);
+        obj->getComponent<Controller>()->paralyze(10000);
+    }
+
+}
+
+
+
+SkullController::SkullController(GameObject *parent, int timeout)
+: Controller(parent, 0), _timeoutMsec(timeout) {
+    _clock.reset(true);
+}
+
+void SkullController::update()
+{
+    checkForGamePause();
+    if (_pause) return;
+
+    if (_clock.getElapsedTime() > sf::milliseconds(_timeoutMsec)) {
+        _gameObject->markForDeletion();
+    }
+}
+
+////
+
+
+StaticCarController::StaticCarController(GameObject *parent)
+: Controller(parent, 0) {
+    _clock.reset(true);
+}
+
+void StaticCarController::onCollided(GameObject *other)
+{
+    assert(other != nullptr);
+    if (other->isFlagSet(GameObject::Player) || other->isFlagSet(GameObject::NPC)) {
+        _gameObject->markForDeletion();
+        SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
+    }
 }

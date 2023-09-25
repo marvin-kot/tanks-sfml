@@ -31,6 +31,8 @@ public:
         TankLandmine,
         TankTurretSetter,
         RamMachine,
+        TankBlockageSetter,
+        TankHedgehogSetter,
         // tank super upgrades
         FourDirectionBullets,
         PiercingBullets,
@@ -350,6 +352,23 @@ class TurretTankUpgrade : public PlayerUpgrade
     std::vector<int> _numberBasedOnLevel;
 public:
     TurretTankUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class BlockageSetterTankUpgrade : public PlayerUpgrade
+{
+    std::vector<int> _numberBasedOnLevel;
+public:
+    BlockageSetterTankUpgrade(int level);
+    void onCollect(GameObject *collector) override;
+};
+
+class HedgehogSetterTankUpgrade : public PlayerUpgrade
+{
+    std::vector<int> _amountBasedOnLevel;
+    std::vector<int> _timeoutBasedOnLevel;
+public:
+    HedgehogSetterTankUpgrade(int level);
     void onCollect(GameObject *collector) override;
 };
 

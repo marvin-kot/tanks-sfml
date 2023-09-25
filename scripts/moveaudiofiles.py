@@ -4,7 +4,7 @@ import sys, re, os
 
 audio_set = {}
 
-audio_path = 'assets/new_sounds/'
+audio_path = 'unused_assets/audio/'
 relative_path = '../' + audio_path
 cpp_path = '../src/SoundPlayer.cpp'
 used_files = '../assets/audio/'
@@ -13,9 +13,10 @@ unused_files = '../assets/audio/unused/'
 with( open(cpp_path) as f ):
     content = f.read()
 
-    existent_paths = re.findall(r'\"' + audio_path + r'([\w/]+.wav)\"', content)
+    existent_paths = re.findall(r'\"assets/audio/([\w/ ]+.wav)\"', content)
 
-    audio_set = [relative_path+match for match in existent_paths]
+    audio_set = [x for x in existent_paths]
+    print(audio_set)
 
     for root, dnames, fnames in os.walk(relative_path):
 
@@ -23,11 +24,13 @@ with( open(cpp_path) as f ):
             root = root + '/'
         for f in fnames:
             fullpath = root + f
-            if fullpath in audio_set:
-                print(fullpath + ' is used!')
+            if not os.path.exists(fullpath):
+                continue
+            if f in audio_set:
+                print(f + ' is used!')
                 os.rename(fullpath, used_files + f)
             else:
                 pass
-                os.rename(fullpath, unused_files + f)
+                #os.rename(fullpath, unused_files + f)
 
 

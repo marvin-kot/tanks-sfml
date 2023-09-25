@@ -47,7 +47,7 @@ bool Game::loadAssets()
 bool Game::initializeWindow()
 {
     using namespace globalConst;
-    Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML", sf::Style::Fullscreen);
+    Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML"/*, sf::Style::Fullscreen*/);
 
     //Utils::window.setVerticalSyncEnabled(true);
     Utils::window.setFramerateLimit(FixedFrameRate);
@@ -323,6 +323,12 @@ void Game::processDeletedObjects()
         GameObject *obj = ObjectsPool::objectsToDelete.front();
 
         if (obj->isFlagSet(GameObject::Player)) {
+            if (globalVars::player1Lives > 0) {
+                auto controller = obj->getComponent<PlayerController>();
+                if (controller)
+                    controller->dropSkull();
+            }
+
             globalVars::player1Lives--;
             ObjectsPool::playerObject = nullptr;
         }
@@ -487,13 +493,15 @@ void Game::recalculateViewPort()
 
 void Game::drawObjects()
 {
+    // 0. draw ground
+    auto objectsToDrawZeroth = ObjectsPool::getObjectsByDrawOrder(0);
+    std::for_each(objectsToDrawZeroth.cbegin(), objectsToDrawZeroth.cend(), [](GameObject *obj) { obj->draw(); });
     // 1. draw ice and water
     auto objectsToDrawFirst = ObjectsPool::getObjectsByDrawOrder(1);
     std::for_each(objectsToDrawFirst.cbegin(), objectsToDrawFirst.cend(), [](GameObject *obj) { obj->draw(); });
 
     // 2. draw tanks and bullets
     std::unordered_set<GameObject *> objectsToDrawSecond = ObjectsPool::getObjectsByDrawOrder(2);
-
     std::for_each(objectsToDrawSecond.begin(), objectsToDrawSecond.end(), [&](GameObject *obj) { if (obj) obj->draw(); });
 
     // 3. draw walls and trees
@@ -502,7 +510,6 @@ void Game::drawObjects()
 
     // 4. visual effects
     auto objectsToDrawFourth = ObjectsPool::getObjectsByDrawOrder(4);
-
     std::for_each(objectsToDrawFourth.cbegin(), objectsToDrawFourth.cend(), [&](GameObject *obj) { obj->draw(); });
 }
 

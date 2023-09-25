@@ -26,6 +26,7 @@ static std::unordered_map<SoundType, std::string> soundPaths = {
     {SoundType::moveCursor, string("assets/audio/Coin Pickup 48.wav")},
     {SoundType::startGame, string("assets/audio/Coin Pickup 42.wav")},
     {SoundType::briefingTheme, string("assets/audio/march-massacre.wav")},
+    {SoundType::TitleTheme, string("assets/audio/jingles/titleTheme.wav")},
     {SoundType::BossTheme, string("assets/audio/bossTankLoop.wav")},
     {SoundType::ShopTheme, string("assets/audio/shop-theme.wav")},
     {SoundType::PartialReload, string("assets/audio/Gun Reload 6.wav")},
@@ -107,6 +108,12 @@ void SoundPlayer::playSound(SoundPlayer::SoundType type)
             loadedSounds.at(type).second.play();
             break;
     }
+}
+
+void SoundPlayer::playSoundWithOffset(SoundPlayer::SoundType type, int offset)
+{
+    loadedSounds.at(type).second.play();
+    loadedSounds.at(type).second.setPlayingOffset(sf::milliseconds(offset));
 }
 
 void SoundPlayer::stopSound(SoundPlayer::SoundType type)

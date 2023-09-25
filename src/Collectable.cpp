@@ -130,3 +130,34 @@ void RepairCollectable::onCollected(GameObject *collector)
         controller->updateAppearance();
     }
 }
+
+
+///
+#include "PlayerUpgrade.h"
+
+
+SkullCollectable::SkullCollectable(GameObject *parent)
+: Collectable(parent)
+{}
+
+SkullCollectable::~SkullCollectable()
+{
+    if (!_gotCollected) {
+        for (auto it = playerUpgrades.begin(); it != playerUpgrades.end(); ) {
+            PlayerUpgrade *obj = (*it);
+            it = playerUpgrades.erase(it);
+            delete obj;
+        }
+    }
+}
+
+void SkullCollectable::onCollected(GameObject *collector)
+{
+    assert(collector != nullptr);
+    assert(collector->isFlagSet(GameObject::Player));
+
+    collector->getComponent<PlayerController>()->restoreLevelAndUpgrades(this);
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusCollect, true);
+    _gotCollected = true;
+}
+

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <SFML/System/Time.hpp>
+
+#include <vector>
+
 class GameObject;
 
 class Collectable
@@ -59,4 +63,22 @@ struct RepairCollectable : public Collectable
 {
     RepairCollectable(GameObject *parent);
     void onCollected(GameObject *collector) override;
+};
+
+class PlayerUpgrade;
+
+struct SkullCollectable : public Collectable
+{
+    sf::Time dropTime;
+    int xp = 0;
+    int level = 0;
+
+    std::vector<PlayerUpgrade *> playerUpgrades;
+
+    SkullCollectable(GameObject *parent);
+    ~SkullCollectable();
+    void onCollected(GameObject *collector) override;
+
+private:
+    bool _gotCollected = false;
 };

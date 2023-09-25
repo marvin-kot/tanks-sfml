@@ -189,7 +189,6 @@ bool GameObject::networkDraw(net::ThinGameObject& thin)
 
 void GameObject::hide(bool val)
 {
-    Logger::instance() << "GameObject::hide " << val << "\n";
     if (spriteRenderer)
         spriteRenderer->hide(val);
 }
@@ -744,7 +743,7 @@ template<> SpriteRenderer *GameObject::getComponent<SpriteRenderer>()
 
 template<> PlayerController *GameObject::getComponent<PlayerController>()
 {
-    return dynamic_cast<PlayerController *>(_controller);
+             return dynamic_cast<PlayerController *>(_controller);
 }
 
 template<> EagleController *GameObject::getComponent<EagleController>()

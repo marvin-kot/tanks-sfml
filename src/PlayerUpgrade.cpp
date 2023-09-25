@@ -43,6 +43,7 @@ std::vector<UpgradeType> PlayerUpgrade::availableTypes = {
         BonusEffectiveness,
         TankLandmine,
         TankTurretSetter,
+        TankHedgehogSetter,
         //RamMachine,
         FreezeEnemies,
         InstantKillEnemies,
@@ -76,6 +77,7 @@ const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     PlayerUpgrade::Rocket,
     PlayerUpgrade::MachineGun,
     PlayerUpgrade::TankLandmine,
+    PlayerUpgrade::TankHedgehogSetter,
     PlayerUpgrade::RamMachine
 };
 
@@ -123,8 +125,11 @@ const std::map<UpgradeType, std::unordered_set<UpgradeType>> upgradeNegations = 
     {UpgradeType::BonusEffectiveness, {UpgradeType::Rocket}},
     {UpgradeType::RepairWalls, {UpgradeType::BaseRestoreOnDamage}},
     {UpgradeType::BaseInvincibility, {UpgradeType::BaseRestoreOnDamage}},
-    {UpgradeType::TankLandmine, {UpgradeType::TankTurretSetter}},
-    {UpgradeType::TankTurretSetter, {UpgradeType::TankLandmine}},
+    {UpgradeType::TankLandmine, {UpgradeType::TankTurretSetter, UpgradeType::TankBlockageSetter, UpgradeType::TankHedgehogSetter}},
+    {UpgradeType::TankTurretSetter, {UpgradeType::TankLandmine, UpgradeType::TankBlockageSetter, UpgradeType::TankHedgehogSetter}},
+    {UpgradeType::TankBlockageSetter, {UpgradeType::TankLandmine, UpgradeType::TankTurretSetter, UpgradeType::TankHedgehogSetter}},
+    {UpgradeType::TankHedgehogSetter, {UpgradeType::TankLandmine, UpgradeType::TankTurretSetter, UpgradeType::TankBlockageSetter}},
+
 };
 
 const std::map<UpgradeType, int> upgradeCap = {
@@ -140,6 +145,8 @@ const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::BaseArmor,  4},
     {UpgradeType::TankLandmine,  4},
     {UpgradeType::TankTurretSetter,  4},
+    {UpgradeType::TankBlockageSetter,  4},
+    {UpgradeType::TankHedgehogSetter,  4},
     {UpgradeType::RamMachine,  4},
     {UpgradeType::XpIncreaser,  1},
     {UpgradeType::PiercingBullets,  1},
@@ -265,12 +272,6 @@ std::vector<UpgradeType> PlayerUpgrade::fillLocalTypesList(PlayerController *pCo
                 continue; // do not add to list
         }
 
-        // increase chances based on perks
-        if (tankUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteTank))
-            availableTypesLocal.push_back(t); // add once more
-        if (baseUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteBase))
-            availableTypesLocal.push_back(t); // add once more
-
         // specific cases
         if (t == RebuildEagleWalls) {
             if (ObjectsPool::getEagleWalls().size() >= globalTypes::EagleWallDirection::MaxDirection-1)
@@ -280,6 +281,12 @@ std::vector<UpgradeType> PlayerUpgrade::fillLocalTypesList(PlayerController *pCo
         }
 
         availableTypesLocal.push_back(t);
+
+        // increase chances based on perks
+        if (tankUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteTank))
+            availableTypesLocal.push_back(t); // add once more
+        if (baseUpgradeTypes.contains(t) && playerOwnedPerks.contains(FavoriteBase))
+            availableTypesLocal.push_back(t); // add once more
     }
 
     return availableTypesLocal;
@@ -324,8 +331,6 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
         mandatoryUpgrades.push(ReloadOnKill);
     if (isUpgradedToMax(eagleController, RepairWalls) && isUpgradedToMax(eagleController, BaseInvincibility))
         mandatoryUpgrades.push(BaseRestoreOnDamage);
-
-    mandatoryUpgrades.push(FourDirectionBullets);
 
     std::unordered_set<UpgradeType> alreadyGenerated;
 
@@ -419,6 +424,9 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
             break;
         case TankTurretSetter:
             newUpgrade = new TurretTankUpgrade(level);
+            break;
+        case TankHedgehogSetter:
+            newUpgrade = new HedgehogSetterTankUpgrade(level);
             break;
         case RamMachine:
             newUpgrade = new RamTankUpgrade(level);
@@ -1067,7 +1075,7 @@ ReloadOnKillUpgrade::ReloadOnKillUpgrade(int level)
 
     _effects.push_back("Replaces [Fast reload] and\n[power bullets] upgrades\nAmmo will fully reload\nafter every succesful kill");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("skullCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("skullIcon", "default", 0).rect;
 }
 
 void ReloadOnKillUpgrade::onCollect(GameObject *target)
@@ -1188,7 +1196,7 @@ LandmineTankUpgrade::LandmineTankUpgrade(int level) : PlayerUpgrade(level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type  = TankLandmine;
-    _name = "Second weapon: landmine";
+    _name = "2nd weapon: landmine";
 
     _numberBasedOnLevel = { 4, 6, 8, 10 };
     for (auto number : _numberBasedOnLevel)
@@ -1212,7 +1220,7 @@ TurretTankUpgrade::TurretTankUpgrade(int level) : PlayerUpgrade(level)
 {
     _category = PlayerUpgrade::TankUpgrade;
     _type  = TankTurretSetter;
-    _name = "Second weapon: turret placer";
+    _name = "2nd weapon: turret placer";
 
     _numberBasedOnLevel = { 2, 4, 6, 8 };
     for (auto number : _numberBasedOnLevel)
@@ -1235,6 +1243,72 @@ void TurretTankUpgrade::onCollect(GameObject *target)
     }
     target->setSecondShootable(turretSetter);
 }
+
+/////
+
+
+BlockageSetterTankUpgrade::BlockageSetterTankUpgrade(int level) : PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::TankUpgrade;
+    _type  = TankBlockageSetter;
+    _name = "2nd weapon: blockage placer";
+
+    _numberBasedOnLevel = { 2, 4, 6, 8 };
+    for (auto number : _numberBasedOnLevel)
+        _effects.push_back("Press X to set the blockage\nin your direction\n" + std::to_string(number) + " turrets can be set at time");
+
+    _iconRect = AssetManager::instance().getAnimationFrame("turretCollectable", "default", 0).rect;
+}
+
+void BlockageSetterTankUpgrade::onCollect(GameObject *target)
+{
+    assert(target->isFlagSet(GameObject::Player) == true);
+
+    auto turretSetter = new BlockageSetter(target);
+
+    /*if (_currentLevel == 1) {
+        turretSetter->setProtection(_numberBasedOnLevel[_currentLevel]);
+    } else */
+    {
+        turretSetter->setLimit(_numberBasedOnLevel[_currentLevel]);
+    }
+    target->setSecondShootable(turretSetter);
+}
+
+/////
+HedgehogSetterTankUpgrade::HedgehogSetterTankUpgrade(int level) : PlayerUpgrade(level)
+{
+    _category = PlayerUpgrade::TankUpgrade;
+    _type  = TankHedgehogSetter;
+    _name = "2nd weapon: hedgehog placer";
+
+    _amountBasedOnLevel = { 6, 8, 10, 12 };
+    _timeoutBasedOnLevel = { 10, 13, 16, 20 };
+    for (int i=0; i<_amountBasedOnLevel.size(); i++) {
+        auto amount = _amountBasedOnLevel[i];
+        auto time = _timeoutBasedOnLevel[i];
+        _effects.push_back(
+            "Press X to set the anti-tank\nhedgehog stopping enemy tanks\n for " + std::to_string(time) + " seconds\n" +
+            std::to_string(amount) + " hedgehogs can be set at time");
+    }
+
+    _iconRect = AssetManager::instance().getAnimationFrame("jezekIcon", "default", 0).rect;
+}
+
+void HedgehogSetterTankUpgrade::onCollect(GameObject *target)
+{
+    assert(target->isFlagSet(GameObject::Player) == true);
+
+    auto jezekSetter = new JezekSetter(target);
+
+    jezekSetter->setLimit(_amountBasedOnLevel[_currentLevel]);
+    jezekSetter->setParalyzeTime(_timeoutBasedOnLevel[_currentLevel]);
+
+    target->setSecondShootable(jezekSetter);
+}
+
+
+//////
 
 
 RamTankUpgrade::RamTankUpgrade(int level) : PlayerUpgrade(level)

@@ -76,6 +76,8 @@ protected:
     std::vector<SpawnerData> _spawners;
     std::string mapString;
     std::map<char, std::string> charMap;
+
+    char charFromMap(int x, int y) const { return mapString[y*map_w + x]; }
 public:
     MapCreator();
     virtual int parseMapFile(std::string fileName);
@@ -90,6 +92,10 @@ public:
     static GameObject *createSpawnerObject(const SpawnerData&);
 
     static void placeBrickWall(int x, int y);
+    static void placeStaticCars(int x, int y, bool vert);
+    void placeWater(int x, int y);
+    void placeRoad(int x, int y);
+    void placeBridge(int x, int y);
 
     void setupScreenBordersBasedOnMapSize();
 

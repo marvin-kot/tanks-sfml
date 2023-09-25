@@ -30,12 +30,30 @@ bool NpcTankController::freezeIfGlobalFreezeActive()
     return false;
 }
 
+void NpcTankController::blinkIfParalyzed()
+{
+    if (_paralyzedForMs > 0) {
+        if (_paralyzeClock.getElapsedTime() > sf::milliseconds(_paralyzedForMs))
+        {
+            _paralyzedForMs = 0;
+            _gameObject->spriteRenderer->hide(false);
+            return;
+        } else if (_blinkClock.getElapsedTime() > sf::seconds(0.25)) {
+                _blinkClock.reset(true);
+                _blink = !_blink;
+                _gameObject->spriteRenderer->hide(_blink);
+        }
+    }
+}
+
 void NpcTankController::update()
 {
     checkForGamePause();
 
     if (_pause)
         return;
+
+    blinkIfParalyzed();
 
     if (freezeIfGlobalFreezeActive())
         return;
@@ -44,7 +62,7 @@ void NpcTankController::update()
     assert(_gameObject->direction() != globalTypes::Direction::Unknown );
     const auto oldDirection = _gameObject->direction();
 
-    bool resetTimeout = tryToMove();
+    bool resetTimeout = _paralyzedForMs==0 ? tryToMove() : false;
 
     if (decideIfToShoot(_gameObject->direction()))
         _gameObject->shoot();

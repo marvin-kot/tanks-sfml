@@ -1,4 +1,5 @@
 
+#include "Collectable.h"
 #include "Damageable.h"
 #include "EagleController.h"
 #include "GameObject.h"
@@ -97,6 +98,24 @@ bool PlayerController::wasPressed(KeysPressed flag)
     return (_pressedStates & flag) != 0;
 }
 
+void PlayerController::blinkIfParalyzed()
+{
+    if (_paralyzedForMs > 0) {
+        if (_paralyzeClock.getElapsedTime() > sf::milliseconds(_paralyzedForMs))
+        {
+            _paralyzedForMs = 0;
+            _gameObject->spriteRenderer->hide(false);
+            _gameObject->turret->spriteRenderer->hide(false);
+            return;
+        } else if (_blinkClock.getElapsedTime() > sf::seconds(0.25)) {
+                _blinkClock.reset(true);
+                _blink = !_blink;
+                _gameObject->spriteRenderer->hide(_blink);
+                _gameObject->turret->spriteRenderer->hide(_blink);
+        }
+    }
+}
+
 void PlayerController::update()
 {
     checkForGamePause();
@@ -110,6 +129,8 @@ void PlayerController::update()
         Damageable *d = _gameObject->getComponent<Damageable>();
         d->makeInvincible(false);
     }
+
+    blinkIfParalyzed();
 
     bool action = false;
 
@@ -131,11 +152,14 @@ void PlayerController::update()
         }
     } else if (_recentPlayerInput.weapon2_request) {
         if (_gameObject->useSecondWeapon()) {
-            // TODO
-        }
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SetLandmine, true);
+        } else
+            SoundPlayer::instance().enqueueSound(SoundPlayer::RejectLandmine, true);
     }
 
-    globalTypes::Direction direction = static_cast<globalTypes::Direction>(_recentPlayerInput.direction_request);
+    globalTypes::Direction direction = (_paralyzedForMs == 0)
+            ? static_cast<globalTypes::Direction>(_recentPlayerInput.direction_request)
+            : globalTypes::Direction::Unknown;
 
     bool moved = false;
     if (direction != globalTypes::Direction::Unknown) {
@@ -337,8 +361,6 @@ void PlayerController::setTemporaryInvincibility(int msec)
 
 void PlayerController::addXP(int val)
 {
-    Logger::instance() << "collect " << val << "xp\n";
-
     int xpIncrease = (val + val * _xpModifier / 100);
 
     globalVars::player1XP += xpIncrease;
@@ -353,6 +375,27 @@ void PlayerController::addXP(int val)
         levelUp();
 }
 
+void PlayerController::dropSkull()
+{
+    GameObject *collectable = new GameObject("skullCollectable");
+    collectable->setFlags(GameObject::CollectableBonus | GameObject::TankPassable | GameObject::BulletPassable | GameObject::Static);
+    collectable->setRenderer(new SpriteRenderer(collectable), 4);
+    collectable->setController(new SkullController(collectable, 12000));
+
+    SkullCollectable *skull = new SkullCollectable(collectable);
+    skull->xp = _xp;
+    skull->level = _level;
+    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ++it) {
+        PlayerUpgrade *obj = (*it).second;
+        skull->playerUpgrades.push_back(obj);
+    }
+
+    collectable->setCollectable(skull);
+
+    collectable->copyParentPosition(_gameObject);
+    ObjectsPool::addObject(collectable);
+}
+
 void PlayerController::resetXP()
 {
     _xp = 0;
@@ -361,7 +404,8 @@ void PlayerController::resetXP()
     for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ) {
         PlayerUpgrade *obj = (*it).second;
         it = _collectedUpgrades.erase(it);
-        delete obj;
+        if (globalVars::player1Lives < 0)
+            delete obj;
     }
 
     globalVars::player1XP = 0;
@@ -381,6 +425,27 @@ void PlayerController::resetXP()
 
     updateAppearance();
 }
+
+void PlayerController::restoreLevelAndUpgrades(SkullCollectable *skull)
+{
+    Logger::instance() << "rectore level ";
+    globalVars::player1XP = _xp = skull->xp;
+    globalVars::player1Level = _level = skull->level;
+
+    // delete existing upgrades
+    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ) {
+        PlayerUpgrade *obj = (*it).second;
+        it = _collectedUpgrades.erase(it);
+    }
+
+    for (PlayerUpgrade *upgrade : skull->playerUpgrades) {
+        auto type = upgrade->type();
+        _collectedUpgrades[type] = upgrade;
+    }
+
+    applyUpgrades();
+}
+
 
 void PlayerController::levelUp()
 {
@@ -610,4 +675,5 @@ void PlayerController::onKillEnemy(GameObject *enemy)
         }
     }
 }
+
 

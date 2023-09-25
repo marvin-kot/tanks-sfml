@@ -5,9 +5,11 @@
 
 class NpcTankController : public Controller
 {
+    bool _blink = false;
 protected:
     const sf::Time _actionTimeout;
     bool freezeIfGlobalFreezeActive();
+    void blinkIfParalyzed();
 
     virtual bool decideIfToShoot(globalTypes::Direction oldDir) const = 0;
     virtual bool tryToMove() = 0;
