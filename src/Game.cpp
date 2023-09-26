@@ -18,15 +18,21 @@
 #include "Utils.h"
 #include "UiUtils.h"
 
-#include <SFML/Graphics.hpp>
-
 #include <format>
 
 namespace allinone {
 
 using namespace globalTypes;
 
-Game::Game() : gameState(GameState::TitleScreen) {}
+Game::Game() : gameState(GameState::TitleScreen) {
+    if (!_texture.loadFromFile("assets/shop-window.png")) {
+        Logger::instance() << " failed to load texture\n";
+        return;
+    }
+
+    _sprite.setTexture(_texture);
+    _sprite.setScale(8, 8);
+}
 
 bool Game::loadAssets()
 {
@@ -47,7 +53,7 @@ bool Game::loadAssets()
 bool Game::initializeWindow()
 {
     using namespace globalConst;
-    Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML"/*, sf::Style::Fullscreen*/);
+    Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML", sf::Style::Fullscreen);
 
     //Utils::window.setVerticalSyncEnabled(true);
     Utils::window.setFramerateLimit(FixedFrameRate);
@@ -348,6 +354,7 @@ void Game::processDeletedObjects()
                 explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
                 explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
                 explosion->copyParentPosition(obj);
+                explosion->setParentId(obj->parentId());
                 explosion->damage = 1;
                 objectsToAdd.push_back(explosion);
                 SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
@@ -370,6 +377,7 @@ void Game::processDeletedObjects()
             explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
             if (obj->isFlagSet(GameObject::Explosive)) {
                 explosion->setController(new ExplosionController(explosion, false));
+                explosion->setParentId(obj->id());
                 explosion->damage = 1;
             }
             explosion->copyParentPosition(obj);
@@ -380,6 +388,12 @@ void Game::processDeletedObjects()
                 SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
             else
                 SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+        } else if (obj->isFlagSet(GameObject::BulletKillable)) {
+            GameObject *explosion = new GameObject("smallExplosion");
+            explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
+            explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+            explosion->copyParentPosition(obj);
+            objectsToAdd.push_back(explosion);
         }
 
         if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive)) {
@@ -392,6 +406,7 @@ void Game::processDeletedObjects()
         } else
             obj->dropXp();
 
+        ObjectsPool::setOfObjectsToDelete.erase(obj);
         ObjectsPool::kill(obj);
         ObjectsPool::objectsToDelete.pop();
     }
@@ -431,28 +446,29 @@ void Game::drawBorders()
     const int viewPortHeight = std::min<int>(globalVars::mapSize.y*globalConst::spriteDisplaySizeY, globalVars::gameViewPort.height);
     const int borderWidth = (globalConst::screen_w - viewPortWidth)/2;
     const int borderHeight = (globalConst::screen_h - viewPortHeight)/2;
+    const sf::Color borderColor = sf::Color(110, 110, 99);
     {
         sf::RectangleShape greyRect(sf::Vector2f(borderWidth, globalConst::screen_h));
         greyRect.setPosition(0, 0);
-        greyRect.setFillColor(sf::Color(102, 102, 102));
+        greyRect.setFillColor(borderColor);
         Utils::window.draw(greyRect);
     }
     {
         sf::RectangleShape greyRect(sf::Vector2f(borderWidth, globalConst::screen_h));
         greyRect.setPosition(globalConst::screen_w-borderWidth, 0);
-        greyRect.setFillColor(sf::Color(102, 102, 102));
+        greyRect.setFillColor(borderColor);
         Utils::window.draw(greyRect);
     }
     {
         sf::RectangleShape greyRect(sf::Vector2f(viewPortWidth, borderHeight));
         greyRect.setPosition(borderWidth, 0);
-        greyRect.setFillColor(sf::Color(102, 102, 102));
+        greyRect.setFillColor(borderColor);
         Utils::window.draw(greyRect);
     }
     {
         sf::RectangleShape greyRect(sf::Vector2f(viewPortWidth, borderHeight));
         greyRect.setPosition(borderWidth, borderHeight+viewPortHeight);
-        greyRect.setFillColor(sf::Color(102, 102, 102));
+        greyRect.setFillColor(borderColor);
         Utils::window.draw(greyRect);
     }
 }
@@ -607,7 +623,8 @@ void Game::drawStartLevelScreen()
     constexpr int screenQuarterY = screen_h / 4;
 
     // grey background
-    UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(102, 102, 102));
+    //UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(102, 102, 102));
+    Utils::window.draw(_sprite);
 
     int currentStringY = screenQuarterY - 64;
     // level name

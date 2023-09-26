@@ -4,6 +4,7 @@
 #include "GlobalTypes.h"
 #include "NetGameTypes.h"
 
+#include <SFML/Graphics.hpp>
 #include <SFML/System/Time.hpp>
 #include <string>
 
@@ -21,6 +22,9 @@ private:
     int _killsCount;
     sf::Time _finishTime;
     bool _won = false;
+
+    sf::Sprite _sprite;
+    sf::Texture _texture;
 
 public:
     Game();

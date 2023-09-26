@@ -134,7 +134,7 @@ void TitleScreen::drawIntro2(int screenCenterX, int screenCenterY)
     int delay2Start = 400;
     int delayShow = 4850;
     int delay1Hide = 5050;
-    int delay2Hide = 5250;
+    int delay2Hide = 5280;
 
     int diff = _delayClock.getElapsedTime().asMilliseconds();
 
@@ -156,7 +156,7 @@ void TitleScreen::drawIntro2(int screenCenterX, int screenCenterY)
         return;
     }
 
-    UiUtils::instance().drawText( "powered by SFML", titleFontSize, screenCenterX, currentY, false, startGameColor);
+    UiUtils::instance().drawText( "a game by alex akulchyk", titleFontSize, screenCenterX, currentY, false, startGameColor);
 }
 
 

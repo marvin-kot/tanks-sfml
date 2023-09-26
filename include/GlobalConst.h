@@ -8,7 +8,7 @@ namespace globalConst
 {
     constexpr int GameMajorVersion = 0;
     constexpr int GameMinorVersion = 3;
-    constexpr int GameReleaseVersion = 1;
+    constexpr int GameReleaseVersion = 2;
 
     constexpr int screen_w = 1920;
     constexpr int screen_h = 1080;

@@ -12,7 +12,15 @@
 #include <cassert>
 
 BonusShopWindow::BonusShopWindow() : _currentUpgradeCursor(0)
-{}
+{
+    if (!_texture.loadFromFile("assets/shop-window.png")) {
+        Logger::instance() << " failed to load texture\n";
+        return;
+    }
+
+    _sprite.setTexture(_texture);
+    _sprite.setScale(8, 8);
+}
 
 BonusShopWindow& BonusShopWindow::instance()
 {
@@ -51,23 +59,24 @@ void BonusShopWindow::draw()
     constexpr int screenQuarterY = screen_h / 4;
 
     // draw frame
-    sf::RectangleShape greyRect(sf::Vector2f(screen_w, screen_h));
+    /*sf::RectangleShape greyRect(sf::Vector2f(screen_w, screen_h));
     greyRect.setOrigin(greyRect.getSize().x/2, greyRect.getSize().y/2);
     greyRect.setPosition(sf::Vector2f(screenCenterX, screenCenterY));
-    greyRect.setFillColor(sf::Color(102, 102, 102));
+    greyRect.setFillColor(sf::Color(91, 91, 75));
     Utils::window.draw(greyRect);
 
     sf::RectangleShape darkRect(sf::Vector2f(screen_w - 256, screen_h - 128));
     darkRect.setOrigin(darkRect.getSize().x/2, darkRect.getSize().y/2);
     darkRect.setPosition(sf::Vector2f(screenCenterX, screenCenterY));
-    darkRect.setFillColor(sf::Color(82, 82, 82));
-    Utils::window.draw(darkRect);
+    darkRect.setFillColor(sf::Color(110, 110, 99));
+    Utils::window.draw(darkRect);*/
+    Utils::window.draw(_sprite);
 
-    const int centerX = greyRect.getPosition().x;
-    const int menuWidth = greyRect.getSize().x;
-    const int menuHeight = greyRect.getSize().y;
+    const int centerX = screenCenterX;//greyRect.getPosition().x;
+    const int menuWidth = _sprite.getLocalBounds().width * 8;
+    const int menuHeight = _sprite.getLocalBounds().height * 8;
 
-    int currentStringY = greyRect.getPosition().y - greyRect.getSize().y/2 - 64;
+    int currentStringY = 64;
 
 
     // draw title
@@ -91,7 +100,7 @@ void BonusShopWindow::draw()
     UiUtils::instance().drawText( amount, amountSize, menuWidth/5-64, currentStringY, true) ;
 
     currentStringY += amountSize;
-    UiUtils::instance().drawHorizontalLine(centerX, currentStringY, darkRect.getSize().x - 64, sf::Color::White);
+    UiUtils::instance().drawHorizontalLine(centerX, currentStringY, (1920-256) - 64, sf::Color::White);
 
     // draw cursor
     currentStringY += 96;
@@ -254,10 +263,12 @@ void BonusShopWindow::processKeyboardPress(sf::Keyboard::Scancode scancode, glob
     else if (scancode == sf::Keyboard::Scan::Space)
         getSelectedUpgrade();
     else if (scancode == sf::Keyboard::Scan::Escape) {
+        SoundPlayer::instance().playSound(SoundPlayer::SoundType::bulletHitWall);
         SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
+        SoundPlayer::instance().playSound(SoundPlayer::TitleTheme);
         gameState = globalTypes::GameState::TitleScreen;
     } else if (scancode == sf::Keyboard::Scan::Enter) {
-        SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
+        SoundPlayer::instance().playSound(SoundPlayer::SoundType::bulletHitWall);
         gameState = globalTypes::GameState::SelectLevel;
     }
 }

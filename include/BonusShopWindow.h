@@ -17,7 +17,8 @@ class BonusShopWindow
     void drawCursor(int x, int y);
     void drawEdging(int x, int y);
 
-
+    sf::Sprite _sprite;
+    sf::Texture _texture;
 public:
     bool afterGameOver = false;
     bool afterWin = false;

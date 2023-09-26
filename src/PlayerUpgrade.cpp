@@ -41,9 +41,10 @@ std::vector<UpgradeType> PlayerUpgrade::availableTypes = {
         TankArmor,
         FastReload,
         BonusEffectiveness,
-        TankLandmine,
-        TankTurretSetter,
-        TankHedgehogSetter,
+        TankBlockageSetter,
+        //TankLandmine,
+        //TankTurretSetter,
+        //TankHedgehogSetter,
         //RamMachine,
         FreezeEnemies,
         InstantKillEnemies,
@@ -69,16 +70,17 @@ const std::unordered_set<UpgradeType> tankUpgradeTypes = {
     UpgradeType::PowerBullets,
     UpgradeType::TankArmor,
     UpgradeType::TankTurretSetter,
-    PlayerUpgrade::BonusEffectiveness,
-    PlayerUpgrade::Rocket,
-    PlayerUpgrade::PiercingBullets,
-    PlayerUpgrade::BulletTank,
-    PlayerUpgrade::FourDirectionBullets,
-    PlayerUpgrade::Rocket,
-    PlayerUpgrade::MachineGun,
-    PlayerUpgrade::TankLandmine,
-    PlayerUpgrade::TankHedgehogSetter,
-    PlayerUpgrade::RamMachine
+    UpgradeType::TankBlockageSetter,
+    UpgradeType::BonusEffectiveness,
+    UpgradeType::Rocket,
+    UpgradeType::PiercingBullets,
+    UpgradeType::BulletTank,
+    UpgradeType::FourDirectionBullets,
+    UpgradeType::Rocket,
+    UpgradeType::MachineGun,
+    UpgradeType::TankLandmine,
+    UpgradeType::TankHedgehogSetter,
+    UpgradeType::RamMachine
 };
 
 const std::unordered_set<UpgradeType> baseUpgradeTypes = {
@@ -332,6 +334,8 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
     if (isUpgradedToMax(eagleController, RepairWalls) && isUpgradedToMax(eagleController, BaseInvincibility))
         mandatoryUpgrades.push(BaseRestoreOnDamage);
 
+    mandatoryUpgrades.push(Rocket);
+
     std::unordered_set<UpgradeType> alreadyGenerated;
 
     for (int i = 0; i < globalConst::NumOfUpgradesOnLevelup; i++) {
@@ -418,6 +422,9 @@ PlayerUpgrade *PlayerUpgrade::createUpgrade(UpgradeType type, int level)
             break;
         case TankArmor:
             newUpgrade = new ArmorUpgrade(level);
+            break;
+        case TankBlockageSetter:
+            newUpgrade = new BlockageSetterTankUpgrade(level);
             break;
         case TankLandmine:
             newUpgrade = new LandmineTankUpgrade(level);
@@ -779,7 +786,7 @@ FastReloadUpgrade::FastReloadUpgrade(int level)
     _type = FastReload;
     _name = "Fast Reload";
 
-    _percentBasedOnLevel = { 10, 20, 30, 40 };
+    _percentBasedOnLevel = { 20, 30, 40, 50 };
     for (auto number : _percentBasedOnLevel)
         _effects.push_back("+" + std::to_string(number) + "\% ammo reload speed");
 
@@ -1257,7 +1264,7 @@ BlockageSetterTankUpgrade::BlockageSetterTankUpgrade(int level) : PlayerUpgrade(
     for (auto number : _numberBasedOnLevel)
         _effects.push_back("Press X to set the blockage\nin your direction\n" + std::to_string(number) + " turrets can be set at time");
 
-    _iconRect = AssetManager::instance().getAnimationFrame("turretCollectable", "default", 0).rect;
+    _iconRect = AssetManager::instance().getAnimationFrame("blockageIcon", "default", 0).rect;
 }
 
 void BlockageSetterTankUpgrade::onCollect(GameObject *target)

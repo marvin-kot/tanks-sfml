@@ -11,6 +11,9 @@ class LevelUpPopupMenu
     int _currentUpgradeCursor = 0;
     bool _isOpen;
 
+    sf::Sprite _sprite;
+    sf::Texture _texture;
+
     void drawUpgrade(int index, int x, int y);
     void drawCursor(sf::RectangleShape& parentRect);
 public:

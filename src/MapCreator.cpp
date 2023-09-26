@@ -10,6 +10,7 @@
 #include "Utils.h"
 
 #include <string>
+#include <set>
 
 namespace Level {
     std::map<WinCondition, const char *> winDescriptionsMap = {
@@ -187,9 +188,9 @@ GameObject *MapCreator::buildObject(std::string type)
         return jezek;
     }
 
-    if (type.rfind("car_", 0, 4) != std::string::npos) {
+    if (type.rfind("car-", 0, 4) != std::string::npos) {
         GameObject *car = new GameObject(type);
-        car->setFlags(GameObject::TankPassable | GameObject::BulletKillable | GameObject::Static);
+        car->setFlags(GameObject::BulletKillable | GameObject::Static);
         car->setController(new StaticCarController(car));
         car->setRenderer(new SpriteRenderer(car), 2);
         car->setDamageable(new Damageable(car, 0));
@@ -197,7 +198,7 @@ GameObject *MapCreator::buildObject(std::string type)
         return car;
     }
 
-    if (type.rfind("debris_", 0, 7) != std::string::npos) {
+    if (type.rfind("debris-", 0, 7) != std::string::npos) {
         GameObject *car = new GameObject(type);
         car->setFlags(GameObject::TankPassable | GameObject::BulletPassable | GameObject::Static);
         car->setRenderer(new SpriteRenderer(car), 1);
@@ -275,8 +276,8 @@ MapCreator::MapCreator()
             {'7', "road_top_right"},
             {'L', "road_bottom_left"},
             {'j', "road_bottom_right"},*/
-            {'=', "cars_horizontal"},
-            {'H', "cars_vertical"},
+            {'=', "carsHorizontal"},
+            {'H', "carsVertical"},
             };
 }
 
@@ -414,30 +415,64 @@ void MapCreator::placeStaticCars(int x, int y, bool vert)
     using namespace std;
 
     vector<string> parts;
-    if (vert) {
-        parts.push_back("car_v_left");
-        parts.push_back("car_v_right");
-    } else {
-        parts.push_back("car_h_top");
-        parts.push_back("car_h_bottom");
+
+    vector<string> carSprite;
+    vector<string> debrisSprite;
+
+
+    std::uniform_int_distribution<int> type_distr(0, 3);
+
+    for (int i=0; i<2; i++) {
+        int carIndex = type_distr(Utils::generator);
+
+        switch (carIndex) {
+            case 0:
+                carSprite.push_back("car-1-left");
+                debrisSprite.push_back("debris-car-1");
+                break;
+            case 1:
+                carSprite.push_back("car-1-right");
+                debrisSprite.push_back("debris-car-1");
+                break;
+            case 2:
+                carSprite.push_back("car-2-left");
+                debrisSprite.push_back("debris-car-2");
+                break;
+            case 3:
+                carSprite.push_back("car-2-right");
+                debrisSprite.push_back("debris-car-2");
+                break;
+        }
     }
 
     const int centerX = x + tileCenter;
     const int centerY = y + tileCenter;
 
-    int i=0;
-    for (auto part : parts) {
-        GameObject *object = MapCreator::buildObject(part);
-        assert(object != nullptr);
+    for (int i=0; i<2; i++) {
+        GameObject *car = MapCreator::buildObject(carSprite.at(i));
+        assert(car != nullptr);
         int posX = vert ? (centerX - subtileCenter + i*subtileSize) : centerX;
         int posY = vert ? centerY : (centerY - subtileCenter + i*subtileSize);
-        object->setPosition(posX, posY);
-        ObjectsPool::addObject(object);
-        i++;
+        car->setPosition(posX, posY);
+
+        bool randMirror = (type_distr(Utils::generator) < 2);
+
+        if (vert)
+            car->setCurrentDirection(randMirror ? globalTypes::Direction::Down : globalTypes::Direction::Up);
+        else
+            car->setCurrentDirection(randMirror ? globalTypes::Direction::Left : globalTypes::Direction::Right);
+
+        ObjectsPool::addObject(car);
+
         // set debris
-        GameObject *debris = MapCreator::buildObject(vert ?"debris_car_v" : "debris_car_h");
+        GameObject *debris = MapCreator::buildObject(debrisSprite.at(i));
         debris->setPosition(posX, posY);
         ObjectsPool::addObject(debris);
+
+        if (vert)
+            debris->setCurrentDirection(randMirror ? globalTypes::Direction::Down : globalTypes::Direction::Up);
+        else
+            debris->setCurrentDirection(randMirror ? globalTypes::Direction::Left : globalTypes::Direction::Right);
 
     }
 
@@ -461,26 +496,28 @@ void MapCreator::placeWater(int xTile, int yTile)
     water->setPosition(xTile*basicTileSize + tileCenter, yTile*basicTileSize + tileCenter);
     ObjectsPool::addObject(water);
 
+    std::set<char> waterBodies = {'~', '+'};
+
     // add borders
-    if (xTile>0 && charFromMap(xTile-1, yTile) != '~') {
+    if (xTile>0 && !waterBodies.contains(charFromMap(xTile-1, yTile))) {
         GameObject *border = MapCreator::buildObject("water-border-left");
         border->setPosition(xTile*basicTileSize + 1, yTile*basicTileSize + tileCenter);
         ObjectsPool::addObject(border);
     }
 
-    if (xTile<(map_w-1) && charFromMap(xTile+1, yTile) != '~') {
+    if (xTile<(map_w-1) && !waterBodies.contains(charFromMap(xTile+1, yTile))) {
         GameObject *border = MapCreator::buildObject("water-border-right");
         border->setPosition(xTile*basicTileSize + basicTileSize - 2, yTile*basicTileSize + tileCenter);
         ObjectsPool::addObject(border);
     }
 
-    if (yTile>0 && charFromMap(xTile, yTile-1) != '~') {
+    if (yTile>0 && !waterBodies.contains(charFromMap(xTile, yTile-1))) {
         GameObject *border = MapCreator::buildObject("water-border-top");
         border->setPosition(xTile*basicTileSize + tileCenter, yTile*basicTileSize + 1);
         ObjectsPool::addObject(border);
     }
 
-    if (yTile<(map_h-1) && charFromMap(xTile, yTile+1) != '~') {
+    if (yTile<(map_h-1) && !waterBodies.contains(charFromMap(xTile, yTile+1))) {
         GameObject *border = MapCreator::buildObject("water-border-bottom");
         border->setPosition(xTile*basicTileSize + tileCenter, yTile*basicTileSize + basicTileSize - 2);
         ObjectsPool::addObject(border);
@@ -606,11 +643,11 @@ Level::Properties MapCreator::buildMapFromData()
                     continue;
                 }
 
-                if (objType == "cars_horizontal") {
+                if (objType == "carsHorizontal") {
                     placeStaticCars(x*basicTileSize, y*basicTileSize, false);
                     continue;
                 }
-                if (objType == "cars_vertical") {
+                if (objType == "carsVertical") {
                     placeStaticCars(x*basicTileSize, y*basicTileSize, true);
                     continue;
                 }

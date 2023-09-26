@@ -14,6 +14,7 @@ std::unordered_map<int, std::unordered_set<GameObject *>> ObjectsPool::objectsBy
 std::map<globalTypes::EagleWallDirection, GameObject *> ObjectsPool::eagleWalls = {};
 std::unordered_map<int, net::ThinGameObject> ObjectsPool::thinGameObjects = {};
 std::queue<GameObject *> ObjectsPool::objectsToDelete;
+std::unordered_set<GameObject *> ObjectsPool::setOfObjectsToDelete;
 
 ObjectsPool::~ObjectsPool()
 {

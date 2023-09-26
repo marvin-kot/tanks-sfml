@@ -45,6 +45,11 @@ bool Shootable::shoot(globalTypes::Direction dir)
     return true;
 }
 
+SoundPlayer::SoundType Shootable::shootSound() const
+{
+    return SoundPlayer::SoundType::Shoot;
+}
+
 void Shootable::addTempBullets(int b)
 {
     int missingBullets = _maxBullets - _bullets;
@@ -209,18 +214,32 @@ bool RocketShootable::shoot(globalTypes::Direction dir)
     assert( dir != globalTypes::Direction::Unknown);
     if (isShootingProhibited())
         return false;
+
     _shootClock.reset(true);
+    _reloadClock.reset(true);
     GameObject *bullet = new GameObject(_gameObject, "rocket");
     bullet->setParentId(_gameObject->id());
     bullet->setFlags(GameObject::Bullet | GameObject::Explosive);
     bullet->setController(new RocketController(bullet, dir, _bulletSpeed, _damage));
-    bullet->setRenderer(new SpriteRenderer(bullet), 2);
+    bullet->setRenderer(new SpriteRenderer(bullet), 4);
     bullet->copyParentPosition(_gameObject);
 
     // add to bullet pool
     ObjectsPool::addObject(bullet);
 
+    if (_bullets == _maxBullets) _reloadClock.reset(true);
+
+    if (_tempBullets > 0)
+        _tempBullets--;
+    else
+        _bullets--;
+
     return true;
+}
+
+SoundPlayer::SoundType RocketShootable::shootSound() const
+{
+    return SoundPlayer::SoundType::RocketShoot;
 }
 
 bool RocketShootable::isShootingProhibited() {

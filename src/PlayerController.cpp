@@ -140,13 +140,17 @@ void PlayerController::update()
 
     if (_recentPlayerInput.shoot_request) {
         if (_gameObject->shoot()) {
-            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::Shoot, true);
+            auto shootable = _gameObject->getComponent<Shootable>();
+            assert(shootable != nullptr);
+            SoundPlayer::instance().enqueueSound(shootable->shootSound(), true);
             if (_4dirSet)
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-4dir-shot", true);
             else if (_upgradePower)
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-power-shot", true);
             else if (_upgradeSpeed)
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-speed-shot", true);
+            else if (_rocketSet)
+                _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-rocket-shot", true);
             else
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("default-shot", true);
         }
@@ -324,6 +328,9 @@ void PlayerController::updateAppearance()
 
     if (_4dirSet)
         turretAnimation = "upgrade-4dir";
+
+    if (_rocketSet)
+        turretAnimation = "upgrade-rocket";
 
     if (damaged)
         turretAnimation += "-damaged";
@@ -624,6 +631,7 @@ void PlayerController::setRocketLauncher()
     // take old turret values
     auto oldShootable = _gameObject->getComponent<Shootable>();
     int actionTimeout = oldShootable->shootTimeoutMs();
+    int reloadTimeout = oldShootable->reloadTimeoutMs();
     int damage = oldShootable->damage();
     int bulletSpeed = std::max(oldShootable->bulletSpeed(), globalConst::DefaultRocketSpeed);
     int maxBullets = oldShootable->maxBullets();
@@ -633,8 +641,9 @@ void PlayerController::setRocketLauncher()
 
     // set new turret
     auto newShootable = new RocketShootable(_gameObject, maxBullets);
-    newShootable->setShootTimeoutMs(actionTimeout);
     newShootable->setDamage(damage);
+    newShootable->setShootTimeoutMs(actionTimeout);
+    newShootable->setReloadTimeoutMs(reloadTimeout);
     newShootable->setBulletSpeed(bulletSpeed);
 
     _gameObject->setShootable(newShootable);

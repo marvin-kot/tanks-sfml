@@ -2,6 +2,7 @@
 
 #include "Controller.h"
 #include "GlobalConst.h"
+#include "SoundPlayer.h"
 #include "ObjectsPool.h"
 #include "Logger.h"
 
@@ -60,6 +61,8 @@ public:
 
     virtual bool shoot(globalTypes::Direction dir);
 
+    virtual SoundPlayer::SoundType shootSound() const;
+
     void reloadByTimeout();
 
 protected:
@@ -86,6 +89,8 @@ struct RocketShootable : public Shootable
     RocketShootable(GameObject *parent, int maxBullets);
     bool shoot(globalTypes::Direction dir) override;
     bool isShootingProhibited() override;
+
+    SoundPlayer::SoundType shootSound() const override;
 };
 
 struct DoubleShootable : public Shootable

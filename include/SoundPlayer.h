@@ -15,6 +15,7 @@ public:
         TankStand,
         TankMove,
         Shoot,
+        RocketShoot,
         bulletHitWall,
         smallExplosion,
         bigExplosion,

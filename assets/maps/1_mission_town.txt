@@ -1,10 +1,11 @@
 Welcome to the Battle Town
 SURVIVE 5
 LOSE_BASE 0
-3
-Brave commander! You are the only survivor of your tank regiment. And now you have an order:
-Protect the command center at any cost until the reinforcement come!
-This is critical for the course of the war. May the odds be on your side!
+4
+Brave commander! You are the only survivor of your tank regiment.
+And now you have an order: Protect the command center at any cost 
+until the reinforcement come! This is critical for the course of the war.
+May the odds be on your side!
 map 21 21
 segments 7x7
 1-1 1-2 1-3

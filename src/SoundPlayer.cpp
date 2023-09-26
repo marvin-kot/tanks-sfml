@@ -8,6 +8,7 @@ static std::unordered_map<SoundType, std::string> soundPaths = {
     {SoundType::TankStand, string("assets/audio/car_idle_lp_01.wav")},
     {SoundType::TankMove, string("assets/audio/car_move_lp_01.wav")},
     {SoundType::Shoot, string("assets/audio/raygun_04.wav")},
+    {SoundType::RocketShoot, string("assets/audio/missile_launch_03.wav")},
     {SoundType::bulletHitWall, string("assets/audio/hit_normal_09.wav")},
     {SoundType::smallExplosion, string("assets/audio/explosion_short_punchy_rnd_01.wav")},
     {SoundType::bigExplosion, string("assets/audio/explosion_medium_09.wav")},

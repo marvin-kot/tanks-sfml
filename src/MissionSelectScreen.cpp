@@ -147,6 +147,7 @@ void MissionSelectScreen::moveCursorUp()
 
 void MissionSelectScreen::selectLevel()
 {
+    SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::startGame);
 }
 

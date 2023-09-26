@@ -290,25 +290,28 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
             // damage target
             if (isFlagSet(PiercingBullet)) {
                 auto bullet = dynamic_cast<BulletController *>(_controller);
-                if (other->isFlagSet(BulletKillable)) {
-                    if (bullet->loseDamage() < 1)
-                        markForDeletion();
-                } else if (other->isFlagSet(Bullet)) {
+                assert(other != nullptr);
+                if (other->isFlagSet(Bullet)) {
                     auto otherBullet = dynamic_cast<BulletController *>(other->_controller);
+                    assert(otherBullet != nullptr);
                     if (bullet->damage() > otherBullet->damage())
                         bullet->loseDamage();
-                    else
+                    else {
                         markForDeletion();
-                } else if (!other->isFlagSet(BulletPassable))
+                        return;
+                    }
+                } else if (!other->isFlagSet(BulletPassable)) {
                     markForDeletion(); // if hit concrete block
+                    return;
+                }
             } else {
                 markForDeletion();
+                return;
             }
         }
 
         if (!isFlagSet(PiercingBullet) && other->isFlagSet(Bullet))// && _parentId != other->_parentId)
             markForDeletion();
-
         return;
     }
 
@@ -325,8 +328,11 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                 if (bulletAuthor && bulletAuthor->isFlagSet(NPC))
                     friendlyFire = true;
                 else if (bulletAuthor && bulletAuthor->isFlagSet(Player)) {
-                    if (_damageable->isDestroyed())
-                        dynamic_cast<PlayerController *>(bulletAuthor->_controller)->onKillEnemy(this);
+                    if (_damageable->isDestroyed()) {
+                        auto pc = dynamic_cast<PlayerController *>(bulletAuthor->_controller);
+                        assert(pc != nullptr);
+                        pc->onKillEnemy(this);
+                    }
                     else
                         SoundPlayer::instance().enqueueSound(SoundPlayer::DamageEnemy, true);
                 }
@@ -351,6 +357,9 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                             SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
                     }
                 }
+
+                if (other->isFlagSet(PiercingBullet) && bullet->loseDamage() < 1)
+                    other->markForDeletion();
             }
         }
         return;
@@ -366,15 +375,18 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         other->getCollectedBy(this);
     }
 
-    if (damage>0 && other->isFlagSet(BulletKillable) && other->_damageable) {
+    if (damage>0 && other->isFlagSet(BulletKillable) && other->_damageable && _parentId != other->_id) {
         other->_damageable->takeDamage(damage);
         if (other->_damageable->isDestroyed()) {
             other->markForDeletion();
             cancelMovement = false;
         } else {
-            if (isFlagSet(Player))
+            if (isFlagSet(Player)) {
                 // if goal is not killed, stop the sequence
-                dynamic_cast<PlayerController *>(_controller)->resetMoveStartTimer();
+                auto pc = dynamic_cast<PlayerController *>(_controller);
+                assert(pc != nullptr);
+                pc->resetMoveStartTimer();
+            }
         }
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
     }
@@ -431,7 +443,11 @@ bool GameObject::isOnIce() const
 void GameObject::markForDeletion() {
     _deleteme = true;
     appendFlags(Delete);
-    ObjectsPool::objectsToDelete.push(this);
+
+    if (!ObjectsPool::setOfObjectsToDelete.contains(this)) {
+        ObjectsPool::objectsToDelete.push(this);
+        ObjectsPool::setOfObjectsToDelete.insert(this);
+    }
 }
 
 void GameObject::updateOnCollision(GameObject *other)
