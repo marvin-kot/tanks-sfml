@@ -281,7 +281,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
         return;
 
     if (isBullet) {
-        // to handle 1-turre-4-bullets situation
+        // to handle 1-turret-4-bullets situation
         if (other->isFlagSet(Bullet) && _parentId == other->_parentId)
             return;
 
@@ -300,9 +300,6 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                         markForDeletion();
                         return;
                     }
-                } else if (!other->isFlagSet(BulletPassable)) {
-                    markForDeletion(); // if hit concrete block
-                    return;
                 }
             } else {
                 markForDeletion();
@@ -358,7 +355,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
                     }
                 }
 
-                if (other->isFlagSet(PiercingBullet) && bullet->loseDamage() < 1)
+                if (other->isFlagSet(PiercingBullet) && (bullet->loseDamage() < 1 || _damageable->isInvincible()))
                     other->markForDeletion();
             }
         }
@@ -389,42 +386,6 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
             }
         }
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
-    }
-
-    // merge colliding xp points to reduce number of objects on map
-    if (isFlagSet(CollectableBonus) && other->isFlagSet(CollectableBonus)) {
-        XpCollectable *thisXp = dynamic_cast<XpCollectable *>(_collectable);
-        if (thisXp == nullptr)
-            return;
-        XpCollectable *thatXp = dynamic_cast<XpCollectable *>(other->_collectable);
-        if (thatXp == nullptr)
-            return;
-        int sum = thisXp->value() + thatXp->value();
-        if (sum > 1000 || (sum % 100 != 0))
-            return; // 900 is maximum xp collectable...
-
-        // update value
-        thisXp->setValue(sum);
-        std::string newType;
-        switch (sum) {
-            case 200: newType = "200xp"; break;
-            case 300: newType = "300xp"; break;
-            case 400: newType = "400xp"; break;
-            case 500: newType = "500xp"; break;
-            case 600: newType = "600xp"; break;
-            case 700: newType = "700xp"; break;
-            case 800: newType = "800xp"; break;
-            case 900: newType = "900xp"; break;
-            case 1000: newType = "1000xp"; break;
-            default:
-                return;
-        }
-
-        spriteRenderer->setNewObjectType(newType);
-
-        // delete second object
-        other->markForDeletion();
-
     }
 
     if (_controller)

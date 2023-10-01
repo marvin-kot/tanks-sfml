@@ -5,6 +5,7 @@
 #include "Utils.h"
 #include "ObjectsPool.h"
 #include "Collectable.h"
+#include "Controller.h"
 
 #include <random>
 #include <map>
@@ -112,6 +113,7 @@ GameObject * DropGenerator::createObject(std::string type)
             component = new Collectable(collectable); // default collectable (useless)
 
         collectable->setCollectable(component);
+        collectable->setController(new CollectableXpController(collectable));
 
         return collectable;
     }

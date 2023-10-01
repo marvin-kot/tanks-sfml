@@ -140,7 +140,7 @@ const std::map<UpgradeType, int> upgradeCap = {
     {UpgradeType::BaseInvincibility, 4},
     {UpgradeType::MoreBullets,  4},
     {UpgradeType::FastBullets,  4},
-    {UpgradeType::FastReload,  4},
+    {UpgradeType::FastReload,  3},
     {UpgradeType::TankArmor,  4},
     {UpgradeType::TankSpeed,  4},
     {UpgradeType::PowerBullets,  3},
@@ -334,7 +334,6 @@ void PlayerUpgrade::generateRandomUpgradesForPlayer(GameObject *playerObj)
     if (isUpgradedToMax(eagleController, RepairWalls) && isUpgradedToMax(eagleController, BaseInvincibility))
         mandatoryUpgrades.push(BaseRestoreOnDamage);
 
-    mandatoryUpgrades.push(Rocket);
 
     std::unordered_set<UpgradeType> alreadyGenerated;
 
@@ -786,7 +785,7 @@ FastReloadUpgrade::FastReloadUpgrade(int level)
     _type = FastReload;
     _name = "Fast Reload";
 
-    _percentBasedOnLevel = { 20, 30, 40, 50 };
+    _percentBasedOnLevel = { 20, 40, 60 };
     for (auto number : _percentBasedOnLevel)
         _effects.push_back("+" + std::to_string(number) + "\% ammo reload speed");
 

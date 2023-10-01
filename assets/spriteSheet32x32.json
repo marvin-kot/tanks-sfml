@@ -2868,5 +2868,75 @@
                 ]
             }
         ]
+    },
+    {
+        "type": "bulletIcon",
+        "animations": [
+            {
+                "name": "default",
+                "frames": [
+                    {
+                        "id": 223,
+                        "x": 221,
+                        "y": 1,
+                        "w": 10,
+                        "h": 28
+                    }
+                ]
+            },
+            {
+                "name": "empty",
+                "frames": [
+                    {
+                        "id": 224,
+                        "x": 231,
+                        "y": 1,
+                        "w": 10,
+                        "h": 28
+                    }
+                ]
+            },
+            {
+                "name": "extra",
+                "frames": [
+                    {
+                        "id": 225,
+                        "x": 241,
+                        "y": 1,
+                        "w": 10,
+                        "h": 28
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "type": "shieldIcon",
+        "animations": [
+            {
+                "name": "default",
+                "frames": [
+                    {
+                        "id": 226,
+                        "x": 192,
+                        "y": 0,
+                        "w": 24,
+                        "h": 26
+                    }
+                ]
+            },
+            {
+                "name": "broken",
+                "frames": [
+                    {
+                        "id": 227,
+                        "x": 192,
+                        "y": 26,
+                        "w": 24,
+                        "h": 26
+                    }
+                ]
+            }
+        ]
     }
 ]

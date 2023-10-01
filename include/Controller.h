@@ -30,6 +30,8 @@ protected:
     sftools::Chronometer _blinkClock;
     sftools::Chronometer _paralyzeClock;
 
+    int _updatedOnFrame = 0;
+
     bool _addSpeed = false;
     int moveSpeedForCurrentFrame();
     void prepareMoveInDirection(globalTypes::Direction, int spd);
@@ -58,6 +60,7 @@ public:
     int speed() const { return _moveSpeed; }
     int damage() const { return _damage; }
     int loseDamage() { return --_damage; }
+    void onCollided(GameObject *) override;
 };
 
 class RocketController : public BulletController
@@ -182,6 +185,13 @@ public:
     SkullController(GameObject *parent, int timeout);
 
     void update() override;
+};
+
+class CollectableXpController : public Controller
+{
+public:
+    CollectableXpController(GameObject *parent);
+    void onCollided(GameObject *) override;
 };
 
 class StaticCarController : public Controller

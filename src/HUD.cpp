@@ -1,4 +1,5 @@
 #include "EagleController.h"
+#include "Damageable.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
 #include "HUD.h"
@@ -29,7 +30,8 @@ void HUD::draw()
     drawBaseUpgrades(112+64+48);
     drawPerks(28);
 
-    drawBullets(globalConst::screen_h - 128);
+    drawBullets(globalConst::screen_h - 96);
+    drawArmor(globalConst::screen_h - 230);
 
     drawGlobalTimer();
 
@@ -153,14 +155,36 @@ void HUD::drawBullets(int baseY)
     assert(shootable != nullptr);
 
     for (int i=0; i<shootable->maxBullets(); i++) {
-        auto color = shootable->bullets() <= i ? sf::Color(100, 100, 100) : sf::Color(250, 250, 250);
-        UiUtils::instance().drawRect(sf::IntRect(baseX-16, baseY, 32, 80), color);
+
+        auto anim = shootable->bullets() <= i ? "empty" : "default";
+        auto rect = AssetManager::instance().getAnimationFrame("bulletIcon", anim, 0).rect;
+        UiUtils::instance().drawIcon(rect, baseX-16, baseY);
         baseX += 40;
     }
 
     for (int j=0; j<shootable->tempBullets(); j++) {
-        UiUtils::instance().drawRect(sf::IntRect(baseX-16, baseY, 32, 80), sf::Color::Green);
+        auto rect = AssetManager::instance().getAnimationFrame("bulletIcon", "extra", 0).rect;
+        UiUtils::instance().drawIcon(rect, baseX-16, baseY);
         baseX += 40;
+    }
+}
+
+void HUD::drawArmor(int baseY)
+{
+    int baseX = 56;
+
+    if (ObjectsPool::playerObject == nullptr) return;
+
+    auto shootable = ObjectsPool::playerObject->getComponent<Shootable>();
+    assert(shootable != nullptr);
+
+    auto damageable = ObjectsPool::playerObject->getComponent<Damageable>();
+
+    for (int i=0; i<damageable->maxDefence(); i++) {
+        auto anim = damageable->defence() <= i ? "broken" : "default";
+        auto rect = AssetManager::instance().getAnimationFrame("shieldIcon", anim, 0).rect;
+        UiUtils::instance().drawIcon(rect, baseX, baseY);
+        baseX += 92;
     }
 }
 

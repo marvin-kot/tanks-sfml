@@ -123,8 +123,8 @@ void BonusShopWindow::draw()
     const int bottomY = menuHeight - 30;
 
     UiUtils::instance().drawText("[escape] exit to main menu", promptSize, bottomOffsetX, bottomY, false, sf::Color(120, 4, 34));
-    UiUtils::instance().drawText("[enter] buy an item", promptSize, bottomOffsetX*2, bottomY, false, sf::Color(31, 81, 43));
-    UiUtils::instance().drawText("[space] start the game", promptSize, bottomOffsetX*3, bottomY, false, sf::Color::Yellow);
+    UiUtils::instance().drawText("[space] buy an item", promptSize, bottomOffsetX*2, bottomY, false, sf::Color(31, 81, 43));
+    UiUtils::instance().drawText("[enter] start the game", promptSize, bottomOffsetX*3, bottomY, false, sf::Color::Yellow);
 
     Utils::window.display();
 }

@@ -18,7 +18,7 @@ static std::unordered_map<SoundType, std::string> soundPaths = {
     {SoundType::pause, string("assets/audio/notification_1.wav")},
     {SoundType::xpCollect, string("assets/audio/pickup_15.wav")},
     {SoundType::tick, string("assets/audio/UI_click_15.wav")},
-    {SoundType::win, string("assets/audio/8_Bit_Dendy_Battle_City.wav")},
+    {SoundType::win, string("assets/audio/jingles/winJingle.wav")},
     {SoundType::fail, string("assets/audio/jingles/player_death_01.wav")},
     {SoundType::BuildWall, string("assets/audio/rifle_shot_rnd_01.wav")},
     {SoundType::DestroyWall, string("assets/audio/block_smash_rnd_01.wav")},

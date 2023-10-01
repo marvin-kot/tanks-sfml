@@ -558,7 +558,8 @@ void Game::checkStatePostFrame()
         // instant kill all enemies
         auto enemiesAlive = ObjectsPool::getObjectsByTypes({
             "npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcDoubleCannonArmorTank", "npcKamikazeTank",
-            "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank", "spawner_npcGiantTank", "spawner_npcDoubleCannonArmorTank", "spawner_npcKamikazeTank"});
+            "spawner_npcBaseTank", "spawner_npcFastTank", "spawner_npcPowerTank", "spawner_npcArmorTank", "spawner_npcGiantTank", "spawner_npcDoubleCannonArmorTank", "spawner_npcKamikazeTank",
+            "bullet"});
         for (auto enemy : enemiesAlive) enemy->markForDeletion();
 
         framesToWin = globalConst::MaxFramesToWin;

@@ -1,4 +1,5 @@
 #include "Controller.h"
+#include "Collectable.h"
 #include "Damageable.h"
 #include "GlobalConst.h"
 #include "GameObject.h"
@@ -111,6 +112,20 @@ void BulletController::update()
     prepareMoveInDirection(_direction, speed);
     _gameObject->move(_currMoveX, _currMoveY);
 
+}
+
+void BulletController::onCollided(GameObject *other)
+{
+    if (_updatedOnFrame == Utils::currentFrame) return;
+
+    if (other->isFlagSet(GameObject::BulletPassable))
+        return;
+
+    // bullet cannot hit its parent
+    if (_gameObject->parentId() == other->id())
+        return;
+
+    _updatedOnFrame = Utils::currentFrame;
 }
 
 
@@ -326,6 +341,59 @@ void SkullController::update()
 
 ////
 
+CollectableXpController::CollectableXpController(GameObject *parent)
+: Controller(parent, 0) {}
+
+void CollectableXpController::onCollided(GameObject *other)
+{
+    assert(_gameObject->isFlagSet(GameObject::CollectableBonus));
+
+    if (!other->isFlagSet(GameObject::CollectableBonus)) return;
+
+    // merge colliding xp points to reduce number of objects on map
+    auto thisCollectable = _gameObject->getComponent<Collectable>();
+    assert(thisCollectable != nullptr);
+    XpCollectable *thisXp = dynamic_cast<XpCollectable *>(thisCollectable);
+    if (thisXp == nullptr)
+        return;
+
+    auto thatCollectable = other->getComponent<Collectable>();
+    assert(thatCollectable != nullptr);
+
+    XpCollectable *thatXp = dynamic_cast<XpCollectable *>(thatCollectable);
+    if (thatXp == nullptr)
+        return;
+
+    int sum = thisXp->value() + thatXp->value();
+    if (sum > 1000 || (sum % 100 != 0))
+        return; // 900 is maximum xp collectable...
+
+    // update value
+    thisXp->setValue(sum);
+    std::string newType;
+    switch (sum) {
+        case 200: newType = "200xp"; break;
+        case 300: newType = "300xp"; break;
+        case 400: newType = "400xp"; break;
+        case 500: newType = "500xp"; break;
+        case 600: newType = "600xp"; break;
+        case 700: newType = "700xp"; break;
+        case 800: newType = "800xp"; break;
+        case 900: newType = "900xp"; break;
+        case 1000: newType = "1000xp"; break;
+        default:
+            return;
+    }
+
+    assert(_gameObject->spriteRenderer != nullptr);
+    _gameObject->spriteRenderer->setNewObjectType(newType);
+
+    // delete second object
+    other->markForDeletion();
+}
+
+
+////
 
 StaticCarController::StaticCarController(GameObject *parent)
 : Controller(parent, 0) {

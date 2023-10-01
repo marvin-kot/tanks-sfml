@@ -145,12 +145,12 @@ void PlayerController::update()
             SoundPlayer::instance().enqueueSound(shootable->shootSound(), true);
             if (_4dirSet)
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-4dir-shot", true);
+            else if (_rocketSet)
+                _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-rocket-shot", true);
             else if (_upgradePower)
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-power-shot", true);
             else if (_upgradeSpeed)
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-speed-shot", true);
-            else if (_rocketSet)
-                _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-rocket-shot", true);
             else
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("default-shot", true);
         }
