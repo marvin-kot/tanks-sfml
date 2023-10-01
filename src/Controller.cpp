@@ -129,6 +129,17 @@ void BulletController::onCollided(GameObject *other)
 }
 
 
+GameObject *BulletController::onDestroyed()
+{
+    if (_gameObject->getParentObject() && _gameObject->getParentObject()->isFlagSet(GameObject::Player))
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
+
+    if (_gameObject->isFlagSet(GameObject::Explosive))
+        return ExplosionController::createBigExplosion(_gameObject, true);
+    else
+        return ExplosionController::createSmallExplosion(_gameObject);
+}
+
 /////
 
 RocketController::RocketController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg)
@@ -177,6 +188,32 @@ void ExplosionController::update()
 }
 
 
+GameObject *ExplosionController::createSmallExplosion(GameObject *parent)
+{
+    GameObject *explosion = new GameObject("smallExplosion");
+    explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
+    explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+    explosion->copyParentPosition(parent);
+
+    return explosion;
+}
+
+GameObject *ExplosionController::createBigExplosion(GameObject *parent, bool damaging)
+{
+    GameObject *explosion = new GameObject("bigExplosion");
+    if (damaging) {
+        explosion->setController(new ExplosionController(explosion, false));
+        explosion->damage = 1;
+    }
+    explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
+    explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+    explosion->copyParentPosition(parent);
+    explosion->setParentId(parent->parentId());
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+
+    return explosion;
+}
+
 /////////
 
 
@@ -205,6 +242,13 @@ void LandmineController::onCollided(GameObject *obj)
     }
 }
 
+
+GameObject *LandmineController::onDestroyed()
+{
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+    // true - damaging explosion
+    return ExplosionController::createBigExplosion(_gameObject, true);
+}
 ///
 
 StaticTurretController::StaticTurretController(GameObject *parent, globalTypes::Direction dir)
@@ -407,4 +451,28 @@ void StaticCarController::onCollided(GameObject *other)
         _gameObject->markForDeletion();
         SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
     }
+}
+
+GameObject *StaticCarController::onDestroyed()
+{
+    //SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
+    return ExplosionController::createSmallExplosion(_gameObject);
+}
+
+////
+
+////
+
+PrizeBoxController::PrizeBoxController(GameObject *parent)
+: Controller(parent, 0) {
+}
+
+
+GameObject *PrizeBoxController::onDestroyed()
+{
+    SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
+    _gameObject->generateDrop();
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
+
+    return ExplosionController::createSmallExplosion(_gameObject);
 }

@@ -12,33 +12,26 @@
 
 DropGenerator::DropGenerator(GameObject *parent, int xp)
 : _gameObject(parent), _xp(xp)
-{}
+{
+    setDropTypes({"ammoCollectable", "ammoCollectable", "toolsCollectable"});
+}
 
+void DropGenerator::setDropTypes(std::vector<std::string> types)
+{
+    _types = types;
+}
 void DropGenerator::placeRandomCollectable()
 {
     std::uniform_int_distribution<int> x_distr(1, (globalVars::mapSize.x/globalConst::spriteOriginalSizeX)-1);
     std::uniform_int_distribution<int> y_distr(1, (globalVars::mapSize.y/globalConst::spriteOriginalSizeY)-1);
 
-    const std::vector<std::string> types = {
-        //"helmetCollectable",
-        //"timerCollectable",
-        //"shovelCollectable",
-        //"starCollectable",
-        //"grenadeCollectable",
-        //"tankCollectable",
-        "ammoCollectable",
-        "ammoCollectable",
-        "ammoCollectable",
-        "toolsCollectable"
-    };
-
     //int x = x_distr(Utils::generator);
     //int y = y_distr(Utils::generator);
 
-    std::uniform_int_distribution<int> type_distr(0, types.size()-1);
+    std::uniform_int_distribution<int> type_distr(0, _types.size()-1);
     int typeIndex = type_distr(Utils::generator);
 
-    GameObject *collectable = createObject(types[typeIndex]);
+    GameObject *collectable = createObject(_types[typeIndex]);
     if (collectable) {
         //collectable->setPosition(x*globalConst::spriteOriginalSizeX, y*globalConst::spriteOriginalSizeX);
         collectable->copyParentPosition(_gameObject);
@@ -77,9 +70,9 @@ GameObject * DropGenerator::createObject(std::string type)
         collectable->setRenderer(new SpriteRenderer(collectable), 4);
 
         Collectable *component = nullptr;
-        if (type == "helmetCollectable")
+        if (type == "cloudCollectable")
             component = new HelmetCollectable(collectable);
-        else if (type == "timerCollectable")
+        else if (type == "freezeCollectable")
             component = new TimerCollectable(collectable);
         else if (type == "grenadeCollectable")
             component = new GrenadeCollectable(collectable);

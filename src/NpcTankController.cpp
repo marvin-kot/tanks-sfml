@@ -64,8 +64,10 @@ void NpcTankController::update()
 
     bool resetTimeout = _paralyzedForMs==0 ? tryToMove() : false;
 
-    if (decideIfToShoot(_gameObject->direction()))
+    if (decideIfToShoot(_gameObject->direction())) {
         _gameObject->shoot();
+        _triggered = true;
+    }
 
     if (resetTimeout) {
         _clock.reset(true);
@@ -96,6 +98,20 @@ void NpcTankController::onDamaged()
     SpriteRenderer *renderer = _gameObject->getComponent<SpriteRenderer>();
     assert(renderer != nullptr);
     renderer->setOneFrameTintColor(sf::Color::Red);
+}
+
+GameObject *NpcTankController::onDestroyed()
+{
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+
+    if (_gameObject->isFlagSet(GameObject::BonusOnHit)) {
+        _gameObject->generateDrop();
+        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
+    } else
+        _gameObject->dropXp();
+
+
+    return ExplosionController::createBigExplosion(_gameObject, false);
 }
 
 bool NpcTankController::tryMoveToOneOfDirections(std::vector<globalTypes::Direction>& directions)
@@ -253,6 +269,22 @@ bool TankKamikazeController::decideIfToShoot(globalTypes::Direction oldDir) cons
         target = ObjectsPool::playerObject;
 
     return (target != nullptr);
+}
+
+
+GameObject * TankKamikazeController::onDestroyed()
+{
+    if (!_triggered) {
+        if (_gameObject->isFlagSet(GameObject::BonusOnHit)) {
+            _gameObject->generateDrop();
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
+        } else
+            _gameObject->dropXp();
+    }
+
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+    // true - damaging explosion
+    return ExplosionController::createBigExplosion(_gameObject, _triggered);
 }
 
 
@@ -456,4 +488,10 @@ void TankBossController::onDamaged()
     if (target->position().y - _gameObject->position().y < -spriteOriginalSizeX)
         //_nextDirection.push(Direction::Up);
         _nextDirection = Direction::Up;
+}
+
+GameObject *TankBossController::onDestroyed()
+{
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
+    return ExplosionController::createBigExplosion(_gameObject, false);
 }

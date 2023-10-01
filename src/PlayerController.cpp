@@ -685,4 +685,15 @@ void PlayerController::onKillEnemy(GameObject *enemy)
     }
 }
 
+GameObject *PlayerController::onDestroyed()
+{
+    if (globalVars::player1Lives > 0)
+        dropSkull();
 
+    globalVars::player1Lives--;
+    ObjectsPool::playerObject = nullptr;
+
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
+
+    return ExplosionController::createBigExplosion(_gameObject, false);
+}

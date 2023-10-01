@@ -1,11 +1,12 @@
-#include "MapCreator.h"
+#include "Controller.h"
+#include "Damageable.h"
+#include "DropGenerator.h"
 #include "EagleController.h"
 #include "GameObject.h"
-#include "Controller.h"
-#include "Shootable.h"
-#include "Damageable.h"
-#include "ObjectsPool.h"
 #include "GlobalConst.h"
+#include "MapCreator.h"
+#include "ObjectsPool.h"
+#include "Shootable.h"
 #include "SpriteRenderer.h"
 #include "Utils.h"
 
@@ -226,7 +227,21 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type == "explosive-box") {
         GameObject *box = new GameObject(type);
         box->setFlags(GameObject::Explosive | GameObject::BulletKillable | GameObject::Static);
-        box->setRenderer(new SpriteRenderer(box), 0);
+        box->setRenderer(new SpriteRenderer(box), 2);
+        box->setDamageable(new Damageable(box, 0));
+        box->setCurrentAnimation("default");
+
+        return box;
+    }
+
+    if (type == "prize-box") {
+        GameObject *box = new GameObject(type);
+        box->setFlags(GameObject::BulletKillable | GameObject::Static);
+        box->setController(new PrizeBoxController(box));
+        DropGenerator *dropper = new DropGenerator(box, 500);
+        dropper->setDropTypes({"cloudCollectable", "grenadeCollectable", "freezeCollectable", "tankCollectable", "toolsCollectable"});
+        box->setDropGenerator(dropper);
+        box->setRenderer(new SpriteRenderer(box), 2);
         box->setDamageable(new Damageable(box, 0));
         box->setCurrentAnimation("default");
 
@@ -274,7 +289,8 @@ MapCreator::MapCreator()
             {'+', "bridge"},
             {'=', "carsHorizontal"},
             {'H', "carsVertical"},
-            {'%', "explosive-box"}
+            {'%', "explosive-box"},
+            {'?', "prize-box"}
             };
 }
 
@@ -668,17 +684,22 @@ Level::Properties MapCreator::buildMapFromData()
                         placeFloorUnderObject = true;
                     }
 
-                    if (object->type() == "tree" || object->type() == "enemyJezek") {
+                    if (object->type() == "tree" || object->type() == "enemyJezek" || object->type() == "prize-box") {
                         placeFloorUnderObject = true;
                     }
 
+                    if (object->type() == "explosive-box") {
+                        GameObject *floor = MapCreator::buildObject("underbrick_floor");
+                        floor->setSize(basicTileSize, basicTileSize);
+                        floor->setPosition(x*basicTileSize + tileCenter, y*basicTileSize + tileCenter);
+                        ObjectsPool::addObject(floor);
+                    }
+
                     if (placeFloorUnderObject) {
-                        {
-                            GameObject *floor = MapCreator::buildObject("concrete_floor");
-                            //floor->setSize(basicTileSize, basicTileSize);
-                            floor->setPosition(x*basicTileSize + tileCenter, y*basicTileSize + tileCenter);
-                            ObjectsPool::addObject(floor);
-                        }
+                        GameObject *floor = MapCreator::buildObject("concrete_floor");
+                        //floor->setSize(basicTileSize, basicTileSize);
+                        floor->setPosition(x*basicTileSize + tileCenter, y*basicTileSize + tileCenter);
+                        ObjectsPool::addObject(floor);
                     }
                 }
             }

@@ -43,6 +43,7 @@ public:
 
     virtual void onDamaged() {};
     virtual void onCollided(GameObject *) {}
+    virtual GameObject *onDestroyed() { return nullptr; }
     void paralyze(int msec);
 };
 
@@ -61,6 +62,7 @@ public:
     int damage() const { return _damage; }
     int loseDamage() { return --_damage; }
     void onCollided(GameObject *) override;
+    GameObject *onDestroyed() override;
 };
 
 class RocketController : public BulletController
@@ -126,6 +128,7 @@ public:
     ~PlayerSpawnController();
     void update() override;
     void appendLife();
+    GameObject *onDestroyed() override;
 };
 
 
@@ -135,6 +138,9 @@ class ExplosionController : public Controller
 public:
     ExplosionController(GameObject *parent, bool dontHurtParent);
     void update() override;
+
+    static GameObject *createSmallExplosion(GameObject *parent);
+    static GameObject *createBigExplosion(GameObject *parent, bool damaging);
 };
 
 
@@ -145,6 +151,7 @@ public:
     LandmineController(GameObject *parent, bool dontHurtParent);
     void update() override;
     void onCollided(GameObject *) override;
+    GameObject *onDestroyed() override;
 };
 
 class StaticTurretController : public Controller
@@ -192,6 +199,7 @@ class CollectableXpController : public Controller
 public:
     CollectableXpController(GameObject *parent);
     void onCollided(GameObject *) override;
+
 };
 
 class StaticCarController : public Controller
@@ -199,4 +207,13 @@ class StaticCarController : public Controller
 public:
     StaticCarController(GameObject *parent);
     void onCollided(GameObject *) override;
+    GameObject *onDestroyed() override;
+};
+
+
+class PrizeBoxController : public Controller
+{
+public:
+    PrizeBoxController(GameObject *parent);
+    GameObject *onDestroyed() override;
 };

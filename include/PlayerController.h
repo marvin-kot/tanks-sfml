@@ -64,6 +64,7 @@ public:
     PlayerController(GameObject *obj);
     ~PlayerController();
     void update() override;
+    GameObject *onDestroyed() override;
     void applyPerks();
     void removePerks();
     void applyUpgrades();

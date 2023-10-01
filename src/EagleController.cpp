@@ -287,3 +287,11 @@ void EagleController::onDamaged()
         fastRepairWalls(100);
     }
 }
+
+
+GameObject *EagleController::onDestroyed()
+{
+    ObjectsPool::eagleObject = nullptr;
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
+    return ExplosionController::createBigExplosion(_gameObject, false);
+}

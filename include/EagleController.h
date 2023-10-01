@@ -56,4 +56,5 @@ public:
 
     void setTempInvincibilityAfterDamage(int timeout);
     void onDamaged() override;
+    GameObject *onDestroyed() override;
 };

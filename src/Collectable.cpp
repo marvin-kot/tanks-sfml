@@ -42,6 +42,7 @@ TimerCollectable::TimerCollectable(GameObject *parent)
 
 void TimerCollectable::onCollected(GameObject *collector)
 {
+    globalVars::globalFreezeTimeout = 10;
     globalVars::globalTimeFreeze = true;
     globalVars::globalFreezeChronometer.reset(true);
 
@@ -58,7 +59,7 @@ HelmetCollectable::HelmetCollectable(GameObject *parent)
 void HelmetCollectable::onCollected(GameObject *collector)
 {
     PlayerController *controller = collector->getComponent<PlayerController>();
-    controller->setTemporaryInvincibility(5000);
+    controller->setTemporaryInvincibility(7500);
 
     Collectable::onCollected(collector);
 }

@@ -16,10 +16,13 @@ protected:
     int trySqueeze();
 
     bool tryMoveToOneOfDirections(std::vector<globalTypes::Direction>&);
+
+    bool _triggered = false; // needed only for kamikaze tank
 public:
     NpcTankController(GameObject *parent, int spd, float timeoutSec);
     void update() override;
     void onDamaged() override;
+    GameObject *onDestroyed() override;
 };
 
 class TankRandomController : public NpcTankController
@@ -38,6 +41,7 @@ class TankKamikazeController : public NpcTankController
 
 public:
     TankKamikazeController(GameObject *parent, int spd, float timeoutSec);
+    GameObject *onDestroyed() override;
 };
 
 
@@ -53,4 +57,5 @@ public:
     TankBossController(GameObject *parent, int spd, float timeoutSec);
     ~TankBossController();
     void onDamaged() override;
+    GameObject *onDestroyed() override;
 };

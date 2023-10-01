@@ -328,83 +328,22 @@ void Game::processDeletedObjects()
     while (!ObjectsPool::objectsToDelete.empty()) {
         GameObject *obj = ObjectsPool::objectsToDelete.front();
 
-        if (obj->isFlagSet(GameObject::Player)) {
-            if (globalVars::player1Lives > 0) {
-                auto controller = obj->getComponent<PlayerController>();
-                if (controller)
-                    controller->dropSkull();
-            }
-
-            globalVars::player1Lives--;
-            ObjectsPool::playerObject = nullptr;
-        }
-
-        if (obj->isFlagSet(GameObject::Eagle)) {
-            ObjectsPool::eagleObject = nullptr;
-            // do not break here - we still need to create explosion few lines later!
-        }
-
-        if (obj->isFlagSet(GameObject::PlayerSpawner))
-            ObjectsPool::playerSpawnerObject = nullptr;
-
-        if (obj->isFlagSet(GameObject::Bullet)) {
-            if (obj->isFlagSet(GameObject::Explosive)) {
-                GameObject *explosion = new GameObject("bigExplosion");
-                explosion->setController(new ExplosionController(explosion, false));
-                explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
-                explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                explosion->copyParentPosition(obj);
-                explosion->setParentId(obj->parentId());
-                explosion->damage = 1;
+        auto controller = obj->getComponent<Controller>();
+        if (controller != nullptr) {
+            auto explosion = controller->onDestroyed();
+            if (explosion != nullptr)
                 objectsToAdd.push_back(explosion);
-                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
-            } else {
-                GameObject *explosion = new GameObject("smallExplosion");
-                explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
-                explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-                explosion->copyParentPosition(obj);
-
-                objectsToAdd.push_back(explosion);
-            }
-
-            if (obj->getParentObject() && obj->getParentObject()->isFlagSet(GameObject::Player))
-                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bulletHitWall, true);
-        }
-
-        if (obj->isFlagSet(GameObject::Player | GameObject::NPC | GameObject::Eagle | GameObject::OwnedByPlayer)) {
-            GameObject *explosion = new GameObject("bigExplosion");
-            explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
-            explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-            if (obj->isFlagSet(GameObject::Explosive)) {
-                explosion->setController(new ExplosionController(explosion, false));
-                explosion->setParentId(obj->id());
-                explosion->damage = 1;
-            }
-            explosion->copyParentPosition(obj);
-
-            objectsToAdd.push_back(explosion);
-
-            if (obj->isFlagSet(GameObject::Player | GameObject::Eagle | GameObject::Boss))
-                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
-            else
-                SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
         } else if (obj->isFlagSet(GameObject::BulletKillable)) {
-            GameObject *explosion = new GameObject("smallExplosion");
-            explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
-            explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
-            explosion->copyParentPosition(obj);
+            GameObject *explosion = nullptr;
+            if (obj->isFlagSet(GameObject::Explosive))
+                explosion = ExplosionController::createBigExplosion(obj, true);
+            else
+                explosion = ExplosionController::createSmallExplosion(obj);
             objectsToAdd.push_back(explosion);
         }
 
-        if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive)) {
+        if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive))
             _killsCount++;
-        }
-
-        if (obj->isFlagSet(GameObject::BonusOnHit)) {
-            obj->generateDrop();
-            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusAppear, true);
-        } else
-            obj->dropXp();
 
         ObjectsPool::setOfObjectsToDelete.erase(obj);
         ObjectsPool::kill(obj);

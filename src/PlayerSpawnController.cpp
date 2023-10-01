@@ -96,3 +96,9 @@ void PlayerSpawnController::appendLife()
 {
     globalVars::player1Lives++;
 }
+
+GameObject *PlayerSpawnController::onDestroyed()
+{
+    ObjectsPool::playerSpawnerObject = nullptr;
+    return Controller::onDestroyed();
+}
