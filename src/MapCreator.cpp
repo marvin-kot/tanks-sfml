@@ -223,6 +223,15 @@ GameObject *MapCreator::buildObject(std::string type)
         return road;
     }
 
+    if (type == "explosive-box") {
+        GameObject *box = new GameObject(type);
+        box->setFlags(GameObject::Explosive | GameObject::BulletKillable | GameObject::Static);
+        box->setRenderer(new SpriteRenderer(box), 0);
+        box->setDamageable(new Damageable(box, 0));
+        box->setCurrentAnimation("default");
+
+        return box;
+    }
 
 
     // else - consider it's floor
@@ -263,21 +272,9 @@ MapCreator::MapCreator()
             {'x', "jezek"},
             {'-', "road"},
             {'+', "bridge"},
-            /*{'-', "road_horizontal"},
-            {'\"', "road_horizontal_broken"},
-            {'|', "road_vertical"},
-            {':', "road_vertical_broken"},
-            {'+', "road_cross"},
-            {'T', "road_t_cross_down"},
-            {'<', "road_t_cross_left"},
-            {'>', "road_t_cross_right"},
-            {'1', "road_t_cross_up"},
-            {'r', "road_top_left"},
-            {'7', "road_top_right"},
-            {'L', "road_bottom_left"},
-            {'j', "road_bottom_right"},*/
             {'=', "carsHorizontal"},
             {'H', "carsVertical"},
+            {'%', "explosive-box"}
             };
 }
 
