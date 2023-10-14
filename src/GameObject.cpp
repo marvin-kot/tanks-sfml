@@ -124,7 +124,7 @@ void GameObject::draw()
 
         int screenX = mappedX + globalVars::gameViewPort.left;
         int screenY = mappedY + globalVars::gameViewPort.top;
-        spriteRenderer->_sprite.setPosition(screenX, screenY);
+        spriteRenderer->setSpritePosition(screenX, screenY);
         spriteRenderer->draw();
     }
     else

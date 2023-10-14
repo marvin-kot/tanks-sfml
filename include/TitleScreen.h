@@ -5,6 +5,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 
+class SpriteRenderer;
+
 class TitleScreen
 {
     enum States {
@@ -18,6 +20,7 @@ class TitleScreen
     TitleScreen();
     TitleScreen(TitleScreen &) = delete;
     void operator=(const TitleScreen&) = delete;
+    ~TitleScreen();
 
     int _cursorPos;
     int _blinkCount;
@@ -32,6 +35,7 @@ class TitleScreen
     void drawIntro1(int screenCenterX, int screenCenterY);
     void drawIntro2(int screenCenterX, int screenCenterY);
     void drawTitleMenu(int screenCenterX, int screenCenterY);
+
 public:
     static TitleScreen& instance();
 

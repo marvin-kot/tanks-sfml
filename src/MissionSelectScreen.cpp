@@ -11,9 +11,12 @@
 #include <cassert>
 #include <filesystem>
 
-
 MissionSelectScreen::MissionSelectScreen() {
     open();
+}
+
+MissionSelectScreen::~MissionSelectScreen()
+{
 }
 
 MissionSelectScreen& MissionSelectScreen::instance()
@@ -102,6 +105,9 @@ int MissionSelectScreen::draw()
     for (int i = 0; i < _missions.size(); i++) {
 
         if (i <= PersistentGameData::instance().unlockedLevels()) {
+            if (_cursorPos == i) {
+                UiUtils::instance().drawAnimatedEagleCursor(menuWidth/5-128, currentStringY);
+            }
             std::string line = std::to_string(i+1) + ". " + _missions[i].title;
             UiUtils::instance().drawText( line, lineSize, menuWidth/5-64, currentStringY, true, _cursorPos == i ? sf::Color::Yellow : sf::Color::White) ;
             currentStringY += lineSize ;

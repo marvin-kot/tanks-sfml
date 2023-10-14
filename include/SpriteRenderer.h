@@ -61,6 +61,7 @@ public:
     void setOneFrameTintColor(sf::Color);
     void showAnimationFrame(int i);
     void setNewObjectType(std::string type);
+    void setSpritePosition(int x, int y);
 };
 
 class OneShotAnimationRenderer : public SpriteRenderer

@@ -185,6 +185,11 @@ void SpriteRenderer::setSpriteSheetOffset(int x, int y)
     _spriteSheetOffsetY = y;
 }
 
+void SpriteRenderer::setSpritePosition(int x, int y)
+{
+    _sprite.setPosition(x, y);
+}
+
 void SpriteRenderer::setOneFrameTintColor(sf::Color color)
 {
     _oneFrameTintColor = color;

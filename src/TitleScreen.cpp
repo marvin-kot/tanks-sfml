@@ -1,3 +1,4 @@
+#include "AssetManager.h"
 #include "BonusShopWindow.h"
 #include "GlobalConst.h"
 #include "PersistentGameData.h"
@@ -10,10 +11,19 @@
 
 #include <format>
 
-TitleScreen::TitleScreen() : _cursorPos(0), _blinkCount(0), _selected(false), _blink(false) {
+
+TitleScreen::TitleScreen()
+: _cursorPos(0)
+, _blinkCount(0)
+, _selected(false)
+, _blink(false)
+{
     _clock.restart();
 }
 
+TitleScreen::~TitleScreen()
+{
+}
 
 TitleScreen& TitleScreen::instance()
 {
@@ -217,8 +227,14 @@ void TitleScreen::drawTitleMenu(int screenCenterX, int screenCenterY)
         _clock.restart();
     }
 
-    if (!_blink)
-        UiUtils::instance().drawText( "start the game", promptFontSize, screenCenterX, currentY, false, startGameColor );
+    if (!_blink) {
+        std::string option = "start the game";
+        if (_cursorPos == 0) {
+            UiUtils::instance().drawAnimatedEagleCursor(screenCenterX - (promptFontSize * option.size() / 2) - 16, currentY);
+            UiUtils::instance().drawAnimatedEagleCursor(screenCenterX + (promptFontSize * option.size() / 2) + 16, currentY);
+        }
+        UiUtils::instance().drawText( option, promptFontSize, screenCenterX, currentY, false, startGameColor );
+    }
 
     // perk shop
     /*sf::Color shopColor = _cursorPos == 1 ? sf::Color::Yellow : sf::Color::White;
@@ -231,7 +247,12 @@ void TitleScreen::drawTitleMenu(int screenCenterX, int screenCenterY)
     // exit to desktop
     const sf::Color exitColor = _cursorPos == 1 ? sf::Color::Yellow : sf::Color::White;
     currentY += promptFontSize+24;
-    UiUtils::instance().drawText( "exit to desktop", promptFontSize, screenCenterX, currentY, false, exitColor );
+    std::string option = "exit to desktop";
+    if (_cursorPos == 1) {
+        UiUtils::instance().drawAnimatedEagleCursor(screenCenterX - (promptFontSize * option.size() / 2) - 16, currentY);
+        UiUtils::instance().drawAnimatedEagleCursor(screenCenterX + (promptFontSize * option.size() / 2) + 16, currentY);
+    }
+    UiUtils::instance().drawText( option, promptFontSize, screenCenterX, currentY, false, exitColor );
 }
 
 void TitleScreen::processKeyboardPress(sf::Keyboard::Scancode scancode)

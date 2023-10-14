@@ -15,10 +15,14 @@ class BonusShopWindow
     void drawUpgrade(int index, int x, int y);
     //void drawCursor(int startY, sf::RectangleShape& parentRect);
     void drawCursor(int x, int y);
+    void drawCursorOnButton(int x, int y);
     void drawEdging(int x, int y);
 
     sf::Sprite _sprite;
     sf::Texture _texture;
+
+    int buttonStartCursorPos;
+    int buttonExitCursorPos;
 public:
     bool afterGameOver = false;
     bool afterWin = false;

@@ -151,7 +151,7 @@ globalTypes::GameState GameOverScreen::draw()
                 _delayClock.restart();
                 _newMissionJustUnlocked = true;
             }
-            if (_delayClock.getElapsedTime() > sf::seconds(_faster ? 1.5 : 3))
+            if (_delayClock.getElapsedTime() > sf::seconds(_faster && !_newMissionJustUnlocked ? 1.5 : 3))
                 _state = Exit;
         }
             break;

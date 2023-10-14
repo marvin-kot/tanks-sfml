@@ -1,12 +1,15 @@
 #include "AssetManager.h"
 #include "UiUtils.h"
 #include "Utils.h"
-
+#include "SpriteRenderer.h"
 
 
 UiUtils::UiUtils()
+: _eagleCursorObject(std::make_unique<GameObject>("eagleCursor"))
 {
+    _eagleCursorObject->setRenderer(new SpriteRenderer(_eagleCursorObject.get()), 0);
     _sprite.setTexture(AssetManager::instance().mainSpriteSheetTexture());
+
 }
 
 UiUtils& UiUtils::instance()
@@ -71,4 +74,10 @@ void UiUtils::drawHorizontalLine(int x, int y, int width, sf::Color color)
     line.setFillColor(color);
 
     Utils::window.draw(line);
+}
+
+void UiUtils::drawAnimatedEagleCursor(int x, int y)
+{
+    _eagleCursorObject->spriteRenderer->setSpritePosition(x, y);
+    _eagleCursorObject->spriteRenderer->draw();
 }

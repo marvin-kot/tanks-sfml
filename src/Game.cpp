@@ -620,8 +620,12 @@ void Game::drawStartLevelScreen()
 
     // prompt
     currentStringY += 150;
+
+    auto rect = AssetManager::instance().getAnimationFrame("button", "default", 0).rect;
+    UiUtils::instance().drawIcon(rect, screenCenterX, currentStringY);
+
     UiUtils::instance().drawText(
-        "Press [enter] to start", 24,
+        "start", 26,
         screenCenterX, currentStringY, false,
         sf::Color::Yellow);
     Utils::window.display();

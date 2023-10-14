@@ -14,6 +14,7 @@ private:
     void operator=(const MissionSelectScreen&) = delete;
 
     MissionSelectScreen();
+    ~MissionSelectScreen();
 
     struct MapInfo
     {

@@ -11,6 +11,8 @@
 
 #include <cassert>
 
+
+
 BonusShopWindow::BonusShopWindow() : _currentUpgradeCursor(0)
 {
     if (!_texture.loadFromFile("assets/shop-window.png")) {
@@ -20,6 +22,11 @@ BonusShopWindow::BonusShopWindow() : _currentUpgradeCursor(0)
 
     _sprite.setTexture(_texture);
     _sprite.setScale(8, 8);
+
+    const int perksNum = PlayerUpgrade::availablePerkObjects.size();
+    const int lastRow = (perksNum-1)/4;
+    buttonExitCursorPos = (lastRow+1)*4 + 1;
+    buttonStartCursorPos = (lastRow+1)*4 + 2;
 }
 
 BonusShopWindow& BonusShopWindow::instance()
@@ -58,18 +65,7 @@ void BonusShopWindow::draw()
 
     constexpr int screenQuarterY = screen_h / 4;
 
-    // draw frame
-    /*sf::RectangleShape greyRect(sf::Vector2f(screen_w, screen_h));
-    greyRect.setOrigin(greyRect.getSize().x/2, greyRect.getSize().y/2);
-    greyRect.setPosition(sf::Vector2f(screenCenterX, screenCenterY));
-    greyRect.setFillColor(sf::Color(91, 91, 75));
-    Utils::window.draw(greyRect);
 
-    sf::RectangleShape darkRect(sf::Vector2f(screen_w - 256, screen_h - 128));
-    darkRect.setOrigin(darkRect.getSize().x/2, darkRect.getSize().y/2);
-    darkRect.setPosition(sf::Vector2f(screenCenterX, screenCenterY));
-    darkRect.setFillColor(sf::Color(110, 110, 99));
-    Utils::window.draw(darkRect);*/
     Utils::window.draw(_sprite);
 
     const int centerX = screenCenterX;//greyRect.getPosition().x;
@@ -121,17 +117,40 @@ void BonusShopWindow::draw()
 
     const int bottomOffsetX = menuWidth / 4;
     const int bottomY = menuHeight - 30;
+    const int buttonY = menuHeight - 190;
 
-    UiUtils::instance().drawText("[escape] exit to main menu", promptSize, bottomOffsetX, bottomY, false, sf::Color(120, 4, 34));
-    UiUtils::instance().drawText("[space] buy an item", promptSize, bottomOffsetX*2, bottomY, false, sf::Color(31, 81, 43));
-    UiUtils::instance().drawText("[enter] start the game", promptSize, bottomOffsetX*3, bottomY, false, sf::Color::Yellow);
+    if (_currentUpgradeCursor == buttonExitCursorPos)
+        drawCursorOnButton(bottomOffsetX, buttonY);
+    else if (_currentUpgradeCursor == buttonStartCursorPos)
+        drawCursorOnButton(bottomOffsetX*3, buttonY);
 
+    auto rect = AssetManager::instance().getAnimationFrame("button", "default", 0).rect;
+    UiUtils::instance().drawIcon(rect, bottomOffsetX, buttonY);
+    UiUtils::instance().drawIcon(rect, bottomOffsetX*3, buttonY);
+
+    UiUtils::instance().drawText("exit", promptSize+4, bottomOffsetX, buttonY, false, sf::Color::Red);
+    UiUtils::instance().drawText("start", promptSize+4, bottomOffsetX*3, buttonY, false, sf::Color::Green);
+
+    UiUtils::instance().drawText("press on the item to buy it", promptSize, bottomOffsetX*2, bottomY, false, sf::Color(31, 81, 43));
     Utils::window.display();
 }
 
 void BonusShopWindow::drawCursor(int x,  int y)
 {
     sf::RectangleShape whiteRect(sf::Vector2f(globalConst::spriteOriginalSizeX+2, globalConst::spriteOriginalSizeY+2));
+    whiteRect.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
+    whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
+    whiteRect.setPosition(x, y);
+    whiteRect.setFillColor(sf::Color(200, 200, 200));
+
+    Utils::window.draw(whiteRect);
+}
+
+void BonusShopWindow::drawCursorOnButton(int x,  int y)
+{
+    const auto rect = AssetManager::instance().getAnimationFrame("button", "default", 0).rect;
+
+    sf::RectangleShape whiteRect(sf::Vector2f(rect.getSize().x+2, rect.getSize().y+2));
     whiteRect.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
     whiteRect.setOrigin(whiteRect.getSize().x/2, whiteRect.getSize().y/2);
     whiteRect.setPosition(x, y);
@@ -189,19 +208,35 @@ void BonusShopWindow::drawUpgrade(int index, int x, int y)
 void BonusShopWindow::moveCursorLeft()
 {
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::tick);
-
-    if (_currentUpgradeCursor%4 == 0)
-        _currentUpgradeCursor += 3;
-    else
-        --_currentUpgradeCursor;
+    const int perksNum = PlayerUpgrade::availablePerkObjects.size();
+    const int lastRow = (perksNum-1)/4;
+    if (_currentUpgradeCursor == buttonExitCursorPos)
+        _currentUpgradeCursor++;
+    else if (_currentUpgradeCursor == buttonStartCursorPos)
+        _currentUpgradeCursor--;
+    else {
+        if (_currentUpgradeCursor%4 == 0)
+            _currentUpgradeCursor += 3;
+        else
+            --_currentUpgradeCursor;
+    }
 }
 
 void BonusShopWindow::moveCursorRight()
 {
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::tick);
-    _currentUpgradeCursor++;
-    if (_currentUpgradeCursor%4 == 0)
-        _currentUpgradeCursor -= 4;
+    const int perksNum = PlayerUpgrade::availablePerkObjects.size();
+    const int lastRow = (perksNum-1)/4;
+
+    if (_currentUpgradeCursor == buttonExitCursorPos)
+        _currentUpgradeCursor++;
+    else if (_currentUpgradeCursor == buttonStartCursorPos)
+        _currentUpgradeCursor--;
+    else {
+        _currentUpgradeCursor++;
+        if (_currentUpgradeCursor%4 == 0)
+            _currentUpgradeCursor -= 4;
+    }
 }
 
 void BonusShopWindow::moveCursorUp()
@@ -209,8 +244,13 @@ void BonusShopWindow::moveCursorUp()
     const int perksNum = PlayerUpgrade::availablePerkObjects.size();
     const int lastRow = (perksNum-1)/4;
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::tick);
-    if (_currentUpgradeCursor < 4)
-        _currentUpgradeCursor += lastRow*4;
+    if (_currentUpgradeCursor < 4) {
+        if (_currentUpgradeCursor > 1)
+            _currentUpgradeCursor = buttonStartCursorPos;
+        else
+            _currentUpgradeCursor = buttonExitCursorPos;
+        //_currentUpgradeCursor += lastRow*4;
+    }
     else
         _currentUpgradeCursor -= 4;
 }
@@ -219,11 +259,23 @@ void BonusShopWindow::moveCursorDown()
 {
     const int perksNum = PlayerUpgrade::availablePerkObjects.size();
     const int lastRow = (perksNum-1)/4;
+    const int col = _currentUpgradeCursor % 4;
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::tick);
-    if (_currentUpgradeCursor >= lastRow*4)
-        _currentUpgradeCursor -= lastRow*4;
+    if (_currentUpgradeCursor >= lastRow*4) {
+        if (_currentUpgradeCursor >= buttonExitCursorPos)
+            _currentUpgradeCursor -= lastRow*4;
+        else {
+            if (col > 1)
+                _currentUpgradeCursor = buttonStartCursorPos;
+            else
+                _currentUpgradeCursor = buttonExitCursorPos;
+        }
+    }
     else
         _currentUpgradeCursor += 4;
+
+    if (_currentUpgradeCursor > buttonStartCursorPos)
+        _currentUpgradeCursor = buttonStartCursorPos;
 }
 
 void BonusShopWindow::getSelectedUpgrade()
@@ -260,15 +312,22 @@ void BonusShopWindow::processKeyboardPress(sf::Keyboard::Scancode scancode, glob
         moveCursorDown();
     else if (scancode == sf::Keyboard::Scan::Up)
         moveCursorUp();
-    else if (scancode == sf::Keyboard::Scan::Space)
-        getSelectedUpgrade();
     else if (scancode == sf::Keyboard::Scan::Escape) {
         SoundPlayer::instance().playSound(SoundPlayer::SoundType::bulletHitWall);
         SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
         SoundPlayer::instance().playSound(SoundPlayer::TitleTheme);
         gameState = globalTypes::GameState::TitleScreen;
-    } else if (scancode == sf::Keyboard::Scan::Enter) {
-        SoundPlayer::instance().playSound(SoundPlayer::SoundType::bulletHitWall);
-        gameState = globalTypes::GameState::SelectLevel;
+    } else if (scancode == sf::Keyboard::Scan::Enter || scancode == sf::Keyboard::Scan::Space) {
+        if (_currentUpgradeCursor < buttonExitCursorPos) {
+            getSelectedUpgrade();
+        } else if (_currentUpgradeCursor == buttonExitCursorPos) {
+            SoundPlayer::instance().playSound(SoundPlayer::SoundType::bulletHitWall);
+            SoundPlayer::instance().stopSound(SoundPlayer::ShopTheme);
+            SoundPlayer::instance().playSound(SoundPlayer::TitleTheme);
+            gameState = globalTypes::GameState::TitleScreen;
+        } else if (_currentUpgradeCursor == buttonStartCursorPos) {
+            SoundPlayer::instance().playSound(SoundPlayer::SoundType::bulletHitWall);
+            gameState = globalTypes::GameState::SelectLevel;
+        }
     }
 }
