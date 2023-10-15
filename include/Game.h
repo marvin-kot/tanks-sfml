@@ -23,9 +23,6 @@ private:
     sf::Time _finishTime;
     bool _won = false;
 
-    sf::Sprite _sprite;
-    sf::Texture _texture;
-
 public:
     Game();
 

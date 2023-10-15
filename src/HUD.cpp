@@ -7,13 +7,17 @@
 #include "PlayerUpgrade.h"
 #include "PlayerController.h"
 #include "Shootable.h"
+#include "SoundPlayer.h"
 
 #include "Utils.h"
 #include "UiUtils.h"
 
+bool base_blink = false;
 
 HUD::HUD()
-{}
+{
+    _baseDamageClock.reset(false);
+}
 
 HUD& HUD::instance()
 {
@@ -23,6 +27,8 @@ HUD& HUD::instance()
 
 void HUD::draw()
 {
+    checkForGamePause();
+    //if (_pause) return;
     drawPlayerXP(28);
     drawTankLives(64);
     drawTankUpgrades(112);
@@ -40,6 +46,24 @@ void HUD::draw()
 
     if (_showFail)
         drawFailScreen();
+
+    if (_baseDamageClock.isRunning()) {
+        if (_baseDamageClock.getElapsedTime() < sf::seconds(4)) {
+            if (_blinkClock.getElapsedTime() > sf::seconds(0.5)) {
+                    _blinkClock.reset(true);
+                    base_blink = !base_blink;
+
+                    if (base_blink)
+                        SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::Alarm, true);
+            }
+            if (base_blink) {
+                UiUtils::instance().drawText("base damaged!", 50, globalConst::screen_w/2, 72, false, sf::Color::Red);
+            }
+        } else {
+            _baseDamageClock.reset(false);
+            base_blink = false;
+        }
+    }
 }
 
 void HUD::drawGlobalTimer()
@@ -231,4 +255,30 @@ void HUD::showFail(bool val)
 
         _surviveTimeStr = std::to_string(minutes) + " minutes " + std::to_string(seconds) + " seconds";
     }
+}
+
+
+void HUD::checkForGamePause()
+{
+    if (!_pause && globalVars::gameIsPaused) {
+        if (_baseDamageClock.isRunning()) {
+            _blinkClock.pause();
+            _baseDamageClock.pause();
+        }
+        _pause = true;
+    } else if (_pause && ! globalVars::gameIsPaused) {
+        if (_baseDamageClock.isPaused()) {
+            _blinkClock.resume();
+            _baseDamageClock.resume();
+        }
+        _pause = false;
+    }
+}
+
+void HUD::onBaseDamaged()
+{
+    base_blink = true;
+    _baseDamageClock.reset(true);
+    _blinkClock.reset(true);
+    SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::Alarm, true);
 }

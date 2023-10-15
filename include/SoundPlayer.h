@@ -40,7 +40,8 @@ public:
         PartialReload,
         FullReload,
         SetLandmine,
-        RejectLandmine
+        RejectLandmine,
+        Alarm
     };
 
 private:

@@ -14,6 +14,7 @@
 #include "PlayerController.h"
 #include "RandomMapCreator.h"
 #include "SoundPlayer.h"
+#include "StartLevelScreen.h"
 #include "TitleScreen.h"
 #include "Utils.h"
 #include "UiUtils.h"
@@ -24,14 +25,8 @@ namespace allinone {
 
 using namespace globalTypes;
 
-Game::Game() : gameState(GameState::TitleScreen) {
-    if (!_texture.loadFromFile("assets/shop-window.png")) {
-        Logger::instance() << " failed to load texture\n";
-        return;
-    }
-
-    _sprite.setTexture(_texture);
-    _sprite.setScale(8, 8);
+Game::Game() : gameState(GameState::TitleScreen)
+{
 }
 
 bool Game::loadAssets()
@@ -40,7 +35,6 @@ bool Game::loadAssets()
         Logger::instance() << "[ERROR] Could not open assets/spriteSheet32x32.png";
         return false;
     }
-
 
     if (!AssetManager::instance().loadFont("assets/joystix.otf")) {
         Logger::instance() << "[ERROR] fonts not loaded";
@@ -55,7 +49,6 @@ bool Game::initializeWindow()
     using namespace globalConst;
     Utils::window.create(sf::VideoMode(screen_w, screen_h), "Retro Tank Massacre SFML", sf::Style::Fullscreen);
 
-    //Utils::window.setVerticalSyncEnabled(true);
     Utils::window.setFramerateLimit(FixedFrameRate);
     Utils::window.setKeyRepeatEnabled(false);
 
@@ -145,12 +138,7 @@ void Game::processWindowEvents()
                 if (gameState == GameState::TitleScreen) {
                     TitleScreen::instance().processKeyboardPress(event.key.scancode);
                 } else if (gameState == GameState::StartLevelScreen) {
-                    if (event.key.scancode == sf::Keyboard::Scan::Enter)
-                        gameState = GameState::StartLevel;
-                    else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
-                        SoundPlayer::instance().stopSound(SoundPlayer::briefingTheme);
-                        gameState = GameState::TitleScreen;
-                    }
+                    StartLevelScreen::instance().processKeyboardPress(event.key.scancode, gameState);
                 } else if (gameState == PlayingLevel) {
                     if (LevelUpPopupMenu::instance().isOpen()) {
                         if (event.key.scancode == sf::Keyboard::Scan::Enter) {
@@ -172,19 +160,7 @@ void Game::processWindowEvents()
                 } else if (gameState == BonusShop) {
                     BonusShopWindow::instance().processKeyboardPress(event.key.scancode, gameState);
                 } else if (gameState == GameState::SelectLevel) {
-                    if (event.key.scancode == sf::Keyboard::Scan::Down)
-                        MissionSelectScreen::instance().moveCursorDown();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Up)
-                        MissionSelectScreen::instance().moveCursorUp();
-                    else if (event.key.scancode == sf::Keyboard::Scan::Enter) {
-                        MissionSelectScreen::instance().selectLevel();
-                        gameState = GameState::LoadNextLevel;
-                    } else if (event.key.scancode == sf::Keyboard::Scan::Escape) {
-                        if (PersistentGameData::instance().isShopUnlocked())
-                            gameState = GameState::BonusShop;
-                        else
-                            gameState = GameState::TitleScreen;
-                    }
+                    MissionSelectScreen::instance().processKeyboardPress(event.key.scancode, gameState);
                 }
                 else if (gameState == GameState::GameOverScreen) {
                     if (event.key.scancode == sf::Keyboard::Scan::Enter || event.key.scancode == sf::Keyboard::Scan::Enter || event.key.scancode == sf::Keyboard::Scan::Escape)
@@ -249,7 +225,8 @@ int Game::processStateChange()
         _killsCount = 0;
         return 0;
     } else if (gameState == GameState::StartLevelScreen) {
-        drawStartLevelScreen();
+        //drawStartLevelScreen();
+        StartLevelScreen::instance().draw();
         return 0;
     }
     else if (gameState == GameState::StartLevel) {
@@ -299,6 +276,8 @@ bool Game::buildLevelMap(std::string fileName)
     _currentLevelProperties = mapBuilder.buildMapFromData();
     if (_currentLevelProperties.failedToLoad)
         return false;
+
+    StartLevelScreen::instance().setLevelProperties(_currentLevelProperties);
 
     if (mapBuilder.mapWidth() > globalConst::maxFieldWidth || mapBuilder.mapHeight() > globalConst::maxFieldHeight) {
         Logger::instance() << "[ERROR] the map size exceeds the limits of the screen. Aborting game..." << fileName;
@@ -363,12 +342,8 @@ void Game::drawGameScreen()
     // draw objects (order matter)
     // draw border
     using namespace globalConst;
-    //sf::RectangleShape greyRect(sf::Vector2f(screen_w, screen_h));
-    //greyRect.setFillColor(sf::Color(102, 102, 102));
-    //Utils::window.draw(greyRect);
 
     // draw view port
-
     int w = std::min<int>(globalVars::mapSize.x*globalConst::spriteDisplaySizeX, globalVars::gameViewPort.width);
     int h = std::min<int>(globalVars::mapSize.y*globalConst::spriteDisplaySizeY, globalVars::gameViewPort.height);
     sf::RectangleShape blackRect(sf::Vector2f(w, h));
@@ -552,83 +527,6 @@ bool Game::failConditionsMet() const
     }
 
     return false;
-}
-
-void Game::drawStartLevelScreen()
-{
-    using namespace globalConst;
-    constexpr int screenCenterX = screen_w / 2;
-    constexpr int screenCenterY = screen_h / 2;
-
-    constexpr int screenQuarterY = screen_h / 4;
-
-    // grey background
-    //UiUtils::instance().drawRect(sf::IntRect(0, 0, screen_w, screen_h), sf::Color(102, 102, 102));
-    Utils::window.draw(_sprite);
-
-    int currentStringY = screenQuarterY - 64;
-    // level name
-    UiUtils::instance().drawText(
-        _currentLevelProperties.name, 48,
-        screenCenterX, currentStringY, false,
-        sf::Color::White);
-
-    currentStringY += 80;
-
-    for (auto& brief : _currentLevelProperties.briefing) {
-        UiUtils::instance().drawText( brief, 23, screenCenterX, currentStringY, false, sf::Color::White);
-        currentStringY += 25;
-    }
-
-    // level goal
-    currentStringY += 75;
-    UiUtils::instance().drawText(
-        "Win", 32,
-        screenCenterX, currentStringY, false,
-        sf::Color::Green);
-
-    currentStringY += 32;
-    const Level::WinCondition win = _currentLevelProperties.win;
-    const int winParam = _currentLevelProperties.winParam;
-    char formattedStr[100];
-    {
-        const char *placeholder = Level::winDescriptionsMap.at(win);
-        sprintf(formattedStr, placeholder, winParam);
-    }
-    //std::string_view str = std::string_view(Level::winDescriptionsMap.at(win));
-    UiUtils::instance().drawText(
-        formattedStr, 24,
-        screenCenterX, currentStringY, false, sf::Color::White);
-
-    // fail condition
-    currentStringY += 60;
-    UiUtils::instance().drawText(
-        "Fail", 32,
-        screenCenterX, currentStringY, false,
-        sf::Color::Red);
-
-    const Level::FailCondition fail = _currentLevelProperties.fail;
-    const int failParam = _currentLevelProperties.failParam;
-    {
-        const char *placeholder = Level::failDescriptionsMap.at(fail);
-        sprintf(formattedStr, placeholder, winParam);
-    }
-    currentStringY += 32;
-    UiUtils::instance().drawText(
-        formattedStr,
-        24, screenCenterX, currentStringY, false, sf::Color::White);
-
-    // prompt
-    currentStringY += 150;
-
-    auto rect = AssetManager::instance().getAnimationFrame("button", "default", 0).rect;
-    UiUtils::instance().drawIcon(rect, screenCenterX, currentStringY);
-
-    UiUtils::instance().drawText(
-        "start", 26,
-        screenCenterX, currentStringY, false,
-        sf::Color::Yellow);
-    Utils::window.display();
 }
 
 

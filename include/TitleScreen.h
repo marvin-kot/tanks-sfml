@@ -36,6 +36,9 @@ class TitleScreen
     void drawIntro2(int screenCenterX, int screenCenterY);
     void drawTitleMenu(int screenCenterX, int screenCenterY);
 
+    sf::Texture _logoTexture;
+    sf::Sprite _logoSprite;
+
 public:
     static TitleScreen& instance();
 

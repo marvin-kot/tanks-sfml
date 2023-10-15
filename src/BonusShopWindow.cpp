@@ -13,7 +13,7 @@
 
 
 
-BonusShopWindow::BonusShopWindow() : _currentUpgradeCursor(0)
+BonusShopWindow::BonusShopWindow()
 {
     if (!_texture.loadFromFile("assets/shop-window.png")) {
         Logger::instance() << " failed to load texture\n";
@@ -27,6 +27,8 @@ BonusShopWindow::BonusShopWindow() : _currentUpgradeCursor(0)
     const int lastRow = (perksNum-1)/4;
     buttonExitCursorPos = (lastRow+1)*4 + 1;
     buttonStartCursorPos = (lastRow+1)*4 + 2;
+
+    _currentUpgradeCursor = buttonStartCursorPos;
 }
 
 BonusShopWindow& BonusShopWindow::instance()
@@ -124,9 +126,11 @@ void BonusShopWindow::draw()
     else if (_currentUpgradeCursor == buttonStartCursorPos)
         drawCursorOnButton(bottomOffsetX*3, buttonY);
 
-    auto rect = AssetManager::instance().getAnimationFrame("button", "default", 0).rect;
-    UiUtils::instance().drawIcon(rect, bottomOffsetX, buttonY);
-    UiUtils::instance().drawIcon(rect, bottomOffsetX*3, buttonY);
+    auto rectDefault = AssetManager::instance().getAnimationFrame("button", "default", 0).rect;
+    auto rectSelected = AssetManager::instance().getAnimationFrame("button", "selected", 0).rect;
+
+    UiUtils::instance().drawIcon(_currentUpgradeCursor == buttonExitCursorPos ? rectSelected : rectDefault, bottomOffsetX, buttonY);
+    UiUtils::instance().drawIcon(_currentUpgradeCursor == buttonStartCursorPos ? rectSelected : rectDefault, bottomOffsetX*3, buttonY);
 
     UiUtils::instance().drawText("exit", promptSize+4, bottomOffsetX, buttonY, false, sf::Color::Red);
     UiUtils::instance().drawText("start", promptSize+4, bottomOffsetX*3, buttonY, false, sf::Color::Green);
@@ -251,8 +255,11 @@ void BonusShopWindow::moveCursorUp()
             _currentUpgradeCursor = buttonExitCursorPos;
         //_currentUpgradeCursor += lastRow*4;
     }
-    else
+    else {
         _currentUpgradeCursor -= 4;
+        if (_currentUpgradeCursor >= perksNum)
+            _currentUpgradeCursor = perksNum-1;
+    }
 }
 
 void BonusShopWindow::moveCursorDown()
@@ -271,8 +278,13 @@ void BonusShopWindow::moveCursorDown()
                 _currentUpgradeCursor = buttonExitCursorPos;
         }
     }
-    else
+    else {
         _currentUpgradeCursor += 4;
+        if (_currentUpgradeCursor >= perksNum)
+            _currentUpgradeCursor = perksNum-1;
+    }
+
+
 
     if (_currentUpgradeCursor > buttonStartCursorPos)
         _currentUpgradeCursor = buttonStartCursorPos;

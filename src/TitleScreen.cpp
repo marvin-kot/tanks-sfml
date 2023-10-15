@@ -18,6 +18,12 @@ TitleScreen::TitleScreen()
 , _selected(false)
 , _blink(false)
 {
+    if (_logoTexture.loadFromFile("assets/stork-pixel.png")) {
+        _logoSprite.setTexture(_logoTexture);
+    } else {
+        Logger::instance() << "assets/stork-pixel.png" <<  "failed to load texture\n";
+    }
+
     _clock.restart();
 }
 
@@ -120,9 +126,17 @@ void TitleScreen::drawIntro1(int screenCenterX, int screenCenterY)
         return;
     }
 
+    auto rect = _logoSprite.getTextureRect();
+    //_logoSprite.setTextureRect(rect);
+    _logoSprite.setScale(globalConst::spriteScaleX+1, globalConst::spriteScaleY+1);
+    _logoSprite.setOrigin(rect.width/2, rect.height/2);
+    _logoSprite.setPosition(screenCenterX, screenCenterY - 80);
+    _logoSprite.setColor(startGameColor);
+    Utils::window.draw(_logoSprite);
+
     constexpr int titleFontSize = 36;
-    int currentY = screenCenterY;
-    UiUtils::instance().drawText( "mountain shark games", titleFontSize, screenCenterX, currentY, false, startGameColor);
+    int currentY = screenCenterY + 80;
+    UiUtils::instance().drawText( "mountain stork games", titleFontSize, screenCenterX, currentY, false, startGameColor);
 
     // game version
     constexpr int versionFontSize = titleFontSize / 3;
@@ -253,6 +267,11 @@ void TitleScreen::drawTitleMenu(int screenCenterX, int screenCenterY)
         UiUtils::instance().drawAnimatedEagleCursor(screenCenterX + (promptFontSize * option.size() / 2) + 16, currentY);
     }
     UiUtils::instance().drawText( option, promptFontSize, screenCenterX, currentY, false, exitColor );
+
+    // bottom
+    //constexpr int versFontSize = titleFontSize / 6;
+    static std::string bottom = std::format("(c) 2023 all rights reserved");
+    UiUtils::instance().drawText(bottom, versionFontSize, screenCenterX, globalConst::screen_h - 60);
 }
 
 void TitleScreen::processKeyboardPress(sf::Keyboard::Scancode scancode)

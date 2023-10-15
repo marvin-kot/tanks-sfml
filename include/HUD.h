@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 
+#include <sftools/Chronometer.hpp>
 
 class HUD
 {
@@ -26,10 +27,17 @@ class HUD
     bool _showFail = false;
 
     std::string _surviveTimeStr;
+
+    sftools::Chronometer _blinkClock;
+    sftools::Chronometer _baseDamageClock;
+    bool _pause = false;
+    void checkForGamePause();
 public:
     static HUD& instance();
 
     void draw();
     void showWin(bool val);
     void showFail(bool val);
+
+    void onBaseDamaged();
 };

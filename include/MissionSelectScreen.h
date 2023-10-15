@@ -3,6 +3,10 @@
 #include <string>
 #include <vector>
 
+#include "GlobalTypes.h"
+
+#include <SFML/Window/Keyboard.hpp>
+
 
 class MissionSelectScreen
 {
@@ -44,4 +48,6 @@ public:
     int getSelectedIndex() const {return _cursorPos; }
 
     int totalMissions() const { return _missions.size(); }
+
+    void processKeyboardPress(sf::Keyboard::Scancode scancode, globalTypes::GameState& gameState);
 };

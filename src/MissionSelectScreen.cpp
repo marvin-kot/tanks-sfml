@@ -1,6 +1,6 @@
 #include "GlobalConst.h"
 #include "MissionSelectScreen.h"
-#include "MapCreator.h"
+#include "RandomMapCreator.h"
 #include "PersistentGameData.h"
 #include "SoundPlayer.h"
 #include "UiUtils.h"
@@ -37,7 +37,7 @@ void MissionSelectScreen::open()
     assert(fs::exists(dir) == true);
     assert(fs::is_directory(dir) == true);
 
-    MapCreator mapCreator;
+    RandomMapCreator mapCreator;
 
     for (const auto& entry : fs::directory_iterator(dir)) {
         if (!fs::is_regular_file(entry.status()))
@@ -157,3 +157,19 @@ void MissionSelectScreen::selectLevel()
     SoundPlayer::instance().playSound(SoundPlayer::SoundType::startGame);
 }
 
+void MissionSelectScreen::processKeyboardPress(sf::Keyboard::Scancode scancode, globalTypes::GameState& gameState)
+{
+    if (scancode == sf::Keyboard::Scan::Down)
+        moveCursorDown();
+    else if (scancode == sf::Keyboard::Scan::Up)
+        moveCursorUp();
+    else if (scancode == sf::Keyboard::Scan::Enter) {
+        selectLevel();
+        gameState = globalTypes::GameState::LoadNextLevel;
+    } else if (scancode == sf::Keyboard::Scan::Escape) {
+        if (PersistentGameData::instance().isShopUnlocked())
+            gameState = globalTypes::GameState::BonusShop;
+        else
+            gameState = globalTypes::GameState::TitleScreen;
+    }
+}

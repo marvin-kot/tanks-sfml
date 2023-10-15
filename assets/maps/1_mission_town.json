@@ -1,0 +1,69 @@
+{
+    "title": "Welcome to the Battle Town",
+    "win_condition" : "SURVIVE",
+    "win_param" : 5,
+    "fail_condition" : "LOSE_BASE",
+    "fail_param" : 0,
+    "briefing" : [
+        "Brave commander! You are the only survivor of your tank regiment.",
+        "And now you have an order: Protect the command center at any cost",
+        "until the reinforcement come! This is critical for the course of the war.",
+        "May the odds be on your side!"
+    ],
+    "map": {
+        "width" : 21,
+        "height" : 21,
+        "segments" : {
+            "size" : "7x7",
+            "variants" : {
+                "1-1" : {
+                    "3" : {"2-1": [4]}
+                },
+                "1-2" : {},
+                "1-3" : {},
+                "2-1" : {},
+                "2-2" : {},
+                "2-3" : {},
+                "3-1" : {},
+                "3-2" : {},
+                "3-3" : {}
+            }
+        }
+    },
+    "enemies" : [
+        {"type":"npcBaseTank", "x": 0, "y": 0, "delay": 0, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 20, "y": 0, "delay": 0, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 0, "y": 20, "delay": 0, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 20, "y": 20, "delay": 0, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 10, "y": 0, "delay": 20, "timeout": 20, "quantity": 2 },
+        {"type" : "npcBaseTank", "x": 10, "y": 20, "delay": 20, "timeout": 20, "quantity": 2 },
+
+        {"type" : "npcArmorTank", "x": 10, "y": 0, "delay": 60, "timeout": 15, "quantity": 3 },
+        {"type" : "npcArmorTank", "x": 10, "y": 20, "delay": 60, "timeout": 15, "quantity": 3 },
+        {"type" : "npcBaseTank", "x": 0, "y": 0, "delay": 70, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 20, "y": 0, "delay": 70, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 0, "y": 20, "delay": 70, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 20, "y": 20, "delay": 70, "timeout": 13, "quantity": 4 },
+
+        {"type" : "npcFastTank", "x": 0, "y": 0, "delay": 120, "timeout": 13, "quantity": 4 },
+        {"type" : "npcFastTank", "x": 20, "y": 0, "delay": 124, "timeout": 13, "quantity": 4 },
+        {"type" : "npcFastTank", "x": 0, "y": 20, "delay": 120, "timeout": 13, "quantity": 4 },
+        {"type" : "npcFastTank", "x": 20, "y": 20, "delay": 124, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 10, "y": 0, "delay": 130, "timeout": 13, "quantity": 4 },
+        {"type" : "npcBaseTank", "x": 10, "y": 20, "delay": 130, "timeout": 13, "quantity": 4 },
+
+        {"type" : "npcBaseTank", "x": 0, "y": 10, "delay": 180, "timeout": 15, "quantity": 8 },
+        {"type" : "npcBaseTank", "x": 20, "y": 10, "delay": 180, "timeout": 15, "quantity": 8 },
+        {"type" : "npcArmorTank", "x": 0, "y": 0, "delay": 180, "timeout": 13, "quantity": 4 },
+        {"type" : "npcArmorTank", "x": 20, "y": 0, "delay": 180, "timeout": 13, "quantity": 4 },
+        {"type" : "npcArmorTank", "x": 0, "y": 20, "delay": 180, "timeout": 13, "quantity": 4 },
+        {"type" : "npcArmorTank", "x": 20, "y": 20, "delay": 180, "timeout": 13, "quantity": 4 },
+
+        {"type" : "npcFastTank", "x": 0, "y": 0, "delay": 240, "timeout": 13, "quantity": 4 },
+        {"type" : "npcFastTank", "x": 20, "y": 0, "delay": 240, "timeout": 13, "quantity": 4 },
+        {"type" : "npcFastTank", "x": 0, "y": 20, "delay": 240, "timeout": 13, "quantity": 4 },
+        {"type" : "npcFastTank", "x": 20, "y": 20, "delay": 240, "timeout": 13, "quantity": 4 },
+        {"type" : "npcDoubleCannonArmorTank", "x": 10, "y": 0, "delay": 245, "timeout": 14, "quantity": 4 },
+        {"type" : "npcDoubleCannonArmorTank", "x": 10, "y": 20, "delay": 245, "timeout": 14, "quantity": 4 }
+    ]
+}

@@ -33,7 +33,8 @@ static std::unordered_map<SoundType, std::string> soundPaths = {
     {SoundType::PartialReload, string("assets/audio/Gun Reload 6.wav")},
     {SoundType::FullReload, string("assets/audio/Gun Reload 1.wav")},
     {SoundType::SetLandmine, string("assets/audio/big_laser_zap_rnd_01.wav")},
-    {SoundType::RejectLandmine, string("assets/audio/UI_reject_03.wav")}
+    {SoundType::RejectLandmine, string("assets/audio/UI_reject_03.wav")},
+    {SoundType::Alarm, string("assets/audio/alarm_repeating.wav")}
 };
 
 

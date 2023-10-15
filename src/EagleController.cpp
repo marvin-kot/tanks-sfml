@@ -2,6 +2,7 @@
 #include "EagleController.h"
 #include "GameObject.h"
 #include "GlobalConst.h"
+#include "HUD.h"
 #include "ObjectsPool.h"
 #include "PersistentGameData.h"
 #include "PlayerController.h"
@@ -283,8 +284,11 @@ void EagleController::onDamaged()
         } else {
             // eagle is dead - run is finished
         }
-    } else if (hasLevelOfUpgrade(PlayerUpgrade::BaseRestoreOnDamage) > -1) {
-        fastRepairWalls(100);
+    } else {
+        HUD::instance().onBaseDamaged();
+        if (hasLevelOfUpgrade(PlayerUpgrade::BaseRestoreOnDamage) > -1)
+            fastRepairWalls(100);
+
     }
 }
 
