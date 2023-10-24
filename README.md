@@ -1,6 +1,6 @@
 # Retro Tank Massacre
 
-Yet another remake of the classic NES Battle City game.
+Re-thinking of the classic NES Battle City game with addinig of roguelike elements.
 
 Implemented in C++ using SFML library.
 
