@@ -2,7 +2,6 @@
 #include "GlobalTypes.h"
 #include "NetGameTypes.h"
 #include "GameClient.h"
-#include "GlobalTypes.h"
 
 PlayerControllerClient::PlayerControllerClient()
 {

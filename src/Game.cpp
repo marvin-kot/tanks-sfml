@@ -7,6 +7,7 @@
 #include "GlobalConst.h"
 #include "HUD.h"
 #include "LevelUpPopupMenu.h"
+#include "ExitPopupMenu.h"
 #include "Logger.h"
 #include "MissionSelectScreen.h"
 #include "ObjectsPool.h"
@@ -104,6 +105,11 @@ bool Game::update()
         LevelUpPopupMenu::instance().draw();
     }
 
+    if (ExitPopupMenu::instance().isOpen()) {
+        SoundPlayer::instance().pauseAllSounds();
+        ExitPopupMenu::instance().draw();
+    }
+
     updateDisplay();
 
     if (!globalVars::gameIsPaused)
@@ -144,16 +150,33 @@ void Game::processWindowEvents()
                         if (event.key.scancode == sf::Keyboard::Scan::Enter) {
                             LevelUpPopupMenu::instance().getSelectedUpgrade();
                             LevelUpPopupMenu::instance().close();
-                        } else if (event.key.scancode == sf::Keyboard::Scan::Left)
+                        } else if (event.key.scancode == sf::Keyboard::Scan::Left) {
                             LevelUpPopupMenu::instance().moveCursorLeft();
-                        if (event.key.scancode == sf::Keyboard::Scan::Right)
+                        }
+                        else if (event.key.scancode == sf::Keyboard::Scan::Right) {
                             LevelUpPopupMenu::instance().moveCursorRight();
+                        }
                         break; // do not process further!
                     }
 
+                    if (ExitPopupMenu::instance().isOpen()) {
+                        if (event.key.scancode == sf::Keyboard::Scan::Escape) {
+                            ExitPopupMenu::instance().close();
+                        }
+                        else if (event.key.scancode == sf::Keyboard::Scan::Enter) {
+                            ExitPopupMenu::instance().close();
+                            gameState = ExitPopupMenu::instance().applyChoice();
+                        } else if (event.key.scancode == sf::Keyboard::Scan::Left) {
+                            ExitPopupMenu::instance().moveCursorLeft();
+                        }
+                        else if (event.key.scancode == sf::Keyboard::Scan::Right) {
+                            ExitPopupMenu::instance().moveCursorLeft();
+                        }
+                        break;
+                    }
+
                     if (event.key.scancode == sf::Keyboard::Scan::Escape) {
-                        // TODO: ask player confirmation
-                        gameState = GameState::GameOver;
+                        ExitPopupMenu::instance().open();
                     } else if (event.key.scancode == sf::Keyboard::Scan::Pause || event.key.scancode == sf::Keyboard::Scan::Enter) {
                         pause(!globalVars::gameIsPaused);
                     }

@@ -19,15 +19,20 @@ static std::vector<int> xpNeededForLevelUp;
 
 void initXpLevelupNumbers()
 {
-    std::vector<int> limits = { 300, 500 };
-    for (int i = 2; i < 50 ; i++) {
+    std::vector<int> limits = {300, 500};
+    for (int i = 2; i < 50; i++)
+    {
         float coeff = 1;
-        if (i<4)        coeff = 1.4;
-        else if (i<6)        coeff = 1.3;
-        else if (i<8)   coeff = 1.2;
-        else            coeff = 1.1;
+        if (i < 4)
+            coeff = 1.4;
+        else if (i < 6)
+            coeff = 1.3;
+        else if (i < 8)
+            coeff = 1.2;
+        else
+            coeff = 1.1;
 
-        int val = ((int)(limits[i-1] * coeff) / 100) * 100;
+        int val = ((int)(limits[i - 1] * coeff) / 100) * 100;
         limits.push_back(val);
     }
 
@@ -35,15 +40,15 @@ void initXpLevelupNumbers()
 
     Logger::instance() << "XP limits for level ups:\n";
     xpNeededForLevelUp.push_back(limits[0]);
-    for (int i = 1; i < limits.size() ; i++) {
-        xpNeededForLevelUp.push_back( xpNeededForLevelUp[i-1] + limits[i] );
-        Logger::instance() << "    l." << i << " - " << xpNeededForLevelUp[i-1] << "\n";
+    for (int i = 1; i < limits.size(); i++)
+    {
+        xpNeededForLevelUp.push_back(xpNeededForLevelUp[i - 1] + limits[i]);
+        Logger::instance() << "    l." << i << " - " << xpNeededForLevelUp[i - 1] << "\n";
     }
 }
 
-
 PlayerController::PlayerController(GameObject *obj)
-: Controller(obj, globalConst::DefaultPlayerSpeed)
+    : Controller(obj, globalConst::DefaultPlayerSpeed)
 {
     _clock.reset(true);
     resetXP();
@@ -53,17 +58,20 @@ PlayerController::PlayerController(GameObject *obj)
 PlayerController::~PlayerController()
 {
     // if player has "atomic core" trait, kill all enemies instantly
-    if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::KillAllOnDeath)) {
+    if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::KillAllOnDeath))
+    {
         std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcDoubleCannonArmorTank"});
-        std::for_each(objectsToKill.cbegin(), objectsToKill.cend(), [](GameObject *obj) {
-            obj->markForDeletion();
-        });
+        std::for_each(objectsToKill.cbegin(), objectsToKill.cend(), [](GameObject *obj)
+                      { obj->markForDeletion(); });
     }
 
     // if player has "war machine learning"
-    if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::XpIncreaser)) {
-        for (auto obj : PlayerUpgrade::availablePerkObjects) {
-            if (obj->type() == PlayerUpgrade::XpIncreaser) {
+    if (PlayerUpgrade::playerOwnedPerks.contains(PlayerUpgrade::XpIncreaser))
+    {
+        for (auto obj : PlayerUpgrade::availablePerkObjects)
+        {
+            if (obj->type() == PlayerUpgrade::XpIncreaser)
+            {
                 obj->increaseLevel();
             }
         }
@@ -74,7 +82,8 @@ PlayerController::~PlayerController()
 
 void PlayerController::applyPerks()
 {
-    for (auto obj : PlayerUpgrade::availablePerkObjects) {
+    for (auto obj : PlayerUpgrade::availablePerkObjects)
+    {
         if (PlayerUpgrade::playerOwnedPerks.contains(obj->type()))
             obj->onCollect(_gameObject);
     }
@@ -100,18 +109,21 @@ bool PlayerController::wasPressed(KeysPressed flag)
 
 void PlayerController::blinkIfParalyzed()
 {
-    if (_paralyzedForMs > 0) {
+    if (_paralyzedForMs > 0)
+    {
         if (_paralyzeClock.getElapsedTime() > sf::milliseconds(_paralyzedForMs))
         {
             _paralyzedForMs = 0;
             _gameObject->spriteRenderer->hide(false);
             _gameObject->turret->spriteRenderer->hide(false);
             return;
-        } else if (_blinkClock.getElapsedTime() > sf::seconds(0.25)) {
-                _blinkClock.reset(true);
-                _blink = !_blink;
-                _gameObject->spriteRenderer->hide(_blink);
-                _gameObject->turret->spriteRenderer->hide(_blink);
+        }
+        else if (_blinkClock.getElapsedTime() > sf::seconds(0.25))
+        {
+            _blinkClock.reset(true);
+            _blink = !_blink;
+            _gameObject->spriteRenderer->hide(_blink);
+            _gameObject->turret->spriteRenderer->hide(_blink);
         }
     }
 }
@@ -119,10 +131,12 @@ void PlayerController::blinkIfParalyzed()
 void PlayerController::update()
 {
     checkForGamePause();
-    if (_pause) return;
+    if (_pause)
+        return;
     assert(_gameObject != nullptr);
 
-    if (_invincible && _invincibilityTimer.getElapsedTime() >= sf::milliseconds(_invincibilityTimeout)) {
+    if (_invincible && _invincibilityTimer.getElapsedTime() >= sf::milliseconds(_invincibilityTimeout))
+    {
         _invincible = false;
         delete _gameObject->visualEffect;
         _gameObject->visualEffect = nullptr;
@@ -138,8 +152,10 @@ void PlayerController::update()
     PlayerControllerClient::instance().update(&_recentPlayerInput);
 #endif
 
-    if (_recentPlayerInput.shoot_request) {
-        if (_gameObject->shoot()) {
+    if (_recentPlayerInput.shoot_request)
+    {
+        if (_gameObject->shoot())
+        {
             auto shootable = _gameObject->getComponent<Shootable>();
             assert(shootable != nullptr);
             SoundPlayer::instance().enqueueSound(shootable->shootSound(), true);
@@ -154,22 +170,28 @@ void PlayerController::update()
             else
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("default-shot", true);
         }
-    } else if (_recentPlayerInput.weapon2_request) {
-        if (_gameObject->useSecondWeapon()) {
+    }
+    else if (_recentPlayerInput.weapon2_request)
+    {
+        if (_gameObject->useSecondWeapon())
+        {
             SoundPlayer::instance().enqueueSound(SoundPlayer::SetLandmine, true);
-        } else
+        }
+        else
             SoundPlayer::instance().enqueueSound(SoundPlayer::RejectLandmine, true);
     }
 
     globalTypes::Direction direction = (_paralyzedForMs == 0)
-            ? static_cast<globalTypes::Direction>(_recentPlayerInput.direction_request)
-            : globalTypes::Direction::Unknown;
+                                           ? static_cast<globalTypes::Direction>(_recentPlayerInput.direction_request)
+                                           : globalTypes::Direction::Unknown;
 
     bool moved = false;
-    if (direction != globalTypes::Direction::Unknown) {
+    if (direction != globalTypes::Direction::Unknown)
+    {
         int speed = moveSpeedForCurrentFrame();
-        assert( direction != globalTypes::Direction::Unknown );
-        if (_gameObject->direction() != direction) {
+        assert(direction != globalTypes::Direction::Unknown);
+        if (_gameObject->direction() != direction)
+        {
             resetMoveStartTimer();
         }
 
@@ -184,16 +206,22 @@ void PlayerController::update()
         _lastActionTime = _clock.getElapsedTime();
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankMove, true);
         _gameObject->restartAnimation();
-    } else {
+    }
+    else
+    {
         // check if on ice
-        if (_gameObject->isOnIce()) {
+        if (_gameObject->isOnIce())
+        {
             SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::iceSkid, true);
-            if (_gameObject->move(_currMoveX, _currMoveY) == 0) {
+            if (_gameObject->move(_currMoveX, _currMoveY) == 0)
+            {
                 SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankStand, true);
                 _gameObject->stopAnimation();
                 _prevMoved = false;
             }
-        } else {
+        }
+        else
+        {
             SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::TankStand, true);
             _gameObject->stopAnimation();
             _prevMoved = false;
@@ -201,34 +229,39 @@ void PlayerController::update()
     }
 
     int ramLevel = hasLevelOfUpgrade(PlayerUpgrade::RamMachine);
-    if (ramLevel > -1) {
-        if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(0.1)) {
-            _gameObject->damage = ramLevel+1;
-            if (Utils::currentFrame % 2 == 0) {
-                assert (_gameObject->spriteRenderer);
+    if (ramLevel > -1)
+    {
+        if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(0.1))
+        {
+            _gameObject->damage = ramLevel + 1;
+            if (Utils::currentFrame % 2 == 0)
+            {
+                assert(_gameObject->spriteRenderer);
                 _gameObject->spriteRenderer->setOneFrameTintColor(sf::Color(200, 200, 255));
             }
-        } else
+        }
+        else
             _gameObject->damage = 0;
     }
 
-
-
-
-
-    if (hasLevelOfUpgrade(PlayerUpgrade::BulletTank) > -1) {
-        if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(0.9)) {
+    if (hasLevelOfUpgrade(PlayerUpgrade::BulletTank) > -1)
+    {
+        if (_prevMoved && _moveStartClock.getElapsedTime() > sf::seconds(0.9))
+        {
             // if "bullet tank" ability - become bullet + invulnerable + blink
-            if (Utils::currentFrame % 2 == 0) {
-                assert (_gameObject->spriteRenderer);
-                assert (_gameObject->turret);
-                assert (_gameObject->turret->spriteRenderer);
+            if (Utils::currentFrame % 2 == 0)
+            {
+                assert(_gameObject->spriteRenderer);
+                assert(_gameObject->turret);
+                assert(_gameObject->turret->spriteRenderer);
                 _gameObject->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
                 _gameObject->turret->spriteRenderer->setOneFrameTintColor(sf::Color(0, 255, 0));
             }
             _gameObject->damage = _gameObject->getComponent<Shootable>()->damage();
             setTemporaryInvincibility(globalConst::FixedFrameLength);
-        } else {
+        }
+        else
+        {
             _gameObject->damage = 0;
         }
     }
@@ -241,14 +274,17 @@ void PlayerController::resetMoveStartTimer()
 
 int PlayerController::trySqueeze()
 {
-    if (_currMoveX == 0) {
+    if (_currMoveX == 0)
+    {
         if (_gameObject->move(2, _currMoveY) == 0)
             if (_gameObject->move(-2, _currMoveY) == 0)
                 if (_gameObject->move(4, _currMoveY) == 0)
                     if (_gameObject->move(-4, _currMoveY) == 0)
                         if (_gameObject->move(6, _currMoveY) == 0)
                             return _gameObject->move(-6, _currMoveY);
-    } else if (_currMoveY == 0) {
+    }
+    else if (_currMoveY == 0)
+    {
         if (_gameObject->move(_currMoveX, 2) == 0)
             if (_gameObject->move(_currMoveX, -2) == 0)
                 if (_gameObject->move(_currMoveX, 4) == 0)
@@ -260,23 +296,25 @@ int PlayerController::trySqueeze()
     return 1;
 }
 
-
 void PlayerController::updateAppearance()
 {
     assert(_gameObject != nullptr);
     assert(_gameObject->turret != nullptr);
 
     SpriteRenderer *baseRenderer = _gameObject->getComponent<SpriteRenderer>();
-    if (baseRenderer == nullptr) return;
+    if (baseRenderer == nullptr)
+        return;
 
     SpriteRenderer *turretRenderer = _gameObject->turret->getComponent<SpriteRenderer>();
-    if (turretRenderer == nullptr) return;
+    if (turretRenderer == nullptr)
+        return;
 
     assert(baseRenderer != nullptr);
     assert(turretRenderer != nullptr);
 
     Damageable *damageable = _gameObject->getComponent<Damageable>();
-    if (damageable == nullptr) return;
+    if (damageable == nullptr)
+        return;
     assert(damageable != nullptr);
 
     int turretOffsetX = 0;
@@ -285,45 +323,52 @@ void PlayerController::updateAppearance()
     using namespace globalConst;
     bool damaged = false;
 
-    switch (damageable->defence()) {
-        case 0:
-            baseRenderer->setCurrentAnimation("damaged");
-            damaged = true;
-            break;
-        case 1:
-            baseRenderer->setCurrentAnimation("default");
-            break;
-        case 2:
-            baseRenderer->setCurrentAnimation("protection-1");
-            break;
-        case 3:
-            baseRenderer->setCurrentAnimation("protection-1");
-            break;
-        case 4:
-            baseRenderer->setCurrentAnimation("protection-2");
-            break;
-        case 5:
-            baseRenderer->setCurrentAnimation("protection-2");
-            break;
+    switch (damageable->defence())
+    {
+    case 0:
+        baseRenderer->setCurrentAnimation("damaged");
+        damaged = true;
+        break;
+    case 1:
+        baseRenderer->setCurrentAnimation("default");
+        break;
+    case 2:
+        baseRenderer->setCurrentAnimation("protection-1");
+        break;
+    case 3:
+        baseRenderer->setCurrentAnimation("protection-1");
+        break;
+    case 4:
+        baseRenderer->setCurrentAnimation("protection-2");
+        break;
+    case 5:
+        baseRenderer->setCurrentAnimation("protection-2");
+        break;
     }
 
     Shootable *shootable = _gameObject->getComponent<Shootable>();
-    if (shootable == nullptr) return;
+    if (shootable == nullptr)
+        return;
     assert(shootable != nullptr);
 
     std::string turretAnimation = "default";
 
-    if (shootable->bulletSpeed() > globalConst::DefaultPlayerBulletSpeed) {
+    if (shootable->bulletSpeed() > globalConst::DefaultPlayerBulletSpeed)
+    {
         _upgradeSpeed = true;
         turretAnimation = "upgrade-speed";
-    } else {
+    }
+    else
+    {
         _upgradeSpeed = false;
     }
 
-    if (shootable->damage() > 1) {
+    if (shootable->damage() > 1)
+    {
         _upgradePower = true;
         turretAnimation = "upgrade-power";
-    } else
+    }
+    else
         _upgradePower = false;
 
     if (_4dirSet)
@@ -342,7 +387,8 @@ void PlayerController::updateAppearance()
 
 void PlayerController::onDamaged()
 {
-    if (!_invincible) {
+    if (!_invincible)
+    {
         updateAppearance();
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::GetDamage, true);
         _gameObject->getComponent<SpriteRenderer>()->setOneFrameTintColor(sf::Color::Red);
@@ -358,7 +404,8 @@ void PlayerController::setTemporaryInvincibility(int msec)
     Damageable *dmg = _gameObject->getComponent<Damageable>();
     dmg->makeInvincible(true);
 
-    if (_gameObject->visualEffect == nullptr) {
+    if (_gameObject->visualEffect == nullptr)
+    {
         GameObject *cloud = new GameObject(_gameObject, "cloud");
         cloud->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
         cloud->setRenderer(new LoopAnimationSpriteRenderer(cloud, "cloud"), 4);
@@ -373,7 +420,8 @@ void PlayerController::addXP(int val)
     globalVars::player1XP += xpIncrease;
     _xp += xpIncrease;
 
-    if (_level >= xpNeededForLevelUp.size()) {
+    if (_level >= xpNeededForLevelUp.size())
+    {
         Logger::instance() << "[ERROR] Level too big!\n";
         return;
     }
@@ -392,7 +440,8 @@ void PlayerController::dropSkull()
     SkullCollectable *skull = new SkullCollectable(collectable);
     skull->xp = _xp;
     skull->level = _level;
-    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ++it) {
+    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ++it)
+    {
         PlayerUpgrade *obj = (*it).second;
         skull->playerUpgrades.push_back(obj);
     }
@@ -408,7 +457,8 @@ void PlayerController::resetXP()
     _xp = 0;
     _level = 0;
 
-    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ) {
+    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end();)
+    {
         PlayerUpgrade *obj = (*it).second;
         it = _collectedUpgrades.erase(it);
         if (globalVars::player1Lives < 0)
@@ -440,19 +490,20 @@ void PlayerController::restoreLevelAndUpgrades(SkullCollectable *skull)
     globalVars::player1Level = _level = skull->level;
 
     // delete existing upgrades
-    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end(); ) {
+    for (auto it = _collectedUpgrades.begin(); it != _collectedUpgrades.end();)
+    {
         PlayerUpgrade *obj = (*it).second;
         it = _collectedUpgrades.erase(it);
     }
 
-    for (PlayerUpgrade *upgrade : skull->playerUpgrades) {
+    for (PlayerUpgrade *upgrade : skull->playerUpgrades)
+    {
         auto type = upgrade->type();
         _collectedUpgrades[type] = upgrade;
     }
 
     applyUpgrades();
 }
-
 
 void PlayerController::levelUp()
 {
@@ -465,12 +516,11 @@ void PlayerController::levelUp()
 
     PlayerUpgrade::generateRandomUpgradesForPlayer(_gameObject);
     LevelUpPopupMenu::instance().open();
-
 }
 
 void PlayerController::chooseUpgrade(int index)
 {
-    assert(index>=0 && index < PlayerUpgrade::currentRandomUpgrades.size());
+    assert(index >= 0 && index < PlayerUpgrade::currentRandomUpgrades.size());
 
     auto upgrade = PlayerUpgrade::currentRandomUpgrades[index];
     assert(upgrade != nullptr);
@@ -481,51 +531,60 @@ void PlayerController::chooseUpgrade(int index)
 
     switch (upgrade->category())
     {
-        case PlayerUpgrade::OneTimeBonus:
-            upgrade->onCollect(_gameObject);
-            delete upgrade;
-            break;
-        case PlayerUpgrade::TankUpgrade:
+    case PlayerUpgrade::OneTimeBonus:
+        upgrade->onCollect(_gameObject);
+        delete upgrade;
+        break;
+    case PlayerUpgrade::TankUpgrade:
+    {
+        auto tp = upgrade->type();
+        int lvl = hasLevelOfUpgrade(tp);
+        // TODO magic names
+        if (lvl > -1 && lvl < globalConst::MaxUpgradeLevel)
         {
-            auto tp = upgrade->type();
-            int lvl = hasLevelOfUpgrade(tp);
-            // TODO magic names
-            if (lvl > -1 && lvl < globalConst::MaxUpgradeLevel) {
-                _collectedUpgrades[tp]->increaseLevel();
-            } else {
-                _collectedUpgrades[tp] = upgrade;
-            }
-
-            // specific cases
-            if (tp == PlayerUpgrade::PiercingBullets) {
-                removeUpgrade(PlayerUpgrade::PowerBullets);
-                removeUpgrade(PlayerUpgrade::FastBullets);
-            }
-            if (tp == PlayerUpgrade::BulletTank) {
-                removeUpgrade(PlayerUpgrade::TankArmor);
-                removeUpgrade(PlayerUpgrade::TankSpeed);
-            }
-            if (tp == PlayerUpgrade::Rocket) {
-                removeUpgrade(PlayerUpgrade::BonusEffectiveness);
-                removeUpgrade(PlayerUpgrade::PowerBullets);
-            }
-            if (tp == PlayerUpgrade::MachineGun) {
-                removeUpgrade(PlayerUpgrade::MoreBullets);
-                removeUpgrade(PlayerUpgrade::FastBullets);
-            }
-            if (tp == PlayerUpgrade::FourDirectionBullets) {
-                removeUpgrade(PlayerUpgrade::MoreBullets);
-                removeUpgrade(PlayerUpgrade::PowerBullets);
-            }
-            if (tp == PlayerUpgrade::ReloadOnKill) {
-                removeUpgrade(PlayerUpgrade::FastReload);
-                removeUpgrade(PlayerUpgrade::PowerBullets);
-            }
-            break;
+            _collectedUpgrades[tp]->increaseLevel();
         }
-        case PlayerUpgrade::BaseUpgrade:
-            eagleController->upgrade(upgrade);
-            break;
+        else
+        {
+            _collectedUpgrades[tp] = upgrade;
+        }
+
+        // specific cases
+        if (tp == PlayerUpgrade::PiercingBullets)
+        {
+            removeUpgrade(PlayerUpgrade::PowerBullets);
+            removeUpgrade(PlayerUpgrade::FastBullets);
+        }
+        if (tp == PlayerUpgrade::BulletTank)
+        {
+            removeUpgrade(PlayerUpgrade::TankArmor);
+            removeUpgrade(PlayerUpgrade::TankSpeed);
+        }
+        if (tp == PlayerUpgrade::Rocket)
+        {
+            removeUpgrade(PlayerUpgrade::BonusEffectiveness);
+            removeUpgrade(PlayerUpgrade::PowerBullets);
+        }
+        if (tp == PlayerUpgrade::MachineGun)
+        {
+            removeUpgrade(PlayerUpgrade::MoreBullets);
+            removeUpgrade(PlayerUpgrade::FastBullets);
+        }
+        if (tp == PlayerUpgrade::FourDirectionBullets)
+        {
+            removeUpgrade(PlayerUpgrade::MoreBullets);
+            removeUpgrade(PlayerUpgrade::PowerBullets);
+        }
+        if (tp == PlayerUpgrade::ReloadOnKill)
+        {
+            removeUpgrade(PlayerUpgrade::FastReload);
+            removeUpgrade(PlayerUpgrade::PowerBullets);
+        }
+        break;
+    }
+    case PlayerUpgrade::BaseUpgrade:
+        eagleController->upgrade(upgrade);
+        break;
     }
 
     // re-apply all bonuses (like, armor protection etc) on every level-up
@@ -536,7 +595,8 @@ void PlayerController::chooseUpgrade(int index)
 void PlayerController::removeUpgrade(PlayerUpgrade::UpgradeType t)
 {
     auto it2 = _collectedUpgrades.find(t);
-    if (it2 != _collectedUpgrades.end()) {
+    if (it2 != _collectedUpgrades.end())
+    {
         PlayerUpgrade *obj = (*it2).second;
         _collectedUpgrades.erase(it2);
         delete obj;
@@ -549,7 +609,8 @@ void PlayerController::applyUpgrades()
     resetCalculatedSpeedDebuff();
     _moveSpeed = globalConst::DefaultPlayerSpeed;
 
-    for (auto it : _collectedUpgrades) {
+    for (auto it : _collectedUpgrades)
+    {
         it.second->onCollect(_gameObject);
     }
 
@@ -562,7 +623,7 @@ void PlayerController::applyUpgrades()
     if (damageable->defence() < globalConst::DefaultPlayerProtection)
         damageable->setDefence(globalConst::DefaultPlayerProtection);
     // restore ammunition
-    Shootable * shootable = _gameObject->getComponent<Shootable>();
+    Shootable *shootable = _gameObject->getComponent<Shootable>();
     shootable->resetBullets();
 
     updateAppearance();
@@ -587,7 +648,8 @@ PlayerUpgrade *PlayerController::getUpgrade(int index) const
     assert(index < _collectedUpgrades.size());
 
     int i = 0;
-    for (auto u : _collectedUpgrades) {
+    for (auto u : _collectedUpgrades)
+    {
         if (i == index)
             return u.second;
         i++;
@@ -596,10 +658,10 @@ PlayerUpgrade *PlayerController::getUpgrade(int index) const
     return nullptr;
 }
 
-
 void PlayerController::setFourDirectionTurret()
 {
-    if (_4dirSet) return;
+    if (_4dirSet)
+        return;
     _4dirSet = true;
 
     // take old turret values
@@ -625,7 +687,8 @@ void PlayerController::setFourDirectionTurret()
 
 void PlayerController::setRocketLauncher()
 {
-    if (_rocketSet) return;
+    if (_rocketSet)
+        return;
     _rocketSet = true;
 
     // take old turret values
@@ -650,8 +713,8 @@ void PlayerController::setRocketLauncher()
     updateAppearance();
 }
 
-
-void PlayerController::setMoveSpeed(int speed) {
+void PlayerController::setMoveSpeed(int speed)
+{
     _moveSpeed = speed;
 }
 
@@ -659,7 +722,6 @@ void PlayerController::applyCalculatedSpeedDebuff()
 {
     _moveSpeed -= _moveSpeed * _speedDebuff / 100;
 }
-
 
 void PlayerController::applyCalculatedReloadDebuff()
 {
@@ -675,10 +737,12 @@ void PlayerController::onKillEnemy(GameObject *enemy)
 {
     (void *)enemy;
 
-    if (hasLevelOfUpgrade(PlayerUpgrade::ReloadOnKill) != -1) {
+    if (hasLevelOfUpgrade(PlayerUpgrade::ReloadOnKill) != -1)
+    {
         auto shootable = _gameObject->getComponent<Shootable>();
         assert(shootable != nullptr);
-        if (shootable->bullets() < shootable->maxBullets()) {
+        if (shootable->bullets() < shootable->maxBullets())
+        {
             shootable->resetBullets();
             SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::FullReload, true);
         }
