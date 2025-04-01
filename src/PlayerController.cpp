@@ -169,6 +169,8 @@ void PlayerController::update()
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("upgrade-speed-shot", true);
             else
                 _gameObject->turret->spriteRenderer->setCurrentAnimation("default-shot", true);
+
+            Utils::triggerScreenShake(2.0f, 2);
         }
     }
     else if (_recentPlayerInput.weapon2_request)
@@ -393,6 +395,7 @@ void PlayerController::onDamaged()
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::GetDamage, true);
         _gameObject->getComponent<SpriteRenderer>()->setOneFrameTintColor(sf::Color::Red);
         setTemporaryInvincibility(750);
+        Utils::triggerScreenShake(7.0f, 5);
     }
 }
 
@@ -759,5 +762,7 @@ GameObject *PlayerController::onDestroyed()
 
     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
 
+    // Trigger screen shake on explosion
+    Utils::triggerScreenShake(10.0f, 10);
     return ExplosionController::createBigExplosion(_gameObject, false);
 }

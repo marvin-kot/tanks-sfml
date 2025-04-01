@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "GlobalConst.h"
 
 #include <SFML/Graphics/RenderWindow.hpp>
@@ -22,4 +21,11 @@ struct Utils
     static bool isOutOfBounds(int x, int y);
     static void gameOver();
 
+    // Screen shake variables
+    static float shakeIntensity;
+    static int shakeDuration;
+
+    // Screen shake methods
+    static void triggerScreenShake(float intensity, int duration);
+    static void applyScreenShake();
 };

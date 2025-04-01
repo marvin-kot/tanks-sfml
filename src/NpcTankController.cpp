@@ -111,6 +111,7 @@ GameObject *NpcTankController::onDestroyed()
         _gameObject->dropXp();
 
 
+    Utils::triggerScreenShake(10.0f, 5);
     return ExplosionController::createBigExplosion(_gameObject, false);
 }
 

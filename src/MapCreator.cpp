@@ -192,7 +192,9 @@ GameObject *MapCreator::buildObject(std::string type)
     if (type.rfind("car-", 0, 4) != std::string::npos) {
         GameObject *car = new GameObject(type);
         car->setFlags(GameObject::BulletKillable | GameObject::Static);
-        car->setController(new StaticCarController(car));
+        auto controller = new StaticCarController(car);
+        car->setController(controller);
+        car->setCurrentDirection(globalTypes::Direction::Left);
         car->setRenderer(new SpriteRenderer(car), 2);
         car->setDamageable(new Damageable(car, 0));
         car->setCurrentAnimation("default");

@@ -52,6 +52,10 @@ private:
 
     bool winConditionsMet() const;
     bool failConditionsMet() const;
+
+    // Screen shake methods
+    void triggerScreenShake(float intensity, int duration);
+    void applyScreenShake();
 };
 
 }

@@ -26,6 +26,7 @@ namespace allinone {
 
 using namespace globalTypes;
 
+// Add variables for screen shake
 Game::Game() : gameState(GameState::TitleScreen)
 {
 }
@@ -92,6 +93,9 @@ bool Game::update()
 
     // play sounds
     SoundPlayer::instance().processQueuedSounds();
+
+    // Apply screen shake effect
+    Utils::applyScreenShake();
 
     drawGameScreen();
     if (!globalVars::gameIsPaused)
@@ -333,12 +337,16 @@ void Game::processDeletedObjects()
         auto controller = obj->getComponent<Controller>();
         if (controller != nullptr) {
             auto explosion = controller->onDestroyed();
-            if (explosion != nullptr)
+            if (explosion != nullptr) {
                 objectsToAdd.push_back(explosion);
+            }
         } else if (obj->isFlagSet(GameObject::BulletKillable)) {
             GameObject *explosion = nullptr;
-            if (obj->isFlagSet(GameObject::Explosive))
+            if (obj->isFlagSet(GameObject::Explosive)) {
                 explosion = ExplosionController::createBigExplosion(obj, true);
+                // Trigger screen shake on explosion
+                Utils::triggerScreenShake(7.0f, 5);
+            }
             else
                 explosion = ExplosionController::createSmallExplosion(obj);
             objectsToAdd.push_back(explosion);
@@ -357,7 +365,6 @@ void Game::processDeletedObjects()
         ObjectsPool::addObject(obj);
     }
 }
-
 
 void Game::drawGameScreen()
 {
@@ -551,6 +558,5 @@ bool Game::failConditionsMet() const
 
     return false;
 }
-
 
 }
