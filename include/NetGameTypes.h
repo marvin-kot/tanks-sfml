@@ -89,6 +89,7 @@ struct PlayerInput
 {
     sf::Uint8 direction_request;
     bool shoot_request;
+    sf::Uint8 shoot_direction_request;
     bool weapon2_request;
     bool pause_request;
     bool exit_request;

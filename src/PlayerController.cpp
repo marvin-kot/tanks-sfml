@@ -152,8 +152,19 @@ void PlayerController::update()
     PlayerControllerClient::instance().update(&_recentPlayerInput);
 #endif
 
-    if (_recentPlayerInput.shoot_request)
+    if (_recentPlayerInput.shoot_request || _recentPlayerInput.shoot_direction_request)
     {
+        if (_recentPlayerInput.shoot_direction_request)
+        {
+            globalTypes::Direction absoluteShotDirection = static_cast<globalTypes::Direction>(_recentPlayerInput.shoot_direction_request);
+            auto relativeDirection = _gameObject->turretRelativeDirection(absoluteShotDirection);
+            _gameObject->setTurretRelativeDirection(relativeDirection);
+            _gameObject->setCurrentDirection(_gameObject->direction());
+        } else if (_recentPlayerInput.shoot_request) {
+            _gameObject->setTurretRelativeDirection(globalTypes::Direction::Up);
+            _gameObject->setCurrentDirection(_gameObject->direction());
+        }
+
         if (_gameObject->shoot())
         {
             auto shootable = _gameObject->getComponent<Shootable>();

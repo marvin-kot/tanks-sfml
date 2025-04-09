@@ -63,6 +63,7 @@ private:
     Collectable *_collectable = nullptr;
 
     globalTypes::Direction _direction;
+    globalTypes::Direction _turretRelativeDirection;
 
     GameObject *_parentObject = nullptr;
     int _x, _y;
@@ -77,6 +78,7 @@ public:
     SpriteRenderer *spriteRenderer = nullptr;
     GameObject *visualEffect = nullptr;
     GameObject *turret = nullptr;
+    globalTypes::Direction turretDirection;
 
     bool moving = false;
     int damage = 0;
@@ -101,6 +103,7 @@ public:
     bool networkDraw(net::ThinGameObject&);
     void hide(bool);
     void setPosition(int x, int y);
+    void offsetPosition(int x, int y);
     int move(int x, int y);
     bool isOnIce() const;
     void setSize(int w, int h) { _w = w; _h = h; }
@@ -138,6 +141,10 @@ public:
 
     void setCurrentDirection(globalTypes::Direction);
     inline globalTypes::Direction direction() const {return _direction; }
+    inline globalTypes::Direction turretAbsoluteDirection() const;
+    globalTypes::Direction turretRelativeDirection(globalTypes::Direction absoluteDirection) const;
+    void setTurretRelativeDirection(globalTypes::Direction dir) { _turretRelativeDirection = dir; }
+
     void setCurrentAnimation(std::string animName);
     void stopAnimation();
     void restartAnimation();

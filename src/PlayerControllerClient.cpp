@@ -35,6 +35,13 @@ void PlayerControllerClient::update(net::PlayerInput *input)
     bool action = false;
 
     input->shoot_request = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+
+    input->shoot_direction_request = (uint8_t)(sf::Keyboard::isKeyPressed(sf::Keyboard::W) ? globalTypes::Up :
+                                      sf::Keyboard::isKeyPressed(sf::Keyboard::A) ? globalTypes::Left :
+                                      sf::Keyboard::isKeyPressed(sf::Keyboard::S) ? globalTypes::Down :
+                                      sf::Keyboard::isKeyPressed(sf::Keyboard::D) ? globalTypes::Right : globalTypes::Unknown);
+
+
     input->weapon2_request = sf::Keyboard::isKeyPressed(sf::Keyboard::X);
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {

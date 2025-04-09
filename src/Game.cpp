@@ -343,13 +343,16 @@ void Game::processDeletedObjects()
         } else if (obj->isFlagSet(GameObject::BulletKillable)) {
             GameObject *explosion = nullptr;
             if (obj->isFlagSet(GameObject::Explosive)) {
-                explosion = ExplosionController::createBigExplosion(obj, true);
+                //explosion = ExplosionController::createBigExplosion(obj, true);
+                std::vector<GameObject *> explosions = ExplosionController::createHugeExplosion(obj, 2, true);
                 // Trigger screen shake on explosion
-                Utils::triggerScreenShake(7.0f, 5);
+                Utils::triggerScreenShake(10.0f, 7);
+                objectsToAdd.insert(objectsToAdd.end(), explosions.begin(), explosions.end());
             }
-            else
+            else {
                 explosion = ExplosionController::createSmallExplosion(obj);
-            objectsToAdd.push_back(explosion);
+                objectsToAdd.push_back(explosion);
+            }
         }
 
         if (obj->isFlagSet(GameObject::NPC) && !obj->isFlagSet(GameObject::Explosive))

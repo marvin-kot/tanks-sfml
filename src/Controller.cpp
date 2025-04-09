@@ -9,10 +9,10 @@
 
 #include <algorithm>
 
-
 Controller::Controller(GameObject *parent, int spd)
-: _gameObject(parent), _moveSpeed(spd)
-{}
+    : _gameObject(parent), _moveSpeed(spd)
+{
+}
 
 int Controller::moveSpeedForCurrentFrame()
 {
@@ -20,19 +20,28 @@ int Controller::moveSpeedForCurrentFrame()
     int speed = std::floor(fSpeed);
     float fraction = fSpeed - speed;
 
-    if (fraction >= 0.1 && fraction < 0.3) {
+    if (fraction >= 0.1 && fraction < 0.3)
+    {
         if (Utils::currentFrame % 4 == 0)
             speed++;
-    } else if (fraction >=0.3 && fraction < 0.4) {
+    }
+    else if (fraction >= 0.3 && fraction < 0.4)
+    {
         if (Utils::currentFrame % 3 == 0)
             speed++;
-    } else if (fraction >=0.4 && fraction < 0.6) {
+    }
+    else if (fraction >= 0.4 && fraction < 0.6)
+    {
         if (Utils::currentFrame % 2 == 0)
             speed++;
-    } else if (fraction >=0.6 && fraction < 0.8) {
+    }
+    else if (fraction >= 0.6 && fraction < 0.8)
+    {
         if (Utils::currentFrame % 3 != 0)
             speed++;
-    } else if (fraction >= 0.8) {
+    }
+    else if (fraction >= 0.8)
+    {
         if (Utils::currentFrame % 4 != 0)
             speed++;
     }
@@ -56,32 +65,41 @@ void Controller::prepareMoveInDirection(globalTypes::Direction dir, int speed)
     assert(dir != globalTypes::Direction::Unknown);
     _gameObject->setCurrentDirection(dir);
 
-    switch (dir) {
-        case globalTypes::Left:
-            _currMoveX = -speed; _currMoveY = 0;
-            break;
-        case globalTypes::Up:
-            _currMoveY = -speed; _currMoveX = 0;
-            break;
-        case globalTypes::Right:
-            _currMoveX = speed; _currMoveY = 0;
-            break;
-        case globalTypes::Down:
-            _currMoveY = speed; _currMoveX = 0;
-            break;
-        default:
-            _currMoveY = 0; _currMoveX = 0;
+    switch (dir)
+    {
+    case globalTypes::Left:
+        _currMoveX = -speed;
+        _currMoveY = 0;
+        break;
+    case globalTypes::Up:
+        _currMoveY = -speed;
+        _currMoveX = 0;
+        break;
+    case globalTypes::Right:
+        _currMoveX = speed;
+        _currMoveY = 0;
+        break;
+    case globalTypes::Down:
+        _currMoveY = speed;
+        _currMoveX = 0;
+        break;
+    default:
+        _currMoveY = 0;
+        _currMoveX = 0;
     }
 }
 
 void Controller::checkForGamePause()
 {
-    if (!_pause && globalVars::gameIsPaused) {
+    if (!_pause && globalVars::gameIsPaused)
+    {
         _clock.pause();
         _paralyzeClock.pause();
         _blinkClock.pause();
         _pause = true;
-    } else if (_pause && ! globalVars::gameIsPaused) {
+    }
+    else if (_pause && !globalVars::gameIsPaused)
+    {
         _clock.resume();
         _paralyzeClock.resume();
         _blinkClock.resume();
@@ -92,7 +110,7 @@ void Controller::checkForGamePause()
 /////
 
 BulletController::BulletController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg, bool pierce)
-: Controller(obj, spd), _direction(dir), _damage(dmg), _piercing(pierce)
+    : Controller(obj, spd), _direction(dir), _damage(dmg), _piercing(pierce)
 {
     _clock.reset(true);
 }
@@ -101,22 +119,22 @@ void BulletController::update()
 {
 
     checkForGamePause();
-    if (_pause) return;
+    if (_pause)
+        return;
 
     if (_clock.getElapsedTime() > sf::milliseconds(globalConst::DefaultBulletLifetimeMs))
         _gameObject->markForDeletion();
 
-
     int speed = moveSpeedForCurrentFrame();
-    assert(_direction != globalTypes::Direction::Unknown );
+    assert(_direction != globalTypes::Direction::Unknown);
     prepareMoveInDirection(_direction, speed);
     _gameObject->move(_currMoveX, _currMoveY);
-
 }
 
 void BulletController::onCollided(GameObject *other)
 {
-    if (_updatedOnFrame == Utils::currentFrame) return;
+    if (_updatedOnFrame == Utils::currentFrame)
+        return;
 
     if (other->isFlagSet(GameObject::BulletPassable))
         return;
@@ -127,7 +145,6 @@ void BulletController::onCollided(GameObject *other)
 
     _updatedOnFrame = Utils::currentFrame;
 }
-
 
 GameObject *BulletController::onDestroyed()
 {
@@ -143,9 +160,9 @@ GameObject *BulletController::onDestroyed()
 /////
 
 RocketController::RocketController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg)
-: BulletController(obj, dir, spd, dmg)
+    : BulletController(obj, dir, spd, dmg)
 {
-    _currSpeed = _startSpeed = globalConst::DefaultPlayerBulletSpeed/4;
+    _currSpeed = _startSpeed = globalConst::DefaultPlayerBulletSpeed / 4;
     _clock.reset(true);
     _maxSpeed = _moveSpeed;
 }
@@ -154,39 +171,35 @@ void RocketController::update()
 {
 
     checkForGamePause();
-    if (_pause) return;
-
+    if (_pause)
+        return;
 
     if (_clock.getElapsedTime() > sf::milliseconds(globalConst::DefaultBulletLifetimeMs))
         _gameObject->markForDeletion();
 
     _moveSpeed = _currSpeed;
     int speed = moveSpeedForCurrentFrame();
-    assert(_direction != globalTypes::Direction::Unknown );
+    assert(_direction != globalTypes::Direction::Unknown);
     prepareMoveInDirection(_direction, speed);
     _gameObject->move(_currMoveX, _currMoveY);
 
-    _currSpeed += (_maxSpeed - _startSpeed)/20;
+    _currSpeed += (_maxSpeed - _startSpeed) / 20;
 }
 
-
-
-
 ExplosionController::ExplosionController(GameObject *parent, bool dontHurtParent)
-: Controller(parent, 0), _dontHurtParent(dontHurtParent)
+    : Controller(parent, 0), _dontHurtParent(dontHurtParent)
 {
     _clock.reset(true);
 }
 
-
 void ExplosionController::update()
 {
     checkForGamePause();
-    if (_pause) return;
+    if (_pause)
+        return;
 
     _gameObject->move(0, 0);
 }
-
 
 GameObject *ExplosionController::createSmallExplosion(GameObject *parent)
 {
@@ -201,7 +214,8 @@ GameObject *ExplosionController::createSmallExplosion(GameObject *parent)
 GameObject *ExplosionController::createBigExplosion(GameObject *parent, bool damaging)
 {
     GameObject *explosion = new GameObject("bigExplosion");
-    if (damaging) {
+    if (damaging)
+    {
         explosion->setController(new ExplosionController(explosion, false));
         explosion->damage = 1;
     }
@@ -214,20 +228,47 @@ GameObject *ExplosionController::createBigExplosion(GameObject *parent, bool dam
     return explosion;
 }
 
+std::vector<GameObject *> ExplosionController::createHugeExplosion(GameObject *parent, int damage, bool damaging)
+{
+    std::vector<GameObject *> explosions;
+    for (int offset_y = -16; offset_y <= 16; offset_y += 32)
+    {
+        for (int offset_x = -16; offset_x <= 16; offset_x += 32)
+        {
+            GameObject *explosion = new GameObject("bigExplosion");
+            if (damaging)
+            {
+                explosion->setController(new ExplosionController(explosion, false));
+                explosion->damage = damage;
+            }
+            explosion->setRenderer(new OneShotAnimationRenderer(explosion), 4);
+            explosion->copyParentPosition(parent);
+            explosion->offsetPosition(offset_x, offset_y);
+            explosion->setFlags(GameObject::BulletPassable | GameObject::TankPassable);
+            explosion->setParentId(parent->parentId());
+
+            SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::smallExplosion, true);
+
+            explosions.push_back(explosion);
+        }
+    }
+
+    return explosions;
+}
+
 /////////
 
-
 LandmineController::LandmineController(GameObject *parent, bool dontHurtParent)
-: Controller(parent, 0), _dontHurtParent(dontHurtParent)
+    : Controller(parent, 0), _dontHurtParent(dontHurtParent)
 {
     _clock.reset(true);
 }
 
-
 void LandmineController::update()
 {
     checkForGamePause();
-    if (_pause) return;
+    if (_pause)
+        return;
 
     _gameObject->move(0, 0);
 }
@@ -237,11 +278,11 @@ void LandmineController::onCollided(GameObject *obj)
     if (_dontHurtParent && (obj->id() == _gameObject->parentId() || obj->parentId() == _gameObject->parentId()))
         return;
 
-    if (obj->isFlagSet(GameObject::ObjectFlags::BulletKillable)) {
+    if (obj->isFlagSet(GameObject::ObjectFlags::BulletKillable))
+    {
         _gameObject->shoot();
     }
 }
-
 
 GameObject *LandmineController::onDestroyed()
 {
@@ -252,7 +293,7 @@ GameObject *LandmineController::onDestroyed()
 ///
 
 StaticTurretController::StaticTurretController(GameObject *parent, globalTypes::Direction dir)
-: Controller(parent, 0), _direction(dir)
+    : Controller(parent, 0), _direction(dir)
 {
     _clock.reset(true);
 }
@@ -288,24 +329,23 @@ bool StaticTurretController::decideIfToShoot() const
     if (ObjectsPool::playerObject && _gameObject->parentId() != ObjectsPool::playerObject->id())
         targetIsPlayer = true;
 
-    if (targetIsPlayer && (hit == ObjectsPool::playerObject || hit == ObjectsPool::eagleObject)) {
+    if (targetIsPlayer && (hit == ObjectsPool::playerObject || hit == ObjectsPool::eagleObject))
+    {
         return true;
     }
 
-    if (!targetIsPlayer && hit->isFlagSet(GameObject::NPC)) {
+    if (!targetIsPlayer && hit->isFlagSet(GameObject::NPC))
+    {
         return true;
     }
-
 
     return false;
 }
 
 //////
 
-
 BlockageController::BlockageController(GameObject *parent)
-: Controller(parent, 0) {}
-
+    : Controller(parent, 0) {}
 
 void BlockageController::update()
 {
@@ -318,35 +358,33 @@ void BlockageController::update()
         _gameObject->unsetFlags(GameObject::TankPassable);
 }
 
-
-
-void BlockageController::onDamaged() {
+void BlockageController::onDamaged()
+{
     assert(_gameObject != nullptr);
     auto damageable = _gameObject->getComponent<Damageable>();
     assert(damageable != nullptr);
     assert(_gameObject->spriteRenderer != nullptr);
     switch (damageable->defence())
     {
-        case 1:
-            _gameObject->spriteRenderer->setCurrentAnimation("damaged");
-            break;
-        case 0:
-            _gameObject->spriteRenderer->setCurrentAnimation("damaged-2");
-            break;
-        default:
-            _gameObject->spriteRenderer->setCurrentAnimation("default");
+    case 1:
+        _gameObject->spriteRenderer->setCurrentAnimation("damaged");
+        break;
+    case 0:
+        _gameObject->spriteRenderer->setCurrentAnimation("damaged-2");
+        break;
+    default:
+        _gameObject->spriteRenderer->setCurrentAnimation("default");
     }
 }
 
-
 JezekController::JezekController(GameObject *parent, bool dontHurtParent)
-: Controller(parent, 0), _dontHurtParent(dontHurtParent) {}
-
+    : Controller(parent, 0), _dontHurtParent(dontHurtParent) {}
 
 void JezekController::update()
 {
     checkForGamePause();
-    if (_pause) return;
+    if (_pause)
+        return;
 
     _gameObject->move(0, 0);
 }
@@ -358,27 +396,28 @@ void JezekController::onCollided(GameObject *obj)
     if (_dontHurtParent && (obj->id() == _gameObject->parentId() || obj->parentId() == _gameObject->parentId()))
         return;
 
-    if (obj->isFlagSet(GameObject::ObjectFlags::BulletKillable)) {
+    if (obj->isFlagSet(GameObject::ObjectFlags::BulletKillable))
+    {
         _gameObject->markForDeletion();
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::DestroyWall, true);
         obj->getComponent<Controller>()->paralyze(10000);
     }
-
 }
 
-
-
 SkullController::SkullController(GameObject *parent, int timeout)
-: Controller(parent, 0), _timeoutMsec(timeout) {
+    : Controller(parent, 0), _timeoutMsec(timeout)
+{
     _clock.reset(true);
 }
 
 void SkullController::update()
 {
     checkForGamePause();
-    if (_pause) return;
+    if (_pause)
+        return;
 
-    if (_clock.getElapsedTime() > sf::milliseconds(_timeoutMsec)) {
+    if (_clock.getElapsedTime() > sf::milliseconds(_timeoutMsec))
+    {
         _gameObject->markForDeletion();
     }
 }
@@ -386,13 +425,14 @@ void SkullController::update()
 ////
 
 CollectableXpController::CollectableXpController(GameObject *parent)
-: Controller(parent, 0) {}
+    : Controller(parent, 0) {}
 
 void CollectableXpController::onCollided(GameObject *other)
 {
     assert(_gameObject->isFlagSet(GameObject::CollectableBonus));
 
-    if (!other->isFlagSet(GameObject::CollectableBonus)) return;
+    if (!other->isFlagSet(GameObject::CollectableBonus))
+        return;
 
     // merge colliding xp points to reduce number of objects on map
     auto thisCollectable = _gameObject->getComponent<Collectable>();
@@ -415,18 +455,37 @@ void CollectableXpController::onCollided(GameObject *other)
     // update value
     thisXp->setValue(sum);
     std::string newType;
-    switch (sum) {
-        case 200: newType = "200xp"; break;
-        case 300: newType = "300xp"; break;
-        case 400: newType = "400xp"; break;
-        case 500: newType = "500xp"; break;
-        case 600: newType = "600xp"; break;
-        case 700: newType = "700xp"; break;
-        case 800: newType = "800xp"; break;
-        case 900: newType = "900xp"; break;
-        case 1000: newType = "1000xp"; break;
-        default:
-            return;
+    switch (sum)
+    {
+    case 200:
+        newType = "200xp";
+        break;
+    case 300:
+        newType = "300xp";
+        break;
+    case 400:
+        newType = "400xp";
+        break;
+    case 500:
+        newType = "500xp";
+        break;
+    case 600:
+        newType = "600xp";
+        break;
+    case 700:
+        newType = "700xp";
+        break;
+    case 800:
+        newType = "800xp";
+        break;
+    case 900:
+        newType = "900xp";
+        break;
+    case 1000:
+        newType = "1000xp";
+        break;
+    default:
+        return;
     }
 
     assert(_gameObject->spriteRenderer != nullptr);
@@ -436,18 +495,19 @@ void CollectableXpController::onCollided(GameObject *other)
     other->markForDeletion();
 }
 
-
 ////
 
 StaticCarController::StaticCarController(GameObject *parent)
-: Controller(parent, 0) {
+    : Controller(parent, 0)
+{
     _clock.reset(true);
 }
 
 void StaticCarController::onCollided(GameObject *other)
 {
     assert(other != nullptr);
-    if (other->isFlagSet(GameObject::Player) || other->isFlagSet(GameObject::NPC)) {
+    if (other->isFlagSet(GameObject::Player) || other->isFlagSet(GameObject::NPC))
+    {
         _gameObject->markForDeletion();
         SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
     }
@@ -455,7 +515,7 @@ void StaticCarController::onCollided(GameObject *other)
 
 GameObject *StaticCarController::onDestroyed()
 {
-    //SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
+    // SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
     return ExplosionController::createSmallExplosion(_gameObject);
 }
 
@@ -464,9 +524,9 @@ GameObject *StaticCarController::onDestroyed()
 ////
 
 PrizeBoxController::PrizeBoxController(GameObject *parent)
-: Controller(parent, 0) {
+    : Controller(parent, 0)
+{
 }
-
 
 GameObject *PrizeBoxController::onDestroyed()
 {

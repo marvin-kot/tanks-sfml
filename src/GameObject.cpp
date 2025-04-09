@@ -20,6 +20,7 @@
 GameObject::GameObject(std::string type)
 : _type(type)
 , _direction(globalTypes::Direction::Up)
+, _turretRelativeDirection(globalTypes::Direction::Unknown)
 , _parentObject(nullptr)
 {
     assignUniqueId();
@@ -197,6 +198,12 @@ void GameObject::setPosition(int x, int y)
 {
     _x = x;
     _y = y;
+}
+
+void GameObject::offsetPosition(int offsetX, int offsetY)
+{
+    _x += offsetX;
+    _y += offsetY;
 }
 
 sf::Vector2i GameObject::position() const
@@ -626,14 +633,68 @@ void GameObject::setCurrentDirection(globalTypes::Direction dir)
     if (spriteRenderer)
         spriteRenderer->setCurrentDirection(dir);
 
-    if (turret && turret->spriteRenderer)
-        turret->spriteRenderer->setCurrentDirection(dir);
+    if (turret && turret->spriteRenderer) {
+
+        if (_turretRelativeDirection == globalTypes::Direction::Unknown) {
+            turret->spriteRenderer->setCurrentDirection(_direction);
+        } else {
+            turret->spriteRenderer->setCurrentDirection(turretAbsoluteDirection());
+        }
+    }
+}
+
+
+
+globalTypes::Direction GameObject::turretAbsoluteDirection() const {
+    if (_turretRelativeDirection == globalTypes::Direction::Unknown)
+        return _direction;
+
+    int currDirValue = static_cast<int>(_direction);
+    int dir = 0;
+    switch (_turretRelativeDirection) {
+        case globalTypes::Direction::Up:
+            dir = currDirValue;
+            break;
+        case globalTypes::Direction::Left:
+            dir = currDirValue + 1;
+            if (dir > 4)
+                dir = 1;
+            break;
+        case globalTypes::Direction::Right:
+            dir = currDirValue - 1;
+            if (dir < 1)
+                dir += 4;
+            break;
+        case globalTypes::Direction::Down:
+            dir = currDirValue + 2;
+            if (dir > 4)
+                dir -= 4;
+            break;
+    }
+
+    return static_cast<globalTypes::Direction>(dir);
+}
+
+globalTypes::Direction GameObject::turretRelativeDirection(globalTypes::Direction absoluteDirection) const {
+    assert(absoluteDirection != globalTypes::Direction::Unknown);
+
+    int currDirValue = static_cast<int>(_direction) - 1;
+    int absDirValue = static_cast<int>(absoluteDirection) - 1;
+
+    int relDirValue = absDirValue - currDirValue;
+    if (relDirValue < 0)
+        relDirValue += 4;
+
+
+    return static_cast<globalTypes::Direction>(relDirValue + 1);
 }
 
 bool GameObject::shoot()
 {
-    if (_shootable)
-        return _shootable->shoot(_direction);
+    if (_shootable) {
+        auto direction = _turretRelativeDirection == globalTypes::Direction::Unknown ? _direction : turretAbsoluteDirection();
+        return _shootable->shoot(direction);
+    }
     else
         return false;
 }

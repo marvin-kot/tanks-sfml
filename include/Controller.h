@@ -8,6 +8,7 @@
 #include <sftools/Chronometer.hpp>
 
 #include <random>
+#include <vector>
 
 class GameObject;
 
@@ -141,6 +142,7 @@ public:
 
     static GameObject *createSmallExplosion(GameObject *parent);
     static GameObject *createBigExplosion(GameObject *parent, bool damaging);
+    static std::vector<GameObject *> createHugeExplosion(GameObject *parent, int damage, bool damaging = false);
 };
 
 
