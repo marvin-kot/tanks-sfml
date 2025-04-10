@@ -286,7 +286,7 @@ void EagleController::onDamaged()
             // eagle is dead - run is finished
         }
     } else {
-        Utils::triggerScreenShake(10.0f, 10);
+        Utils::triggerScreenShake(10.0f, 15);
         HUD::instance().onBaseDamaged();
         if (hasLevelOfUpgrade(PlayerUpgrade::BaseRestoreOnDamage) > -1)
             fastRepairWalls(100);
@@ -299,6 +299,6 @@ GameObject *EagleController::onDestroyed()
 {
     ObjectsPool::eagleObject = nullptr;
     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bigExplosion, true);
-    Utils::triggerScreenShake(15.0f, 15);
+    Utils::triggerScreenShake(20.0f, 20);
     return ExplosionController::createBigExplosion(_gameObject, false);
 }

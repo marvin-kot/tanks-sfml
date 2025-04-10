@@ -58,6 +58,8 @@ class PlayerController : public Controller
 
     bool _blink = false;
 
+    int _afterShootDirectionDelayCounter = 0;
+
     void blinkIfParalyzed();
     sf::Time prevFrameTime;
 public:

@@ -28,6 +28,9 @@ void Utils::gameOver()
 // Add method to trigger screen shake
 void Utils::triggerScreenShake(float intensity, int duration)
 {
+    if (duration < shakeDuration) {
+        return; // Already shaking
+    }
     shakeIntensity = intensity;
     shakeDuration = duration;
 }
