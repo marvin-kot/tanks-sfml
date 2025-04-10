@@ -621,8 +621,11 @@ void GameObject::setCollectable(Collectable *col)
 
 void GameObject::getCollectedBy(GameObject *collector)
 {
-    if (_collectable)
-        _collectable->onCollected(collector);
+    if (_collectable) {
+        if (_collectable->onCollected(collector) == false)
+            // leave this item uncollected
+            return;
+    }
 
     markForDeletion();
 }

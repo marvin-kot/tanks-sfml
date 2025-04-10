@@ -13,64 +13,58 @@ Collectable::Collectable(GameObject *parent)
 : _gameObject(parent)
 {}
 
-void Collectable::onCollected(GameObject *collector)
+bool Collectable::onCollected(GameObject *collector)
 {
     (void *)collector;
     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusCollect, true);
+    return true;
 }
-
-///////
 
 GrenadeCollectable::GrenadeCollectable(GameObject *parent)
 : Collectable(parent)
 {}
 
-void GrenadeCollectable::onCollected(GameObject *collector)
+bool GrenadeCollectable::onCollected(GameObject *collector)
 {
-    // kill all enemy tanks in a moment
     std::unordered_set<GameObject *> objectsToKill = ObjectsPool::getObjectsByTypes({"npcBaseTank", "npcFastTank", "npcPowerTank", "npcArmorTank", "npcKamikazeTank", "npc4DirTank", "npc4DirArmorTank", "npcDoubleCannonArmorTank"});
     std::for_each(objectsToKill.cbegin(), objectsToKill.cend(), [](GameObject *obj) { obj->markForDeletion(); });
 
     Collectable::onCollected(collector);
+    return true;
 }
-
-//////
 
 TimerCollectable::TimerCollectable(GameObject *parent)
 : Collectable(parent)
 {}
 
-void TimerCollectable::onCollected(GameObject *collector)
+bool TimerCollectable::onCollected(GameObject *collector)
 {
     globalVars::globalFreezeTimeout = 10;
     globalVars::globalTimeFreeze = true;
     globalVars::globalFreezeChronometer.reset(true);
 
     Collectable::onCollected(collector);
+    return true;
 }
-
-
-//////
 
 HelmetCollectable::HelmetCollectable(GameObject *parent)
 : Collectable(parent)
 {}
 
-void HelmetCollectable::onCollected(GameObject *collector)
+bool HelmetCollectable::onCollected(GameObject *collector)
 {
     PlayerController *controller = collector->getComponent<PlayerController>();
     controller->setTemporaryInvincibility(7500);
 
     Collectable::onCollected(collector);
+    return true;
 }
-
-/////
 
 TankCollectable::TankCollectable(GameObject *parent)
 : Collectable(parent)
 {}
 
-void TankCollectable::onCollected(GameObject *collector)
+bool TankCollectable::onCollected(GameObject *collector)
 {
     assert(collector != nullptr);
     assert(collector->isFlagSet(GameObject::Player));
@@ -79,47 +73,44 @@ void TankCollectable::onCollected(GameObject *collector)
     assert(spawnerObject != nullptr);
 
     auto spawnerController = spawnerObject->getComponent<PlayerSpawnController>();
-
     assert(spawnerController != nullptr);
 
     spawnerController->appendLife();
 
     Collectable::onCollected(collector);
+    return true;
 }
-
 
 XpCollectable::XpCollectable(GameObject *parent, int value)
 : Collectable(parent), _value(value)
 {}
 
-void XpCollectable::onCollected(GameObject *collector)
+bool XpCollectable::onCollected(GameObject *collector)
 {
     PlayerController *controller = collector->getComponent<PlayerController>();
     controller->addXP(_value);
 
     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::xpCollect, true);
+    return true;
 }
-
-//////
 
 AmmoCollectable::AmmoCollectable(GameObject *parent)
 : Collectable(parent)
 {}
 
-void AmmoCollectable::onCollected(GameObject *collector)
+bool AmmoCollectable::onCollected(GameObject *collector)
 {
     assert(collector->isFlagSet(GameObject::Player));
     auto shootable = collector->getComponent<Shootable>();
     shootable->addTempBullets(_amount);
+    return true;
 }
-
-//////
 
 RepairCollectable::RepairCollectable(GameObject *parent)
 : Collectable(parent)
 {}
 
-void RepairCollectable::onCollected(GameObject *collector)
+bool RepairCollectable::onCollected(GameObject *collector)
 {
     assert(collector->isFlagSet(GameObject::Player));
     auto damageable = collector->getComponent<Damageable>();
@@ -129,13 +120,14 @@ void RepairCollectable::onCollected(GameObject *collector)
         SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusCollect, true);
         auto controller = collector->getComponent<PlayerController>();
         controller->updateAppearance();
+        return true;
+    } else {
+        return false;
     }
+
 }
 
-
-///
 #include "PlayerUpgrade.h"
-
 
 SkullCollectable::SkullCollectable(GameObject *parent)
 : Collectable(parent)
@@ -152,7 +144,7 @@ SkullCollectable::~SkullCollectable()
     }
 }
 
-void SkullCollectable::onCollected(GameObject *collector)
+bool SkullCollectable::onCollected(GameObject *collector)
 {
     assert(collector != nullptr);
     assert(collector->isFlagSet(GameObject::Player));
@@ -160,5 +152,5 @@ void SkullCollectable::onCollected(GameObject *collector)
     collector->getComponent<PlayerController>()->restoreLevelAndUpgrades(this);
     SoundPlayer::instance().enqueueSound(SoundPlayer::SoundType::bonusCollect, true);
     _gotCollected = true;
+    return true;
 }
-

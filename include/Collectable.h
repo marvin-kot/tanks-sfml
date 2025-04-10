@@ -12,38 +12,38 @@ class Collectable
 
 public:
     Collectable(GameObject *parent);
-    virtual void onCollected(GameObject *collector);
+    virtual bool onCollected(GameObject *collector); // Changed return type to bool
 };
 
 struct GrenadeCollectable : public Collectable
 {
     GrenadeCollectable(GameObject *parent);
-    void onCollected(GameObject *collector) override;
+    bool onCollected(GameObject *collector) override; // Changed return type to bool
 };
 
 struct TimerCollectable : public Collectable
 {
     TimerCollectable(GameObject *parent);
-    void onCollected(GameObject *collector) override;
+    bool onCollected(GameObject *collector) override; // Changed return type to bool
 };
 
 struct HelmetCollectable : public Collectable
 {
     HelmetCollectable(GameObject *parent);
-    void onCollected(GameObject *collector) override;
+    bool onCollected(GameObject *collector) override; // Changed return type to bool
 };
 
 struct TankCollectable : public Collectable
 {
     TankCollectable(GameObject *parent);
-    void onCollected(GameObject *collector) override;
+    bool onCollected(GameObject *collector) override; // Changed return type to bool
 };
 
 struct XpCollectable : public Collectable
 {
 
     XpCollectable(GameObject *parent, int value);
-    void onCollected(GameObject *collector) override;
+    bool onCollected(GameObject *collector) override; // Changed return type to bool
 
     int value() const { return _value; }
     void setValue(int val) { _value = val; }
@@ -56,13 +56,13 @@ struct AmmoCollectable : public Collectable
 {
     const int _amount = 3;
     AmmoCollectable(GameObject *parent);
-    void onCollected(GameObject *collector) override;
+    bool onCollected(GameObject *collector) override; // Changed return type to bool
 };
 
 struct RepairCollectable : public Collectable
 {
     RepairCollectable(GameObject *parent);
-    void onCollected(GameObject *collector) override;
+    bool onCollected(GameObject *collector) override; // Changed return type to bool
 };
 
 class PlayerUpgrade;
@@ -77,7 +77,7 @@ struct SkullCollectable : public Collectable
 
     SkullCollectable(GameObject *parent);
     ~SkullCollectable();
-    void onCollected(GameObject *collector) override;
+    bool onCollected(GameObject *collector) override; // Changed return type to bool
 
 private:
     bool _gotCollected = false;
