@@ -9,14 +9,42 @@
 
 #include <random>
 #include <vector>
+#include <queue>
+#include <utility>
 
 class GameObject;
+
+
+class MoveTrailBuffer
+{
+    std::queue<std::pair<int,int>> _buffer;
+    int _fixedSize;
+
+public:
+    MoveTrailBuffer(int size) : _fixedSize(size) {}
+
+    void push(int x, int y)
+    {
+        if (_buffer.size() >= _fixedSize)
+            _buffer.pop();
+        _buffer.push(std::make_pair(x, y));
+    }
+
+    std::pair<int,int> front(int onlyIfFull) const
+    {
+        if (_buffer.empty() || (onlyIfFull && _buffer.size() < _fixedSize))
+            return std::make_pair(0, 0);
+        return _buffer.front();
+    }
+};
+
 
 class Controller
 {
 
 protected:
     GameObject *_gameObject;
+    Controller *_trailerObjectController = nullptr;
     //sf::Clock _clock;
     sftools::Chronometer _clock;
     bool _pause = false;
@@ -37,6 +65,8 @@ protected:
     int moveSpeedForCurrentFrame();
     void prepareMoveInDirection(globalTypes::Direction, int spd);
     void checkForGamePause();
+
+    globalTypes::Direction directionBasedOnCurrentMovement() const;
 public:
     Controller(GameObject *obj, int spd);
     virtual ~Controller() {}
@@ -46,6 +76,10 @@ public:
     virtual void onCollided(GameObject *) {}
     virtual GameObject *onDestroyed() { return nullptr; }
     void paralyze(int msec);
+
+    virtual bool previouslyMoved() const { return false; }
+public:
+    MoveTrailBuffer moveTrailBuffer;
 };
 
 class BulletController : public Controller
@@ -73,6 +107,14 @@ class RocketController : public BulletController
     int _maxSpeed;
 public:
     RocketController(GameObject *obj, globalTypes::Direction dir, int spd, int dmg);
+    void update() override;
+};
+
+class TrailerController : public Controller
+{
+    Controller *_ownerController;
+public:
+    TrailerController(GameObject *parent, Controller *owner) : Controller(parent, 0), _ownerController(owner) {}
     void update() override;
 };
 

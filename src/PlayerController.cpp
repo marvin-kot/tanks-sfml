@@ -53,6 +53,10 @@ PlayerController::PlayerController(GameObject *obj)
     _clock.reset(true);
     resetXP();
     initXpLevelupNumbers();
+
+
+
+
 }
 
 PlayerController::~PlayerController()
@@ -161,7 +165,9 @@ void PlayerController::update()
             auto relativeDirection = _gameObject->turretRelativeDirection(absoluteShotDirection);
             _gameObject->setTurretRelativeDirection(relativeDirection);
             _gameObject->setCurrentDirection(_gameObject->direction());
-        } else if (_recentPlayerInput.shoot_request) {
+        }
+        else if (_recentPlayerInput.shoot_request)
+        {
             _gameObject->setTurretRelativeDirection(globalTypes::Direction::Up);
             _gameObject->setCurrentDirection(_gameObject->direction());
         }
@@ -195,9 +201,12 @@ void PlayerController::update()
             SoundPlayer::instance().enqueueSound(SoundPlayer::RejectLandmine, true);
     }
 
-    if (_afterShootDirectionDelayCounter>0) {
+    if (_afterShootDirectionDelayCounter > 0)
+    {
         _afterShootDirectionDelayCounter--;
-    } else {
+    }
+    else
+    {
         _gameObject->setTurretRelativeDirection(globalTypes::Direction::Up);
         _gameObject->setCurrentDirection(_gameObject->direction());
     }
@@ -221,6 +230,9 @@ void PlayerController::update()
 
         if (!_prevMoved && moved)
             resetMoveStartTimer();
+
+        if (moved)
+            moveTrailBuffer.push(_currMoveX, _currMoveY);
 
         _prevMoved = moved;
 
@@ -297,24 +309,26 @@ int PlayerController::trySqueeze()
 {
     if (_currMoveX == 0)
     {
-        if (_gameObject->move(2, _currMoveY) == 0)
-            if (_gameObject->move(-2, _currMoveY) == 0)
-                if (_gameObject->move(4, _currMoveY) == 0)
-                    if (_gameObject->move(-4, _currMoveY) == 0)
-                        if (_gameObject->move(6, _currMoveY) == 0)
-                            return _gameObject->move(-6, _currMoveY);
+        std::vector<int> offsets = {-2, 2, -4, 4, -6, 6};
+        for (int offset : offsets)
+        {
+            _currMoveX = offset;
+            if (_gameObject->move(_currMoveX, _currMoveY) == 1)
+                return 1;
+        }
     }
     else if (_currMoveY == 0)
     {
-        if (_gameObject->move(_currMoveX, 2) == 0)
-            if (_gameObject->move(_currMoveX, -2) == 0)
-                if (_gameObject->move(_currMoveX, 4) == 0)
-                    if (_gameObject->move(_currMoveX, -4) == 0)
-                        if (_gameObject->move(_currMoveX, 6) == 0)
-                            return _gameObject->move(_currMoveX, -6);
+        std::vector<int> offsets = {-2, 2, -4, 4, -6, 6};
+        for (int offset : offsets)
+        {
+            _currMoveY = offset;
+            if (_gameObject->move(_currMoveX, _currMoveY) == 1)
+                return 1;
+        }
     }
 
-    return 1;
+    return 0;
 }
 
 void PlayerController::updateAppearance()
@@ -752,7 +766,7 @@ void PlayerController::applyCalculatedReloadDebuff()
     assert(shootable != nullptr);
 
     int newShootTimeout = globalConst::PlayerShootTimeoutMs + globalConst::PlayerShootTimeoutMs * _shootReloadDebuff / 100;
-    shootable->setShootTimeoutMs(newShootTimeout);
+    shootable->setReloadTimeoutMs(newShootTimeout);
 }
 
 void PlayerController::onKillEnemy(GameObject *enemy)

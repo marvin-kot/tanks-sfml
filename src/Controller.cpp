@@ -10,7 +10,7 @@
 #include <algorithm>
 
 Controller::Controller(GameObject *parent, int spd)
-    : _gameObject(parent), _moveSpeed(spd)
+    : _gameObject(parent), _moveSpeed(spd), moveTrailBuffer(8)
 {
 }
 
@@ -87,6 +87,20 @@ void Controller::prepareMoveInDirection(globalTypes::Direction dir, int speed)
         _currMoveY = 0;
         _currMoveX = 0;
     }
+}
+
+globalTypes::Direction Controller::directionBasedOnCurrentMovement() const
+{
+    if (_currMoveX > 0 && _currMoveX > _currMoveY)
+        return globalTypes::Right;
+    else if (_currMoveX < 0  && _currMoveX < _currMoveY)
+        return globalTypes::Left;
+    else if (_currMoveY > 0  && _currMoveY > _currMoveX)
+        return globalTypes::Down;
+    else if (_currMoveY < 0 && _currMoveY < _currMoveX)
+        return globalTypes::Up;
+
+    return globalTypes::Unknown;
 }
 
 void Controller::checkForGamePause()
@@ -184,6 +198,28 @@ void RocketController::update()
     _gameObject->move(_currMoveX, _currMoveY);
 
     _currSpeed += (_maxSpeed - _startSpeed) / 20;
+}
+
+void TrailerController::update()
+{
+    checkForGamePause();
+    if (_pause)
+        return;
+
+    if (ObjectsPool::playerObject == nullptr)
+        return;
+
+    if (!_ownerController->previouslyMoved())
+        return;
+
+    std::pair movement = _ownerController->moveTrailBuffer.front(true);
+
+    _currMoveX = movement.first;
+    _currMoveY = movement.second;
+
+    _gameObject->setCurrentDirection(directionBasedOnCurrentMovement());
+    //Logger::instance() << "TrailerController: " << _currMoveX << " " << _currMoveY;
+    bool moved = _gameObject->move(_currMoveX, _currMoveY);
 }
 
 ExplosionController::ExplosionController(GameObject *parent, bool dontHurtParent)
@@ -509,6 +545,7 @@ void StaticCarController::onCollided(GameObject *other)
     if (other->isFlagSet(GameObject::Player) || other->isFlagSet(GameObject::NPC))
     {
         _gameObject->markForDeletion();
+        Utils::triggerScreenShake(3.0f, 3);
         SoundPlayer::instance().enqueueSound(SoundPlayer::DestroyWall, true);
     }
 }

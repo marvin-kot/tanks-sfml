@@ -82,6 +82,25 @@ void PlayerSpawnController::update()
 
                     auto controller = newPc->getComponent<PlayerController>();
                     controller->setTemporaryInvincibility(3000);
+
+                    // to test: create a trailer
+                    /*GameObject *trailer = new GameObject("greenTowerTrailer");
+
+                    trailer->setFlags(GameObject::TankPassable | GameObject::BulletPassable);
+                    trailer->setRenderer(new SpriteRenderer(trailer), 2);
+                    trailer->setDamageable(new Damageable(trailer, 0));
+                    trailer->setController(new TrailerController(trailer, controller));
+                    trailer->copyParentPosition(_gameObject);
+                    trailer->move(0, 28);
+
+                    controller->moveTrailBuffer.push(0, -4);
+                    controller->moveTrailBuffer.push(0, -4);
+                    controller->moveTrailBuffer.push(0, -4);
+                    controller->moveTrailBuffer.push(0, -4);
+                    controller->moveTrailBuffer.push(0, -4);
+                    controller->moveTrailBuffer.push(0, -4);
+                    controller->moveTrailBuffer.push(0, -4);
+                    ObjectsPool::addObject(trailer);*/
                 }
 
                 _clock.reset(true);

@@ -81,6 +81,8 @@ public:
     void resetXP();
     void levelUp();
 
+    bool previouslyMoved() const override{ return _prevMoved; }
+
     void chooseUpgrade(int index);
     int hasLevelOfUpgrade(PlayerUpgrade::UpgradeType) const;
     PlayerUpgrade *getUpgrade(int) const;

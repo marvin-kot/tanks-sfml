@@ -370,7 +370,7 @@ void GameObject::updateOnCollision(GameObject *other, bool& cancelMovement)
     }
 
     // just run into wall or another tank
-    if (!other->isFlagSet(TankPassable)) {
+    if (!other->isFlagSet(TankPassable) && !isFlagSet(TankPassable)) {
         cancelMovement = true;
     }
 
@@ -503,7 +503,8 @@ GameObject *GameObject::linecastInDirection(int id, int startX, int startY, glob
     auto objectList = ObjectsPool::getObjectsByTypes(
         { "brickWall", "brickWall1x1", "brickWall2x1", "brickWall1x2", "brickWall2x2", "concreteWall",
           "playerBase", "eagle", "npcBaseTank", "staticTurret",
-          "npcFastTank", "npcArmorTank", "npcPowerTank", "npcGiantTank", "npcDoubleCannonArmorTank", "npcKamikazeTank"
+          "npcFastTank", "npcArmorTank", "npcPowerTank", "npcGiantTank", "npcDoubleCannonArmorTank", "npcKamikazeTank",
+          "greenTowerTrailer"
         });
 
     const int step = 4;
